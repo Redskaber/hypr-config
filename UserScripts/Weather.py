@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# /* ---- 💫 https://github.com/JaKooLit 💫 ---- */  #
 # Rewritten to use Open-Meteo APIs (worldwide, no API key) for robust weather data.
 # Outputs Waybar-compatible JSON and a simple text cache.
 
@@ -16,6 +15,7 @@ from typing import NamedTuple
 import requests
 
 from dataclasses import dataclass
+
 
 @dataclass
 class Location:
@@ -38,6 +38,7 @@ class WeatherData:
     hourly_precip: str
     is_day: int
     code: int
+
 
 # =============== Configuration ===============
 # You can configure behavior via environment variables OR the constants below.
@@ -70,12 +71,16 @@ ENV_PLACE = os.getenv("WEATHER_PLACE")
 # Manual place name set inside this file. If set (non-empty), this takes top priority for display
 # and, if coordinates are not provided, will be used to geocode latitude/longitude.
 # Example: MANUAL_PLACE = "Concord, NH, US"
-MANUAL_PLACE: Optional[str] = "" #Set your city HERE
+MANUAL_PLACE: Optional[str] = ""  # Set your city HERE
 
 # Location icon in tooltip (default to a standard emoji to avoid missing glyphs)
 LOC_ICON = os.getenv("WEATHER_LOC_ICON", "📍")
 # Enable/disable Pango markup in tooltip (1/0, true/false)
-TOOLTIP_MARKUP = os.getenv("WEATHER_TOOLTIP_MARKUP", "0").lower() in ("1", "true", "yes")
+TOOLTIP_MARKUP = os.getenv("WEATHER_TOOLTIP_MARKUP", "0").lower() in (
+    "1",
+    "true",
+    "yes",
+)
 # Optional debug logging to stderr (set WEATHER_DEBUG=1 to enable)
 DEBUG = os.getenv("WEATHER_DEBUG", "0").lower() not in ("0", "false", "no")
 
@@ -157,12 +162,15 @@ def wmo_to_status(code: int) -> str:
 
 # =============== Utilities ===============
 
+
 def esc(s: Optional[str]) -> str:
     return html.escape(s, quote=False) if s else ""
+
 
 def log_debug(msg: str) -> None:
     if DEBUG:
         print(msg, file=sys.stderr)
+
 
 def ensure_cache_dir() -> None:
     try:
@@ -227,7 +235,9 @@ def read_api_cache() -> Optional[Dict[str, Any]]:
 
         # Invalidate cache if units mismatch
         if data_dict.get("units") != UNITS:
-            log_debug(f"Cache units '{data_dict.get('units')}' mismatch current '{UNITS}'.")
+            log_debug(
+                f"Cache units '{data_dict.get('units')}' mismatch current '{UNITS}'."
+            )
             return None
 
         timestamp_val = data_dict.get("timestamp", 0)
@@ -265,7 +275,10 @@ def get_coords_from_env() -> Optional[Tuple[float, float]]:
         try:
             return float(ENV_LAT), float(ENV_LON)
         except ValueError:
-            print("Invalid WEATHER_LAT/WEATHER_LON; falling back to IP geolocation", file=sys.stderr)
+            print(
+                "Invalid WEATHER_LAT/WEATHER_LON; falling back to IP geolocation",
+                file=sys.stderr,
+            )
     return None
 
 
@@ -386,7 +399,9 @@ def get_coords() -> Tuple[float, float]:
         return coords
 
     # 5) IP-based geolocation
-    coords = get_coords_from_ipwho() or get_coords_from_ipapi() or get_coords_from_ipinfo()
+    coords = (
+        get_coords_from_ipwho() or get_coords_from_ipapi() or get_coords_from_ipinfo()
+    )
     if coords:
         return coords
 
@@ -426,6 +441,7 @@ def format_visibility(meters: Optional[float]) -> str:
 
 # =============== API Fetching ===============
 
+
 def fetch_open_meteo(lat: float, lon: float) -> Dict[str, Any]:
     base = "https://api.open-meteo.com/v1/forecast"
     params: Dict[str, Union[str, float]] = {
@@ -461,8 +477,16 @@ def fetch_aqi(lat: float, lon: float) -> Optional[Dict[str, Any]]:
 
 def extract_place_parts_nominatim(data_dict: JSONDict) -> List[str]:
     address = ensure_dict(data_dict.get("address"))
-    candidates = [data_dict.get("name"), address.get("city"), address.get("town"), address.get("village"), address.get("hamlet")]
-    name = cast(Optional[str], next((c for c in candidates if c is not None and c != ""), None))
+    candidates = [
+        data_dict.get("name"),
+        address.get("city"),
+        address.get("town"),
+        address.get("village"),
+        address.get("hamlet"),
+    ]
+    name = cast(
+        Optional[str], next((c for c in candidates if c is not None and c != ""), None)
+    )
     admin1 = cast(Optional[str], address.get("state"))
     country = cast(Optional[str], address.get("country"))
     parts: List[str] = []
@@ -489,7 +513,11 @@ def extract_place_parts_open_meteo(p: JSONDict) -> List[str]:
     return parts
 
 
-def reverse_geocode(base: str, params: Dict[str, Union[str, float]], headers: Optional[Dict[str, str]] = None) -> Optional[str]:
+def reverse_geocode(
+    base: str,
+    params: Dict[str, Union[str, float]],
+    headers: Optional[Dict[str, str]] = None,
+) -> Optional[str]:
     try:
         resp = SESSION.get(base, params=params, headers=headers, timeout=TIMEOUT)
         resp.raise_for_status()
@@ -565,7 +593,10 @@ def ensure_dict(value: Any) -> JSONDict:
     val_repr = repr(value) if value is not None else "None"
     if len(val_repr) > 100:
         val_repr = val_repr[:100] + "..."
-    print(f"Warning: ensure_dict received {type(value).__name__} instead of dict: {val_repr}", file=sys.stderr)
+    print(
+        f"Warning: ensure_dict received {type(value).__name__} instead of dict: {val_repr}",
+        file=sys.stderr,
+    )
     return cast(JSONDict, {})
 
 
@@ -577,7 +608,10 @@ def ensure_list(value: Any) -> JSONList:
     val_repr = repr(value) if value is not None else "None"
     if len(val_repr) > 100:
         val_repr = val_repr[:100] + "..."
-    print(f"Warning: ensure_list received {type(value).__name__} instead of list: {val_repr}", file=sys.stderr)
+    print(
+        f"Warning: ensure_list received {type(value).__name__} instead of list: {val_repr}",
+        file=sys.stderr,
+    )
     return cast(JSONList, [])
 
 
@@ -624,7 +658,9 @@ def build_hourly_precip(forecast: JSONDict) -> str:
         times_raw = safe_get(forecast, "hourly", "time")
         times: List[str] = cast(List[str], ensure_list(times_raw))
         probs = get_precipitation_probabilities(forecast)
-        cur_time: Optional[str] = cast(Optional[str], safe_get(forecast, "current", "time"))
+        cur_time: Optional[str] = cast(
+            Optional[str], safe_get(forecast, "current", "time")
+        )
         idx = find_current_index(times, cur_time)
         window = probs[idx : idx + 6]
         if not window:
@@ -635,14 +671,26 @@ def build_hourly_precip(forecast: JSONDict) -> str:
         return ""
 
 
-def build_weather_strings(cur: JSONDict, cur_units: JSONDict, daily: JSONDict, daily_units: JSONDict, temp_unit: str) -> Tuple[str, str, int, int, str, str, str]:
+def build_weather_strings(
+    cur: JSONDict,
+    cur_units: JSONDict,
+    daily: JSONDict,
+    daily_units: JSONDict,
+    temp_unit: str,
+) -> Tuple[str, str, int, int, str, str, str]:
     temp_val = coerce_float(cur.get("temperature_2m"))
     temp_unit_str = cast(str, cur_units.get("temperature_2m", ""))
-    temp_str = f"{int(round(temp_val))}{temp_unit_str}" if temp_val is not None else "N/A"
+    temp_str = (
+        f"{int(round(temp_val))}{temp_unit_str}" if temp_val is not None else "N/A"
+    )
 
     feels_val = coerce_float(cur.get("apparent_temperature"))
     feels_unit = cast(str, cur_units.get("apparent_temperature", ""))
-    feels_str = f"Feels like {int(round(feels_val))}{feels_unit}" if feels_val is not None else ""
+    feels_str = (
+        f"Feels like {int(round(feels_val))}{feels_unit}"
+        if feels_val is not None
+        else ""
+    )
 
     is_day_val = cur.get("is_day")
     is_day_int = coerce_int(is_day_val)
@@ -702,8 +750,6 @@ def build_place_str(lat: float, lon: float, place: Optional[str]) -> str:
     return f"{lat:.3f}, {lon:.3f}"
 
 
-
-
 class TooltipParams(NamedTuple):
     temp_str: str
     icon: str
@@ -761,14 +807,22 @@ def build_tooltip_text(params: TooltipParams) -> str:
         return build_tooltip_plain(params)
 
 
-def gather_weather_data(forecast: Optional[Dict[str, Any]], aqi: Optional[Dict[str, Any]]) -> WeatherData:
+def gather_weather_data(
+    forecast: Optional[Dict[str, Any]], aqi: Optional[Dict[str, Any]]
+) -> WeatherData:
     forecast_dict = ensure_dict(forecast)
     cur = ensure_dict(forecast_dict.get("current"))
     cur_units = ensure_dict(forecast_dict.get("current_units"))
     daily = ensure_dict(forecast_dict.get("daily"))
     daily_units = ensure_dict(forecast_dict.get("daily_units"))
 
-    temp_str, feels_str, is_day, code, icon, status, min_max = build_weather_strings(cur, cur_units, daily, daily_units, cast(str, cur_units.get("temperature_2m", "")))
+    temp_str, feels_str, is_day, code, icon, status, min_max = build_weather_strings(
+        cur,
+        cur_units,
+        daily,
+        daily_units,
+        cast(str, cur_units.get("temperature_2m", "")),
+    )
     wind_text, humidity_text, visibility_text = build_weather_details(cur, cur_units)
     aqi_text = build_aqi_info(aqi)
     hourly_precip = build_hourly_precip(forecast_dict)
@@ -789,7 +843,9 @@ def gather_weather_data(forecast: Optional[Dict[str, Any]], aqi: Optional[Dict[s
     )
 
 
-def build_output(loc: Location, forecast: Optional[Dict[str, Any]], aqi: Optional[Dict[str, Any]]) -> Tuple[Dict[str, str], str]:
+def build_output(
+    loc: Location, forecast: Optional[Dict[str, Any]], aqi: Optional[Dict[str, Any]]
+) -> Tuple[Dict[str, str], str]:
     data = gather_weather_data(forecast, aqi)
 
     place_str = build_place_str(loc.lat, loc.lon, loc.place)
@@ -797,8 +853,17 @@ def build_output(loc: Location, forecast: Optional[Dict[str, Any]], aqi: Optiona
 
     tooltip_text = build_tooltip_text(
         TooltipParams(
-            data.temp_str, data.icon, data.status, location_text, data.feels_str, data.min_max,
-            data.wind_text, data.humidity_text, data.visibility_text, data.aqi_text, data.hourly_precip
+            data.temp_str,
+            data.icon,
+            data.status,
+            location_text,
+            data.feels_str,
+            data.min_max,
+            data.wind_text,
+            data.humidity_text,
+            data.visibility_text,
+            data.aqi_text,
+            data.hourly_precip,
         )
     )
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# /* ---- 💫 https://github.com/JaKooLit 💫 ---- */
 # SDDM Wallpaper and Wallust Colors Setter
 
 # for the upcoming changes on the simple_sddm_theme
@@ -13,7 +12,7 @@ wallpaper_modified="$HOME/.config/hypr/wallpaper_effects/.wallpaper_modified"
 # Resolve SDDM themes directory (standard paths and NixOS path)
 sddm_themes_dir="/usr/share/sddm/themes"
 if [ ! -d "$sddm_themes_dir" ] && [ -d "/run/current-system/sw/share/sddm/themes" ]; then
-    sddm_themes_dir="/run/current-system/sw/share/sddm/themes"
+  sddm_themes_dir="/run/current-system/sw/share/sddm/themes"
 fi
 sddm_simple="$sddm_themes_dir/simple_sddm_2"
 
@@ -28,9 +27,9 @@ iDIRi="$HOME/.config/swaync/icons"
 # Parse arguments
 mode="effects" # default
 if [[ "$1" == "--normal" ]]; then
-    mode="normal"
+  mode="normal"
 elif [[ "$1" == "--effects" ]]; then
-    mode="effects"
+  mode="effects"
 fi
 
 # Extract colors from rofi wallust config
@@ -46,15 +45,15 @@ foreground=$(grep -oP 'foreground:\s*\K#[A-Fa-f0-9]+' "$rofi_wallust")
 
 # wallpaper to use
 if [[ "$mode" == "normal" ]]; then
-    wallpaper_path="$wallpaper_current"
+  wallpaper_path="$wallpaper_current"
 else
-    wallpaper_path="$wallpaper_modified"
+  wallpaper_path="$wallpaper_modified"
 fi
 
 # Abort on NixOS where this repo doesn't manage SDDM and themes are typically read-only
 if hostnamectl 2>/dev/null | grep -q 'Operating System: NixOS'; then
-    notify-send -i "$iDIR/error.png" "SDDM" "NixOS detected: skipping SDDM background change."
-    exit 0
+  notify-send -i "$iDIR/error.png" "SDDM" "NixOS detected: skipping SDDM background change."
+  exit 0
 fi
 
 # Launch terminal and apply changes
@@ -93,3 +92,4 @@ fi
 
 notify-send -i \"$iDIR/ja.png\" \"SDDM\" \"Background SET\"
 "
+

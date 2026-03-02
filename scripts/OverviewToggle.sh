@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# /* ---- 💫 https://github.com/JaKooLit 💫 ---- */  #
 # Overview toggle wrapper - tries Quickshell first, falls back to AGS
 
 set -euo pipefail

@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# /* ---- 💫 https://github.com/JaKooLit 💫 ---- */  ##
 # For applying Pre-configured Monitor Profiles
 
 # Check if rofi is already running
-if pidof rofi > /dev/null; then
+if pidof rofi >/dev/null; then
   pkill rofi
 fi
 
@@ -25,18 +24,19 @@ mon_profiles_list=$(find -L "$monitor_dir" -maxdepth 1 -type f | sed 's/.*\///' 
 
 # Remove ignored files from the list
 for ignored_file in "${ignore_files[@]}"; do
-    mon_profiles_list=$(echo "$mon_profiles_list" | grep -v -E "^$ignored_file$")
+  mon_profiles_list=$(echo "$mon_profiles_list" | grep -v -E "^$ignored_file$")
 done
 
 # Rofi Menu
 chosen_file=$(echo "$mon_profiles_list" | rofi -i -dmenu -config $rofi_theme -mesg "$msg")
 
 if [[ -n "$chosen_file" ]]; then
-    full_path="$monitor_dir/$chosen_file.conf"
-    cp "$full_path" "$target"
-    
-    notify-send -u low -i "$iDIR/ja.png" "$chosen_file" "Monitor Profile Loaded"
+  full_path="$monitor_dir/$chosen_file.conf"
+  cp "$full_path" "$target"
+
+  notify-send -u low -i "$iDIR/ja.png" "$chosen_file" "Monitor Profile Loaded"
 fi
 
 sleep 1
 ${SCRIPTSDIR}/RefreshNoWaybar.sh &
+

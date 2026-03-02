@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# /* ---- 💫 https://github.com/JaKooLit 💫 ---- */  ##
 # searchable enabled keybinds using rofi (supports bindd descriptions)
 
 # kill yad to not interfere with this binds
 pkill yad || true
 
 # check if rofi is already running
-if pidof rofi > /dev/null; then
+if pidof rofi >/dev/null; then
   pkill rofi
 fi
 
@@ -22,12 +21,12 @@ files=("$keybinds_conf" "$user_keybinds_conf")
 [[ -f "$laptop_conf" ]] && files+=("$laptop_conf")
 
 # Parse binds/unbinds from files, detect overrides, and keep unique effective binds
-declare -A binding_map        # combo -> bind line (effective)
-declare -A source_map         # combo -> source file
-declare -A user_bind_map      # combo -> user bind line
-declare -A unbound_user       # combo -> 1 if explicitly unbound in user file
-declare -A seen_any_bind      # combo -> 1 if any bind seen (for iteration)
-declare -A default_seen       # combo -> 1 if default bind exists
+declare -A binding_map   # combo -> bind line (effective)
+declare -A source_map    # combo -> source file
+declare -A user_bind_map # combo -> user bind line
+declare -A unbound_user  # combo -> 1 if explicitly unbound in user file
+declare -A seen_any_bind # combo -> 1 if any bind seen (for iteration)
+declare -A default_seen  # combo -> 1 if default bind exists
 declare -a missing_unbind_suggestions_arr
 
 normalize_combo() { echo "$1" | sed -E 's/[[:space:]]//g'; }
@@ -39,7 +38,7 @@ extract_combo() {
   if [[ "$s" =~ = ]]; then
     local rhs="${s#*=}"
     local mods="$(echo "$rhs" | awk -F',' '{gsub(/^[ \t]+|[ \t]+$/,"",$1); print $1}')"
-    local key="$(echo "$rhs"  | awk -F',' '{gsub(/^[ \t]+|[ \t]+$/,"",$2); print $2}')"
+    local key="$(echo "$rhs" | awk -F',' '{gsub(/^[ \t]+|[ \t]+$/,"",$2); print $2}')"
     echo "${mods},${key}"
   fi
 }
@@ -78,7 +77,7 @@ for file in "${files[@]}"; do
         unbound_user["$combo"]=1
       fi
     fi
-  done < "$file"
+  done <"$file"
 done
 
 # Build raw_keybinds for display and collect missing unbind suggestions
@@ -97,16 +96,16 @@ for combo in "${!seen_any_bind[@]}"; do
 done
 
 # If there are missing unbinds, write suggestions to a temp file and note in message
-if (( ${#missing_unbind_suggestions_arr[@]} > 0 )); then
+if ((${#missing_unbind_suggestions_arr[@]} > 0)); then
   suggestions_file="$(mktemp -t hypr-unbind-suggestions.XXXX.conf)"
-  printf '%s\n' "${missing_unbind_suggestions_arr[@]}" > "$suggestions_file"
+  printf '%s\n' "${missing_unbind_suggestions_arr[@]}" >"$suggestions_file"
   msg="$msg | Overrides missing unbind: ${#missing_unbind_suggestions_arr[@]} (suggestions: $suggestions_file)"
 fi
 
 # check for any keybinds to display
 if [[ -z "$raw_keybinds" ]]; then
-    echo "no keybinds found."
-    exit 1
+  echo "no keybinds found."
+  exit 1
 fi
 
 # transform into a readable list: MODS+KEY — DESCRIPTION (for bindd) or DISPATCHER [PARAMS] (for bind)
