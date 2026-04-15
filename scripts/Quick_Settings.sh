@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rofi menu for Quick Settings (SUPER SHIFT E)
+# Rofi menu for Hyprland Quick Settings (SUPER SHIFT E)
 # Updated for UserConfigs/configs separation
 
 # Modify this config file for default terminal and EDITOR
