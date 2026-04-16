@@ -1,13 +1,35 @@
 #!/usr/bin/env bash
-# Initialize J/K keybinds so they always cycle windows globally (no layout-specific behavior)
-# This avoids double-actions when layouts change.
+# sys/scripts/KeybindsLayoutInit.sh — Initialize layout-aware keybinds on startup.
+#
+# Called once at startup (exec-once in sys/startup.conf).
+# Reads the current layout and sets J/K + O binds accordingly,
+# matching the same logic used by ChangeLayout.sh.
+#
+# J/K ownership:
+#   scrolling — unbound; hyprscrolling plugin handles column navigation
+#   dwindle   — cyclenext/prev + SUPER+O togglesplit
+#   master    — cyclenext/prev (no SUPER+O)
 
 set -euo pipefail
 
-# Always reset and bind SUPER+J/K the same way on startup
+LAYOUT=$(hyprctl -j getoption general:layout | jq -r '.str')
+
+# Clear all layout-managed binds first
 hyprctl keyword unbind SUPER,J || true
 hyprctl keyword unbind SUPER,K || true
+hyprctl keyword unbind SUPER,O || true
 
-# Cycle windows globally: J = next, K = previous
-hyprctl keyword bind SUPER,J,cyclenext
-hyprctl keyword bind SUPER,K,cyclenext,prev
+case "$LAYOUT" in
+"scrolling")
+    # hyprscrolling owns J/K — leave unbound
+    ;;
+"dwindle")
+    hyprctl keyword bind SUPER,J,cyclenext
+    hyprctl keyword bind SUPER,K,cyclenext,prev
+    hyprctl keyword bind SUPER,O,togglesplit
+    ;;
+"master"|*)
+    hyprctl keyword bind SUPER,J,cyclenext
+    hyprctl keyword bind SUPER,K,cyclenext,prev
+    ;;
+esac
