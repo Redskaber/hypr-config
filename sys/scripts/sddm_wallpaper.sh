@@ -92,4 +92,3 @@ fi
 
 notify-send -i \"$iDIR/ja.png\" \"SDDM\" \"Background SET\"
 "
-
