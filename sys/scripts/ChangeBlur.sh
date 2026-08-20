@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 # Script for changing blurs on the fly
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 notif="$HOME/.config/swaync/images"
 
-STATE=$(hyprctl -j getoption decoration:blur:passes | jq ".int")
+STATE=$("$HYPRCTL" -j getoption decoration:blur:passes | "$JQ" ".int")
 
 if [ "${STATE}" == "2" ]; then
-  hyprctl keyword decoration:blur:size 2
-  hyprctl keyword decoration:blur:passes 1
-  notify-send -e -u low -i "$notif/note.png" " Less Blur"
+  "$HYPRCTL" keyword decoration:blur:size 2
+  "$HYPRCTL" keyword decoration:blur:passes 1
+  "$NOTIFY" -e -u low -i "$notif/note.png" " Less Blur"
 else
-  hyprctl keyword decoration:blur:size 5
-  hyprctl keyword decoration:blur:passes 2
-  notify-send -e -u low -i "$notif/ja.png" " Normal Blur"
+  "$HYPRCTL" keyword decoration:blur:size 5
+  "$HYPRCTL" keyword decoration:blur:passes 2
+  "$NOTIFY" -e -u low -i "$notif/ja.png" " Normal Blur"
 fi

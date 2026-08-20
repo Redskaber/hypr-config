@@ -1,42 +1,48 @@
 #!/usr/bin/env bash
-# Playerctl
+# @path: sys/scripts/MediaCtrl.sh
+# @author: redskaber
+# @date: 2026-08-20
+# @description: Media playback control (uses common.sh for DI)
+
+# Source shared library — provides MEDIA_CONTROL, NOTIFY, dt_notify, etc.
+source "$(dirname "$0")/lib/common.sh"
 
 music_icon="$HOME/.config/swaync/icons/music.png"
 
-# Play the next track
+# Play the next track (uses MEDIA_CONTROL from deps, not hard-coded playerctl)
 play_next() {
-  playerctl next
+  "$MEDIA_CONTROL" next
   show_music_notification
 }
 
 # Play the previous track
 play_previous() {
-  playerctl previous
+  "$MEDIA_CONTROL" previous
   show_music_notification
 }
 
 # Toggle play/pause
 toggle_play_pause() {
-  playerctl play-pause
+  "$MEDIA_CONTROL" play-pause
   sleep 0.1
   show_music_notification
 }
 
 # Stop playback
 stop_playback() {
-  playerctl stop
-  notify-send -e -u low -i $music_icon " Playback:" " Stopped"
+  "$MEDIA_CONTROL" stop
+  "$NOTIFY" -e -u low -i "$music_icon" " Playback:" " Stopped"
 }
 
-# Display notification with song information
+# Display notification with song information (uses NOTIFY from deps)
 show_music_notification() {
-  status=$(playerctl status)
+  status=$("$MEDIA_CONTROL" status)
   if [[ "$status" == "Playing" ]]; then
-    song_title=$(playerctl metadata title)
-    song_artist=$(playerctl metadata artist)
-    notify-send -e -u low -i $music_icon "Now Playing:" "$song_title by $song_artist"
+    song_title=$("$MEDIA_CONTROL" metadata title)
+    song_artist=$("$MEDIA_CONTROL" metadata artist)
+    "$NOTIFY" -e -u low -i "$music_icon" "Now Playing:" "$song_title by $song_artist"
   elif [[ "$status" == "Paused" ]]; then
-    notify-send -e -u low -i $music_icon " Playback:" " Paused"
+    "$NOTIFY" -e -u low -i "$music_icon" " Playback:" " Paused"
   fi
 }
 

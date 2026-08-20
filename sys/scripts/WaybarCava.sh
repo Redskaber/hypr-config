@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # WaybarCava.sh — safer single-instance handling, cleanup, and robustness
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 set -euo pipefail
 

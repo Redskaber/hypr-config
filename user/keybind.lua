@@ -1,4 +1,16 @@
 -- @path: user/keybind.lua
 -- @author: redskaber
 -- @date: 2026-08-20
--- @description: User keybind overrides
+-- @description: User keybind overrides (appended after sys/keybind.lua)
+
+-- Uncomment to add custom keybinds:
+-- local const = _G.HYPR_CONST
+-- hl.bind(const.M .. " + T", hl.dsp.exec_cmd("thunderbird"))
+--
+-- -- Lua function dispatcher (impossible in .conf era):
+-- hl.bind(const.M .. " + ALT + G", function()
+--   require('sys.statemachine.gamemode').new(hl):fire("toggle")
+-- end)
+--
+-- -- With locked flag (fires on lock screen):
+-- hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })

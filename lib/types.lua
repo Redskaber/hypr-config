@@ -1,12 +1,20 @@
 -- @path: lib/types.lua
 -- @author: redskaber
 -- @date: 2026-08-20
--- @description: EmmyLua type annotations (16 @class schemas for IDE)
+-- @version: 2.0
+-- @description: LuaLS type annotations for the entire hl.* API surface + project types.
+-- Verified against Hyprland 0.55+ wiki (Window-Rules, Dispatchers, Animations, Events).
+
+-- =============================================================================
+-- Section 1: Project types (constants, deps, SM, rules)
+-- =============================================================================
 
 ---@class Const
 ---@field Hypr string Root config path
 ---@field sys string System directory
 ---@field user string User directory
+---@field bootstrap string Bootstrap directory
+---@field lock_background string Lock screen wallpaper path
 ---@field M string Modifier key (e.g. "SUPER")
 ---@field M_terminal string Terminal command
 ---@field M_file_manager string File manager command
@@ -14,6 +22,16 @@
 ---@field S string Scripts directory
 ---@field H string Hardware directory
 ---@field P string Policy directory
+---@field P_w string Wallust policy directory
+---@field P_a string Animations policy directory
+---@field U string User directory (alias)
+---@field U_s string User scripts directory
+---@field U_h string User hardware directory
+---@field U_p string User policy directory
+---@field H_Cheat string Helper tag: cheat sheet
+---@field H_Settings string Helper tag: settings menu
+---@field W string Wallpaper directory
+---@field W_l string|nil Wallpaper list
 ---@field I_notify string Notification icon path
 ---@field Search_Engine string Search engine URL
 
@@ -28,32 +46,84 @@
 
 ---@class Deps
 ---@field specs table<string, table> Raw dependency specifications
+---@field _resolved table<string, Dep> Cached resolutions
 ---@field get fun(name: string): Dep|nil Resolve a dependency by name
----@field check_all fun(): boolean, string[] Verify all required deps, return missing list
+---@field check_all fun(): boolean, string[] Verify all required deps
 ---@field owned_tools fun(): string[] List tools whose config we manage
 ---@field cmd fun(name: string): string|nil Get full command string with default args
+---@field export_to_shell fun(path: string?): boolean, string Generate shell cache
+
+---@class WindowRuleMatch
+---@field class string|nil Regex to match window class
+---@field title string|nil Regex to match window title
+---@field initial_class string|nil Regex to match initial class
+---@field initial_title string|nil Regex to match initial title
+---@field tag string|nil Tag name to match
+---@field xwayland boolean|nil Xwayland windows
+---@field float boolean|nil Floating windows
+---@field fullscreen boolean|nil Fullscreen windows
+---@field pin boolean|nil Pinned windows
+---@field focus boolean|nil Currently focused window
+---@field group boolean|nil Grouped windows
+---@field modal boolean|nil Modal dialogs
+---@field workspace string|nil|int Workspace selector
+---@field content string|nil Content type: none/photo/video/game
+---@field xdg_tag string|nil XDG tag regex
 
 ---@class WindowRule
----@field opacity string|nil Opacity value (e.g. "0.90 0.80")
----@field float boolean|nil Whether window floats
----@field center boolean|nil Whether window is centered
----@field size string|nil Window size (e.g. "800 600")
----@field pin boolean|nil Whether window is pinned
----@field idle_inhibit string|nil Idle inhibit mode
----@field match table Match conditions (class, tag, title, etc.)
----@field tag string|nil Tag to register/use
+---@field name string|nil Rule name (for named rules)
+---@field match WindowRuleMatch Match conditions
+---@field opacity string|nil Opacity: "0.8" or "0.9 0.7" (active inactive)
+---@field float boolean|nil Float the window
+---@field tile boolean|nil Tile the window
+---@field fullscreen boolean|nil Fullscreen the window
+---@field maximize boolean|nil Maximize the window
+---@field move string|table|nil Move: "100 200" or {expr, expr}
+---@field size string|table|nil Resize: "800 600" or {expr, expr}
+---@field center boolean|nil Center on monitor (floating)
+---@field monitor string|nil Open on monitor
+---@field workspace string|nil Open on workspace
+---@field pin boolean|nil Pin (show on all workspaces)
+---@field no_initial_focus boolean|nil Disable initial focus
+---@field group string|nil Group properties
+---@field suppress_event string|nil Ignore events: "fullscreen maximize activate..."
+---@field content string|nil Content type: none/photo/video/game
+---@field fullscreen_state string|nil Fullscreen state: "internal client"
+---@field border_color string|table|nil Border color or gradient
+---@field border_size integer|nil Border thickness
+---@field rounding integer|nil Rounding pixels
+---@field idle_inhibit string|nil Idle inhibit: none/always/focus/fullscreen
+---@field no_blur boolean|nil Disable blur
+---@field no_dim boolean|nil Disable dimming
+---@field no_focus boolean|nil Disable focus
+---@field no_anim boolean|nil Disable animations
+---@field dim_around boolean|nil Dim everything around
+---@field tag string|nil Tag to register
 
----@class Tag
----@field name string Tag name
----@field category string Tag category (web/productivity/media/etc.)
----@field classes string[] Class patterns that map to this tag
+---@class LayerRule
+---@field match table Match: { namespace = "regex" }
+---@field no_anim boolean|nil Disable animations
+---@field blur boolean|nil Enable blur
+---@field blur_popups boolean|nil Enable blur for popups
+---@field ignore_alpha number|nil Ignore pixels with opacity ≤ value (0-1)
+---@field dim_around boolean|nil Dim everything behind
+---@field xray boolean|nil Blur xray mode
+---@field animation string|nil Animation style
+---@field order integer|nil Layer order (higher = closer to edge)
+---@field above_lock integer|nil Render above lockscreen (2 = interactive)
+---@field no_screen_share boolean|nil Hide from screen sharing
 
 ---@class StateMachine
 ---@field states string[] Valid states
 ---@field current string Current state
 ---@field initial string Initial state
----@field transitions table[] Transition definitions
----@field fire fun(event: string): boolean, string|nil Fire an event, return success + error
+---@field transitions SMTransition[] Transition definitions
+---@field invariant fun(sm: StateMachine): boolean State invariant check
+---@field persistence string Persistence mode
+---@field log table[] Transition log
+---@field fire fun(event: string): boolean, string|nil Fire an event
+---@field fire_n fun(n: integer, event: string): boolean, string|nil Fire N times
+---@field reset fun(): nil Reset to initial state
 
 ---@class SMTransition
 ---@field from string Source state
@@ -61,13 +131,123 @@
 ---@field to string Target state
 ---@field action fun(sm: StateMachine, from: string, to: string)|nil Transition action
 
----@class ScriptUtils
----@field NOTIF_ICON string Notification icon path (SSOT)
----@field SCRIPTSDIR string Scripts directory (SSOT)
----@field focused_monitor fun(): string|nil Get focused monitor name
----@field kill_existing fun(proc_name: string): nil Kill process by name
----@field notify fun(hl: table, summary: string, body: string, urgency: string): nil Send notification
----@field bg fun(cmd: string): nil Run command in background
----@field wait_for fun(check_fn: fun(): boolean, max_retries: integer, delay: number): boolean Wait with retry
+-- =============================================================================
+-- Section 2: Hyprland hl.* API types (verified against wiki)
+-- =============================================================================
+
+---@class HLWindow
+---@field address string Window address (e.g. "0x1234")
+---@field class string Window class
+---@field title string Window title
+---@field initial_class string Initial class
+---@field initial_title string Initial title
+---@field pid integer Process ID
+---@field workspace HLWorkspace Workspace of window
+---@field floating boolean Is floating
+---@field pinned boolean Is pinned
+---@field fullscreen boolean Is fullscreen
+
+---@class HLWorkspace
+---@field id integer Workspace ID
+---@field name string Workspace name
+
+---@class HLMonitor
+---@field name string Monitor name (e.g. "DP-1")
+---@field x integer X position
+---@field y integer Y position
+---@field width integer Width in pixels
+---@field height integer Height in pixels
+---@field scale number Scale factor
+---@field focused boolean Is focused
+
+---@class HLNotification
+---@field create fun(opts: {text: string, timeout?: integer, icon?: string, color?: string, font_size?: integer}): HLNotification
+---@field get fun(): HLNotification|nil
+
+---@class HLDispatcherWindow
+---@field close fun(opts: {window?: string}): nil
+---@field kill fun(opts: {window?: string}): nil
+---@field float fun(opts: {action?: string, window?: string}): nil
+---@field fullscreen fun(opts: {mode?: string, action?: string, window?: string}): nil
+---@field pin fun(opts: {action?: string, window?: string}): nil
+---@field move fun(opts: {workspace?: string, follow?: boolean, window?: string}): nil
+---@field move fun(opts: {x: number|string, y: number|string, relative?: boolean, window?: string}): nil
+---@field resize fun(opts: {x: number|string, y: number|string, relative?: boolean, window?: string}): nil
+---@field center fun(opts: {window?: string}): nil
+---@field cycle_next fun(opts: {next?: boolean, tiled?: boolean, floating?: boolean, window?: string}): nil
+---@field tag fun(opts: {tag: string, window?: string}): nil
+---@field clear_tags fun(opts: {window?: string}): nil
+---@field set_prop fun(opts: {prop: string, value: string, window?: string}): nil
+---@field swap fun(opts: {direction?: string, target?: string, next?: boolean, prev?: boolean}): nil
+---@field pseudo fun(opts: {action?: string, window?: string}): nil
+---@field signal fun(opts: {signal: integer, window?: string}): nil
+---@field drag fun(): nil
+---@field alter_zorder fun(opts: {mode: string, window?: string}): nil
+
+---@class HLDispatcherWorkspace
+---@field rename fun(opts: {workspace: string, name?: string}): nil
+---@field change_id fun(opts: {workspace: string, id: integer}): nil
+---@field move fun(opts: {workspace?: string, monitor: string}): nil
+---@field swap_monitors fun(opts: {monitor1: string, monitor2: string}): nil
+---@field toggle_special fun(special_name: string): nil
+
+---@class HLDispatcherGroup
+---@field toggle fun(opts: {window?: string}): nil
+---@field next fun(opts: {window?: string}): nil
+---@field prev fun(opts: {window?: string}): nil
+---@field lock fun(opts: {action?: string, window?: string}): nil
+
+---@class HLDispatcherCursor
+---@field move fun(opts: {x: number, y: number}): nil
+---@field move_to_corner fun(opts: {corner: integer, window?: string}): nil
+
+---@class HLDispatcher
+---@field window HLDispatcherWindow
+---@field workspace HLDispatcherWorkspace
+---@field group HLDispatcherGroup
+---@field cursor HLDispatcherCursor
+---@field focus fun(opts: {direction?: string, monitor?: string, workspace?: string, window?: string, urgent_or_last?: boolean, last?: boolean}): nil
+---@field exec_cmd fun(cmd: string, rules?: table): nil
+---@field exec_raw fun(cmd: string): nil
+---@field exit fun(): nil
+---@field submap fun(name: string): nil
+---@field pass fun(opts: {window?: string}): nil
+---@field layout fun(message: string): nil
+---@field dpms fun(opts: {action?: string, monitor?: string}): nil
+---@field event fun(string: string): nil
+
+---@class HLBindFlags
+---@field locked boolean|nil Fires on lock screen
+---@field mouse boolean|nil Mouse bind
+---@field repeat boolean|nil Repeats on hold
+---@field non_consumed boolean|nil Fires even if consumed
+
+---@class HL
+---@field config fun(opts: table): nil Set config section
+---@field bind fun(key: string, action: any, flags?: HLBindFlags): nil Register keybind
+---@field unbind fun(key: string): nil Remove keybind
+---@field window_rule fun(opts: WindowRule): WindowRule Register window rule
+---@field layer_rule fun(opts: LayerRule): LayerRule Register layer rule
+---@field on fun(event: string, fn: function): nil Register event hook
+---@field env fun(key: string, value: string): nil Set env var
+---@field exec_cmd fun(cmd: string): nil Execute command (async)
+---@field monitor fun(opts: {output: string, mode: string, position: string, scale: number}): nil Configure monitor
+---@field device fun(opts: {name: string, enabled: boolean}): nil Configure input device
+---@field gesture fun(opts: table): nil Configure gesture
+---@field workspace_rule fun(opts: table): nil Workspace rule
+---@field animation fun(opts: {leaf: string, enabled: boolean, speed: number|string, curve: string, style?: string}): nil Define animation
+---@field curve fun(name: string, opts: {type: string, points: table}): nil Define bezier curve
+---@field notification HLNotification Notification API
+---@field dsp HLDispatcher Dispatcher API
+---@field dispatch fun(action: any): nil Dispatch a dispatcher action (wraps hl.dsp.*)
+---@field getoption fun(opt: string): any Get config option value
+---@field get_config fun(opt: string): any Get config table
+---@field get_active_window fun(): HLWindow|nil Get active window
+---@field get_windows fun(): HLWindow[] Get all windows
+---@field get_active_workspace fun(): HLWorkspace|nil Get active workspace
+---@field get_workspace fun(name: string): HLWorkspace|nil Get workspace by name
+
+---@type HL
+hl = hl or {}
 
 return {}

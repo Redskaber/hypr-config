@@ -1,4 +1,13 @@
 -- @path: user/decoration.lua
 -- @author: redskaber
 -- @date: 2026-08-20
--- @description: User decoration overrides
+-- @description: User decoration overrides (deltas from sys/decoration.lua)
+
+-- Uncomment to override:
+-- hl.config({
+--   decoration = {
+--     rounding = 0,
+--     blur = { enabled = false },
+--     shadow = { enabled = false },
+--   },
+-- })

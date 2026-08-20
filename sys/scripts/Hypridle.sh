@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Waybar idle_inhibitor: toggle hypridle on/off.
 # Config path must be absolute — hypridle runs in its own process context.
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 PROCESS="hypridle"
 HYPRIDLE_CONF="$HOME/.config/hypr/sys/hypridle.conf"

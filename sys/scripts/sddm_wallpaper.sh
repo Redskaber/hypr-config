@@ -4,7 +4,7 @@
 # for the upcoming changes on the simple_sddm_theme
 
 # variables
-terminal="${HYPR_TERMINAL:-kitty}"
+terminal="${HYPR_TERMINAL:-"$TERMINAL"}"
 wallDIR="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/wallpapers}"
 SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
 wallpaper_current="$HOME/.config/hypr/wallpaper_effects/.wallpaper_current"
@@ -17,7 +17,7 @@ fi
 sddm_simple="$sddm_themes_dir/simple_sddm_2"
 
 # rofi-wallust-sddm colors path
-rofi_wallust="$HOME/.config/rofi/wallust/colors-rofi.rasi"
+rofi_wallust="$HOME/.config/rofi/wallust/colors-"$ROFI".rasi"
 sddm_theme_conf="$sddm_simple/theme.conf"
 
 # Directory for swaync
@@ -33,6 +33,9 @@ elif [[ "$1" == "--effects" ]]; then
 fi
 
 # Extract colors from rofi wallust config
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 color0=$(grep -oP 'color1:\s*\K#[A-Fa-f0-9]+' "$rofi_wallust")
 color1=$(grep -oP 'color0:\s*\K#[A-Fa-f0-9]+' "$rofi_wallust")
@@ -52,7 +55,7 @@ fi
 
 # Abort on NixOS where this repo doesn't manage SDDM and themes are typically read-only
 if hostnamectl 2>/dev/null | grep -q 'Operating System: NixOS'; then
-  notify-send -i "$iDIR/error.png" "SDDM" "NixOS detected: skipping SDDM background change."
+  "$NOTIFY" -i "$iDIR/error.png" "SDDM" "NixOS detected: skipping SDDM background change."
   exit 0
 fi
 
@@ -90,5 +93,5 @@ if [ -e \"$sddm_simple/Backgrounds/default.png\" ]; then
   sudo cp -f \"$wallpaper_path\" \"$sddm_simple/Backgrounds/default.png\"
 fi
 
-notify-send -i \"$iDIR/ja.png\" \"SDDM\" \"Background SET\"
+"$NOTIFY" -i \"$iDIR/ja.png\" \"SDDM\" \"Background SET\"
 "

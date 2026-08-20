@@ -3,7 +3,10 @@
 -- @date: 2026-08-20
 -- @description: Laptop hardware (brightness/media keys/touchpad device)
 
-local const = require("const")
+-- BUG-7 FIX (2026-08-20): use _G.HYPR_CONST (consistent with all other files).
+-- require("const") would fail in Hyprland's Lua runtime — const is not a module,
+-- it's a global table populated by bootstrap/const + sys/const + user/const.
+local const = _G.HYPR_CONST
 
 local Touchpad_Device = "asue1209:00-04f3:319f-touchpad"
 

@@ -11,34 +11,37 @@
 # J/K ownership:
 #   scrolling — unbound here; hyprscrolling plugin handles column navigation
 #   dwindle / master — bound to cyclenext / cyclenext,prev
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 notif="$HOME/.config/swaync/images/ja.png"
 SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
 
-LAYOUT=$(hyprctl -j getoption general:layout | jq -r '.str')
+LAYOUT=$("$HYPRCTL" -j getoption general:layout | "$JQ" -r '.str')
 
 _enter_scrolling() {
-    hyprctl keyword general:layout scrolling
-    hyprctl keyword unbind SUPER,O  || true
-    hyprctl keyword unbind SUPER,J  || true
-    hyprctl keyword unbind SUPER,K  || true
-    notify-send -e -u low -i "$notif" " Layout: Scrolling"
+    "$HYPRCTL" keyword general:layout scrolling
+    "$HYPRCTL" keyword unbind SUPER,O  || true
+    "$HYPRCTL" keyword unbind SUPER,J  || true
+    "$HYPRCTL" keyword unbind SUPER,K  || true
+    "$NOTIFY" -e -u low -i "$notif" " Layout: Scrolling"
 }
 
 _enter_dwindle() {
-    hyprctl keyword general:layout dwindle
-    hyprctl keyword bind SUPER,O,togglesplit
-    hyprctl keyword bind SUPER,J,cyclenext
-    hyprctl keyword bind SUPER,K,cyclenext,prev
-    notify-send -e -u low -i "$notif" " Layout: Dwindle"
+    "$HYPRCTL" keyword general:layout dwindle
+    "$HYPRCTL" keyword bind SUPER,O,togglesplit
+    "$HYPRCTL" keyword bind SUPER,J,cyclenext
+    "$HYPRCTL" keyword bind SUPER,K,cyclenext,prev
+    "$NOTIFY" -e -u low -i "$notif" " Layout: Dwindle"
 }
 
 _enter_master() {
-    hyprctl keyword general:layout master
-    hyprctl keyword unbind SUPER,O  || true
-    hyprctl keyword bind SUPER,J,cyclenext
-    hyprctl keyword bind SUPER,K,cyclenext,prev
-    notify-send -e -u low -i "$notif" " Layout: Master"
+    "$HYPRCTL" keyword general:layout master
+    "$HYPRCTL" keyword unbind SUPER,O  || true
+    "$HYPRCTL" keyword bind SUPER,J,cyclenext
+    "$HYPRCTL" keyword bind SUPER,K,cyclenext,prev
+    "$NOTIFY" -e -u low -i "$notif" " Layout: Master"
 }
 
 case "$LAYOUT" in
@@ -47,7 +50,7 @@ case "$LAYOUT" in
 "master")    _enter_scrolling ;;
 *)
     # Unknown — reset to scrolling as canonical default
-    notify-send -e -u low -i "$notif" " Layout: Scrolling (reset from $LAYOUT)"
+    "$NOTIFY" -e -u low -i "$notif" " Layout: Scrolling (reset from $LAYOUT)"
     _enter_scrolling
     ;;
 esac

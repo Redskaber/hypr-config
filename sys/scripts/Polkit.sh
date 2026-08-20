@@ -14,6 +14,9 @@ polkit=(
   "/usr/lib/x86_64-linux-gnu/libexec/polkit-kde-authentication-agent-1"
   "/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1"
 )
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 executed=false
 

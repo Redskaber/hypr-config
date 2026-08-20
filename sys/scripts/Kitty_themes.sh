@@ -5,11 +5,11 @@
 kitty_themes_DiR="$HOME/.config/kitty/kitty-themes" # Kitty Themes Directory
 kitty_config="$HOME/.config/kitty/kitty.conf"
 iDIR="$HOME/.config/swaync/images" # For notifications
-rofi_theme_for_this_script="$HOME/.config/rofi/config-kitty-theme.rasi"
+rofi_theme_for_this_script="$HOME/.config/rofi/config-"$TERMINAL"-theme.rasi"
 
 # --- Helper Functions ---
 notify_user() {
-  notify-send -u low -i "$1" "$2" "$3"
+  "$NOTIFY" -u low -i "$1" "$2" "$3"
 }
 
 # Function to apply the selected kitty theme
@@ -19,6 +19,9 @@ apply_kitty_theme_to_config() {
     echo "Error: No theme name provided to apply_kitty_theme_to_config." >&2
     return 1
   fi
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
   local theme_file_path_to_apply="$kitty_themes_DiR/$theme_name_to_apply.conf"
   if [ ! -f "$theme_file_path_to_apply" ]; then
@@ -42,7 +45,7 @@ apply_kitty_theme_to_config() {
   cp "$temp_kitty_config_file" "$kitty_config"
   rm "$temp_kitty_config_file"
 
-  for pid_kitty in $(pidof kitty); do
+  for pid_kitty in $(pidof "$TERMINAL"); do
     if [ -n "$pid_kitty" ]; then
       kill -SIGUSR1 "$pid_kitty"
     fi
@@ -88,7 +91,7 @@ while true; do
 
   if ! apply_kitty_theme_to_config "$theme_to_preview_now"; then
     echo "$original_kitty_config_content_backup" >"$kitty_config"
-    for pid_kitty in $(pidof kitty); do if [ -n "$pid_kitty" ]; then kill -SIGUSR1 "$pid_kitty"; fi; done
+    for pid_kitty in $(pidof "$TERMINAL"); do if [ -n "$pid_kitty" ]; then kill -SIGUSR1 "$pid_kitty"; fi; done
     notify_user "$iDIR/error.png" "Preview Error" "Failed to apply $theme_to_preview_now. Reverted."
     exit 1
   fi
@@ -100,7 +103,7 @@ while true; do
   rofi_input_list_trimmed="${rofi_input_list%\\n}"
 
   chosen_index_from_rofi=$(echo -e "$rofi_input_list_trimmed" |
-    rofi -dmenu -i \
+    "$ROFI" -dmenu -i \
       -format 'i' \
       -p "Kitty Theme" \
       -mesg "Preview: ${theme_to_preview_now} | Enter: Preview | Ctrl+S: Apply & Exit | Esc: Cancel" \
@@ -119,7 +122,7 @@ while true; do
   elif [ $rofi_exit_code -eq 1 ]; then
     notify_user "$iDIR/note.png" "Kitty Theme" "Selection cancelled. Reverting to original theme."
     echo "$original_kitty_config_content_backup" >"$kitty_config"
-    for pid_kitty in $(pidof kitty); do if [ -n "$pid_kitty" ]; then kill -SIGUSR1 "$pid_kitty"; fi; done
+    for pid_kitty in $(pidof "$TERMINAL"); do if [ -n "$pid_kitty" ]; then kill -SIGUSR1 "$pid_kitty"; fi; done
     break
   elif [ $rofi_exit_code -eq 10 ]; then # This is the exit code for -kb-custom-1
     notify_user "$iDIR/ja.png" "Kitty Theme Applied" "$theme_to_preview_now"
@@ -127,7 +130,7 @@ while true; do
   else
     notify_user "$iDIR/error.png" "Rofi Error" "Unexpected Rofi exit ($rofi_exit_code). Reverting."
     echo "$original_kitty_config_content_backup" >"$kitty_config"
-    for pid_kitty in $(pidof kitty); do if [ -n "$pid_kitty" ]; then kill -SIGUSR1 "$pid_kitty"; fi; done
+    for pid_kitty in $(pidof "$TERMINAL"); do if [ -n "$pid_kitty" ]; then kill -SIGUSR1 "$pid_kitty"; fi; done
     break
   fi
 done

@@ -30,6 +30,9 @@
 # Примітки:
 # - Скрипт чекає до ~9 секунд (30 ітерацій по 0.3 сек) поки вікно з'явиться.
 # - Використовує hyprctl і jq, тому ці інструменти мають бути встановлені.
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 LOGFILE="$(dirname "$0")/dispatch.log"
 # Log file path located next to the script.
@@ -56,7 +59,7 @@ echo "Starting dispatch of '$APP' to workspace $TARGET_WORKSPACE at $(date)" >>"
 
 # Avoid early workspace focus issues by switching workspace first.
 # Уникаємо проблем з раннім фокусом, спочатку переключаємо воркспейс.
-hyprctl dispatch "workspace $TARGET_WORKSPACE" >>"$LOGFILE" 2>&1
+"$HYPRCTL" eval "hl.dispatch(hl.dsp.focus({workspace=$TARGET_WORKSPACE}))" >>"$LOGFILE" 2>&1
 sleep 0.4
 
 # Launch the application in the background and disown it.
@@ -72,14 +75,14 @@ echo "Launched '$APP' with PID $pid" >>"$LOGFILE"
 # Wait for the application window to appear (matching window class).
 # Чекаємо появи вікна аплікації (за класом вікна).
 for i in {1..30}; do
-  win=$(hyprctl clients -j | jq -r --arg APP "$APP" '
+  win=$("$HYPRCTL" clients -j | "$JQ" -r --arg APP "$APP" '
         .[] | select(.class | test($APP;"i")) | .address' 2>>"$LOGFILE")
 
   if [[ -n "$win" ]]; then
     echo "Found window $win for app '$APP', moving to workspace $TARGET_WORKSPACE" >>"$LOGFILE"
     # Move the window to the target workspace.
     # Переміщаємо вікно на цільовий воркспейс.
-    hyprctl dispatch "movetoworkspace $TARGET_WORKSPACE,address:$win" >>"$LOGFILE" 2>&1
+    "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.move({workspace=$TARGET_WORKSPACE,window=\"address:$win\"}))" >>"$LOGFILE" 2>&1
     exit 0
   fi
   sleep 0.3

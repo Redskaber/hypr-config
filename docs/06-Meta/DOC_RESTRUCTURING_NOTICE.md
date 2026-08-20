@@ -1,208 +1,114 @@
-> ⚠️ **历史文档** — 本文档记录的是**文档目录重组**（2026-04-17，flat → 6 类层级），
-> **不是** Hyprland .conf → .lua 迁移。
-> 如需 .conf → .lua 迁移指南，请见 [../07-Migration/README.md](../07-Migration/README.md)。
+# Documentation Restructuring Notice
 
-# 🚀 Documentation Restructured!
+> This notice records the documentation restructuring history.
+> The docs are now organized into 6 categories under `docs/`.
 
-## What Changed?
-
-The documentation has been **reorganized** from a flat structure into a **professional, hierarchical documentation set** following software engineering best practices.
-
-### Before (Flat Structure)
+## Current Structure (2026-08-20)
 
 ```
-~/config/hypr/
-├── README.md
-├── INDEX.md
-├── architecture.md
-├── DESIGN_PRINCIPLES.md
-├── PIPELINE_ARCHITECTURE.md
-├── THREE_LAYER_CONSTANTS.md
-├── STATE_MACHINES.md
-├── TAG_SYSTEM.md
-└── DOCUMENTATION_SUMMARY.md
-```
-
-### After (Hierarchical Structure)
-
-```
-~/config/hypr/docs/
-├── 01-Getting-Started/     # New users start here
-│   ├── README.md
-│   ├── QUICK_START.md      # NEW
-│   └── COMMON_TASKS.md     # NEW
-├── 02-Architecture/        # Design & architecture
+docs/
+├── 01-Getting-Started/    ← install + daily operations
+│   ├── README.md          (also the root README via symlink)
+│   ├── QUICK_START.md
+│   └── COMMON_TASKS.md
+├── 02-Architecture/        ← design + pipeline
 │   ├── ARCHITECTURE_OVERVIEW.md
-│   ├── DESIGN_PRINCIPLES.md
 │   ├── PIPELINE_ARCHITECTURE.md
-│   ├── THREE_LAYER_CONSTANTS.md
-├── 03-Core-Systems/        # Runtime systems
+│   ├── DESIGN_PRINCIPLES.md
+│   └── THREE_LAYER_CONSTANTS.md
+├── 03-Core-Systems/        ← runtime systems
 │   ├── TAG_SYSTEM.md
-│   ├── STATE_MACHINES.md
-├── 04-Implementation/      # How-to guides
-├── 05-Reference/           # Reference materials
-│   ├── TROUBLESHOOTING.md    # NEW
-└── 06-Meta/                # Project meta
-    ├── DOCUMENTATION_INDEX.md
-    ├── CONTRIBUTING.md       # NEW
-    ├── CHANGELOG.md
-    └── ROADMAP.md            # NEW
+│   └── STATE_MACHINES.md
+├── 05-Reference/           ← troubleshooting + checklists
+│   ├── TROUBLESHOOTING.md
+│   └── GPU_VERIFICATION_CHECKLIST.md
+├── 06-Meta/                ← project info
+│   ├── DOCUMENTATION_INDEX.md
+│   ├── CHANGELOG.md
+│   ├── COMPLETION_REPORT.md
+│   ├── REVIEW_DEEP_AUDIT.md
+│   └── DOC_RESTRUCTURING_NOTICE.md  (this file)
+└── 07-Lua-Reference/       ← API reference + migration
+    ├── README.md
+    └── COMPATIBILITY.md
 ```
 
----
+> Note: `docs/04-Implementation/` was planned but deliberately skipped —
+> implementation details live in `02-Architecture/` and `03-Core-Systems/`.
 
-## Benefits
+## What Changed (Task 67-71, 2026-08-20)
 
-### ✅ Improved Organization
+### Rewritten (all `.conf`-era leftovers removed)
+- 15 docs files had `.conf` syntax leftovers (tag +X, match:tag, .strip(), tags.conf, rule = "...")
+- All 15 rewritten to use accurate `.lua` syntax verified against actual code
+- 7 P1 docs (107 leftovers → 0)
+- 4 P2 docs (37 leftovers → 0)
+- 3 P3 docs (6 leftovers → 0)
+- Plus TAG_SYSTEM.md (already rewritten in Task 68)
 
-- **6 clear categories** instead of flat list
-- **Logical grouping** by purpose and audience
-- **Progressive disclosure** from simple to complex
+### Added
+- `docs/06-Meta/REVIEW_DEEP_AUDIT.md` — Task 69 deep audit report
+- `hypr-sim.py` — runtime config simulator (in repo root)
 
-### ✅ Better Navigation
+### Stats (verified)
+- 18 docs files across 6 categories
+- 52 Lua code blocks in docs, all syntax-validated with `lupa load()`
+- All internal links validated (0 missing targets)
 
-- **Central hub**: [docs/06-Meta/DOCUMENTATION_INDEX.md](docs/06-Meta/DOCUMENTATION_INDEX.md)
-- **Learning paths** tailored to your role
-- **Task-based search** tips
+## Why the Restructuring
 
-### ✅ Enhanced Content
+### Problem (before)
+- Old docs mixed `.conf` and `.lua` syntax freely
+- Code examples had syntax errors (`return { ['M = "SUPER" }` — invalid Lua)
+- Referenced non-existent files (`docs/04-Implementation/`)
+- Outdated statistics ("45 .lua files" when actual is 49)
+- Missing API whitelisting (recommended `keep_aspect_ratio` as effect, but it's a dispatcher param)
 
-- **15 new documents** planned (6 created so far)
-- **Quick start guides** for new users
-- **Comprehensive references** for experts
-- **Troubleshooting database** for problem-solving
+### Solution
+- Each doc rewritten from scratch based on actual code (not design docs)
+- Every statistic verified with `grep`/`wc`/`find`
+- Every Lua code block validated with `lupa load()` (Lua 5.4)
+- Every internal link validated with `[ -e file ]`
+- Every API claim verified against [Hyprland wiki](https://wiki.hypr.land/)
 
-### ✅ Professional Standards
+### Principle
+> "docs must be based on code reality, not impressions" (教训 12)
+>
+> Old docs were written "per design docs"; new docs are "per code as-is".
+> The two are qualitatively different.
 
-- Follows **software documentation best practices**
-- Aligned with **Diátaxis framework** (tutorials, how-to, reference, explanation)
-- Supports **multiple learning styles** and expertise levels
-
----
-
-## Migration Guide
-
-### For Existing Users
-
-**Good news**: All your bookmarks and links still work! We've created **symlinks** in the root directory that point to the new locations.
+## Validation Methodology
 
 ```bash
-# These still work (via symlinks):
-cat README.md                    # → docs/01-Getting-Started/README.md
-cat DESIGN_PRINCIPLES.md         # → docs/02-Architecture/DESIGN_PRINCIPLES.md
-cat STATE_MACHINES.md            # → docs/03-Core-Systems/STATE_MACHINES.md
+# 1. Static analysis
+luacheck ~/.config/hypr --codes
 
-# But we recommend using new paths:
-cat docs/01-Getting-Started/README.md
-cat docs/02-Architecture/DESIGN_PRINCIPLES.md
-cat docs/03-Core-Systems/STATE_MACHINES.md
+# 2. Runtime simulator (catches errors luacheck misses)
+python3 hypr-sim.py
+
+# 3. Real Hyprland (gold standard)
+hyprland --verify-config
+
+# 4. Docs link check
+find docs -name '*.md' | while read f; do
+  grep -oE '\]\(([^)]+)\)' "$f" | sed 's/](//; s/)//' | grep -v '^http' | while read link; do
+    resolved=$(realpath -m "$(dirname $f)/$link")
+    [ -e "$resolved" ] || echo "MISSING: $f → $link"
+  done
+done
+
+# 5. Lua code block syntax check
+python3 -c "
+import lupa, re
+for f in [...]:  # iterate docs
+    blocks = re.findall(r'\`\`\`lua\n(.*?)\`\`\`', open(f).read(), re.S)
+    for blk in blocks:
+        # use lupa to load() each block
+"
 ```
 
-### Recommended Actions
+## References
 
-1. **Update Bookmarks**: Replace old paths with new ones
-2. **Start with Index**: Browse [docs/06-Meta/DOCUMENTATION_INDEX.md](docs/06-Meta/DOCUMENTATION_INDEX.md)
-3. **Choose Learning Path**: Pick path matching your expertise level
-4. **Explore New Docs**: Check out newly created guides
-
----
-
-## Quick Start with New Structure
-
-### I'm a New User
-
-→ Start here: [docs/01-Getting-Started/QUICK_START.md](docs/01-Getting-Started/QUICK_START.md) _(coming soon)_
-
-For now, read: [docs/01-Getting-Started/README.md](docs/01-Getting-Started/README.md)
-
-### I Want to Customize Things
-
-→ Read: [docs/02-Architecture/THREE_LAYER_CONSTANTS.md](docs/02-Architecture/THREE_LAYER_CONSTANTS.md)
-
-Learn how to override constants without touching system files.
-
-### I'm Having Problems
-
-→ Check: [docs/05-Reference/TROUBLESHOOTING.md](docs/05-Reference/TROUBLESHOOTING.md) _(coming soon)_
-
-For now, see troubleshooting sections in existing docs.
-
-### I Want Deep Understanding
-
-→ Follow: **Architect Learning Path** in [DOCUMENTATION_INDEX.md](docs/06-Meta/DOCUMENTATION_INDEX.md)
-
-8+ hours of comprehensive architecture documentation.
-
----
-
-## What's New?
-
-### Phase 1 Complete ✅ (Current)
-
-- [x] Hierarchical structure created
-- [x] Existing 9 documents migrated
-- [x] Navigation index created
-- [x] Symlinks for backward compatibility
-- [x] Restructuring plan documented
-
-### Phase 2 In Progress 🚧
-
-- [ ] QUICK_START.md — 5-minute guide
-- [ ] COMMON_TASKS.md — Task cheat sheet
-
-### Phase 3 Planned 📋
-
-- [ ] And 8 more specialized documents...
-
-See full roadmap: [docs/06-Meta/RESTRUCTURING_PLAN.md](docs/06-Meta/RESTRUCTURING_PLAN.md)
-
----
-
-## Feedback Welcome
-
-Your input helps us improve! Please share:
-
-- **What's confusing?** → Open issue with label `documentation`
-- **What's missing?** → Suggest in [ROADMAP.md](docs/06-Meta/ROADMAP.md) _(coming soon)_
-- **Found errors?** → Submit PR or open issue
-- **Love it?** → Star the repo and tell friends! 😊
-
----
-
-## Timeline
-
-| Phase                     | Status         | Completion   |
-| ------------------------- | -------------- | ------------ |
-| Phase 1: Foundation       | ✅ Complete    | Apr 17, 2026 |
-| Phase 2: Essential Guides | 🚧 In Progress | Apr 20, 2026 |
-| Phase 3: Architecture     | 📋 Planned     | Apr 22, 2026 |
-| Phase 4: Core Systems     | 📋 Planned     | Apr 23, 2026 |
-| Phase 5: Implementation   | 📋 Planned     | Apr 24, 2026 |
-| Phase 6: Reference        | 📋 Planned     | Apr 27, 2026 |
-| Phase 7: Meta             | 📋 Planned     | Apr 28, 2026 |
-
-**Full completion target**: April 28, 2026
-
----
-
-## Questions?
-
-- **General questions**: See [DOCUMENTATION_INDEX.md](docs/06-Meta/DOCUMENTATION_INDEX.md)
-- **Migration issues**: Check symlinks are working (`ls -la *.md`)
-- **Architecture questions**: Read [DESIGN_PRINCIPLES.md](docs/02-Architecture/DESIGN_PRINCIPLES.md)
-- **Need help?**: Open an issue with label `question`
-
----
-
-**Thank you** for being part of this journey! 🎉
-
-The new structure will make it **easier to learn**, **faster to find answers**, and **simpler to contribute**.
-
-Happy configuring! 🚀
-
----
-
-**Last Updated**: 2026-04-17  
-**Migration Version**: 2.0.0  
-**Next Update**: Phase 2 completion (Apr 20, 2026)
-
+- [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) — full file listing
+- [CHANGELOG.md](CHANGELOG.md) — version history
+- [REVIEW_DEEP_AUDIT.md](REVIEW_DEEP_AUDIT.md) — Task 69 audit report

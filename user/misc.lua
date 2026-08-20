@@ -1,4 +1,13 @@
 -- @path: user/misc.lua
 -- @author: redskaber
 -- @date: 2026-08-20
--- @description: User misc overrides
+-- @description: User misc overrides (deltas from sys/misc.lua)
+
+-- Uncomment to override:
+-- hl.config({
+--   misc = {
+--     vfr = true,               -- variable frame rate (power saving)
+--     disable_hyprland_logo = true,
+--     disable_splash_rendering = true,
+--   },
+-- })

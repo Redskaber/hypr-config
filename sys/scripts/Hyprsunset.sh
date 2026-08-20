@@ -12,6 +12,9 @@ set -euo pipefail
 # Customize via env vars:
 #   HYPRSUNSET_TEMP   default 4500 (K)
 #   HYPRSUNSET_ICON_MODE  sunset|blue  (default: sunset)
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 STATE_FILE="$HOME/.cache/.hyprsunset_state"
 TARGET_TEMP="${HYPRSUNSET_TEMP:-4500}"
@@ -48,35 +51,35 @@ cmd_toggle() {
   state="$(cat "$STATE_FILE" || echo off)"
 
   # Always stop any running hyprsunset first to avoid CTM manager conflicts
-  if pgrep -x hyprsunset >/dev/null 2>&1; then
-    pkill -x hyprsunset || true
+  if pgrep -x "$NIGHTLIGHT" >/dev/null 2>&1; then
+    pkill -x "$NIGHTLIGHT" || true
     # give it a moment to release the CTM manager
     sleep 0.2
   fi
 
   if [[ "$state" == "on" ]]; then
     # Turning OFF: set identity and exit
-    if command -v hyprsunset >/dev/null 2>&1; then
-      nohup hyprsunset -i >/dev/null 2>&1 &
+    if command -v "$NIGHTLIGHT" >/dev/null 2>&1; then
+      nohup "$NIGHTLIGHT" -i >/dev/null 2>&1 &
       # if hyprsunset persists, stop it shortly after applying identity
-      sleep 0.3 && pkill -x hyprsunset || true
+      sleep 0.3 && pkill -x "$NIGHTLIGHT" || true
     fi
     echo off >"$STATE_FILE"
-    notify-send -u low "Hyprsunset: Disabled" || true
+    "$NOTIFY" -u low "Hyprsunset: Disabled" || true
   else
     # Turning ON: start hyprsunset at target temp in background
-    if command -v hyprsunset >/dev/null 2>&1; then
-      nohup hyprsunset -t "$TARGET_TEMP" >/dev/null 2>&1 &
+    if command -v "$NIGHTLIGHT" >/dev/null 2>&1; then
+      nohup "$NIGHTLIGHT" -t "$TARGET_TEMP" >/dev/null 2>&1 &
     fi
     echo on >"$STATE_FILE"
-    notify-send -u low "Hyprsunset: Enabled" "${TARGET_TEMP}K" || true
+    "$NOTIFY" -u low "Hyprsunset: Enabled" "${TARGET_TEMP}K" || true
   fi
 }
 
 cmd_status() {
   ensure_state
   # Prefer live process detection; fall back to state file
-  if pgrep -x hyprsunset >/dev/null 2>&1; then
+  if pgrep -x "$NIGHTLIGHT" >/dev/null 2>&1; then
     onoff="on"
   else
     onoff="$(cat "$STATE_FILE" || echo off)"
@@ -99,8 +102,8 @@ cmd_init() {
   state="$(cat "$STATE_FILE" || echo off)"
 
   if [[ "$state" == "on" ]]; then
-    if command -v hyprsunset >/dev/null 2>&1; then
-      nohup hyprsunset -t "$TARGET_TEMP" >/dev/null 2>&1 &
+    if command -v "$NIGHTLIGHT" >/dev/null 2>&1; then
+      nohup "$NIGHTLIGHT" -t "$TARGET_TEMP" >/dev/null 2>&1 &
     fi
   fi
 }

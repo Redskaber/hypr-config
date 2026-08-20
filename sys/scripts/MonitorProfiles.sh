@@ -2,8 +2,8 @@
 # For applying Pre-configured Monitor Profiles
 
 # Check if rofi is already running
-if pidof rofi >/dev/null; then
-  pkill rofi
+if pidof "$ROFI" >/dev/null; then
+  pkill "$ROFI"
 fi
 
 # Variables
@@ -28,13 +28,16 @@ for ignored_file in "${ignore_files[@]}"; do
 done
 
 # Rofi Menu
-chosen_file=$(echo "$mon_profiles_list" | rofi -i -dmenu -config $rofi_theme -mesg "$msg")
+chosen_file=$(echo "$mon_profiles_list" | "$ROFI" -i -dmenu -config $rofi_theme -mesg "$msg")
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 if [[ -n "$chosen_file" ]]; then
   full_path="$monitor_dir/$chosen_file.conf"
   cp "$full_path" "$target"
 
-  notify-send -u low -i "$iDIR/ja.png" "$chosen_file" "Monitor Profile Loaded"
+  "$NOTIFY" -u low -i "$iDIR/ja.png" "$chosen_file" "Monitor Profile Loaded"
 fi
 
 sleep 1

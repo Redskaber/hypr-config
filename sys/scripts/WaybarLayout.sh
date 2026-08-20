@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # Script for waybar layout or configs
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 IFS=$'\n\t'
 
@@ -7,8 +10,8 @@ IFS=$'\n\t'
 waybar_layouts="$HOME/.config/waybar/configs"
 waybar_config="$HOME/.config/waybar/config"
 SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
-rofi_config="$HOME/.config/rofi/config-waybar-layout.rasi"
-msg=' 🎌 NOTE: Some waybar LAYOUT NOT fully compatible with some STYLES'
+rofi_config="$HOME/.config/rofi/config-"$BAR"-layout.rasi"
+msg=' 🎌 NOTE: Some "$BAR" LAYOUT NOT fully compatible with some STYLES'
 
 # Apply selected configuration
 apply_config() {
@@ -40,7 +43,7 @@ main() {
   # Launch rofi with the annotated list, pre‑selecting the active row
   choice=$(
     printf '%s\n' "${options[@]}" |
-      rofi -i -dmenu \
+      "$ROFI" -i -dmenu \
         -config "$rofi_config" \
         -mesg "$msg" \
         -selected-row "$default_row"
@@ -57,7 +60,7 @@ main() {
 
   case "$choice" in
   "no panel")
-    pgrep -x "waybar" && pkill waybar || true
+    pgrep -x "waybar" && pkill "$BAR" || true
     ;;
   *)
     apply_config "$choice"
@@ -67,7 +70,7 @@ main() {
 
 # Kill Rofi if already running before execution
 if pgrep -x "rofi" >/dev/null; then
-  pkill rofi
+  pkill "$ROFI"
   #exit 0
 fi
 

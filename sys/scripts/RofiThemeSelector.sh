@@ -5,14 +5,14 @@
 ROFI_THEMES_DIR_CONFIG="$HOME/.config/rofi/themes"
 ROFI_THEMES_DIR_LOCAL="$HOME/.local/share/rofi/themes"
 ROFI_CONFIG_FILE="$HOME/.config/rofi/config.rasi"
-ROFI_THEME_FOR_THIS_SCRIPT="$HOME/.config/rofi/config-rofi-theme.rasi" # A separate rofi theme for the picker itself
+ROFI_THEME_FOR_THIS_SCRIPT="$HOME/.config/rofi/config-"$ROFI"-theme.rasi" # A separate "$ROFI" theme for the picker itself
 IDIR="$HOME/.config/swaync/images"                                     # For notifications
 
 # --- Helper Functions ---
 
 # Function to send a notification
 notify_user() {
-  notify-send -u low -i "$1" "$2" "$3"
+  "$NOTIFY" -u low -i "$1" "$2" "$3"
 }
 
 # Function to apply the selected rofi theme to the main config file
@@ -57,6 +57,9 @@ apply_rofi_theme_to_config() {
       sed -i '0,/^\s*\/\/@theme/s///' "$ROFI_CONFIG_FILE"
     done
   fi
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
   return 0
 }
@@ -121,7 +124,7 @@ while true; do
 
   # Launch Rofi and get user's choice
   chosen_index_from_rofi=$(echo -e "$rofi_input_list_trimmed" |
-    rofi -dmenu -i \
+    "$ROFI" -dmenu -i \
       -format 'i' \
       -p "Rofi Theme" \
       -mesg "‼️ **note** ‼️ Enter: Preview || Ctrl+S: Apply &amp; Exit || Esc: Cancel" \

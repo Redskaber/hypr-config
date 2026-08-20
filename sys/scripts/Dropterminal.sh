@@ -13,10 +13,10 @@
 #
 # State diagram:
 #
-#     ┌─────────┐  run()   ┌─────────┐  run()   ┌─────────┐
-#     │ ABSENT  │─────────▶│ VISIBLE │─────────▶│ HIDDEN  │
+#     ┌─────────┐  run()   ┌─────────┐  run()   ┌────────┐
+#     │ ABSENT  │─────────▶│ VISIBLE │─────────▶│ HIDDEN │
 #     │(no term)│ create   │(shown)  │  hide    │(scratch)│
-#     └─────────┘          └─────────┘          └─────────┘
+#     └─────────┘          └─────────┘          └────────┘
 #          ▲                     │                     │
 #          │                     │  run()              │  run()
 #          │  process            ▼                     ▼
@@ -36,30 +36,33 @@
 # ============================================================
 # Section 1: Configuration & Constants
 # ============================================================
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 DEBUG=false
 SPECIAL_WS="special:scratchpad"
 ADDR_FILE="/tmp/dropdown_terminal_addr"
 
 # State enum (bash has no enum, use string constants for readability)
-STATE_ABSENT="ABSENT"   # no dropdown terminal (ADDR_FILE missing or process dead)
-STATE_VISIBLE="VISIBLE" # dropdown is shown on a normal workspace
-STATE_HIDDEN="HIDDEN"   # dropdown is parked in special:scratchpad
+STATE_ABSENT="ABSENT"    # no dropdown terminal (ADDR_FILE missing or process dead)
+STATE_VISIBLE="VISIBLE"  # dropdown is shown on a normal workspace
+STATE_HIDDEN="HIDDEN"    # dropdown is parked in special:scratchpad
 
 # Dropdown geometry (percentages of logical monitor space)
 WIDTH_PERCENT=65
 HEIGHT_PERCENT=65
-Y_PERCENT=10 # X is auto-centered
+Y_PERCENT=10   # X is auto-centered
 
 # Animation
 SLIDE_STEPS=5
-SLIDE_DOWN_INTERSTEP_SLEEP=0.03 # seconds
+SLIDE_DOWN_INTERSTEP_SLEEP=0.03   # seconds
 SLIDE_UP_INTERSTEP_SLEEP=0.03
 SLIDE_PREP_SLEEP=0.05
 
 # Spawn polling
-SPAWN_POLL_INTERVAL=0.1 # seconds
-SPAWN_POLL_MAX_TRIES=20 # 20 × 0.1s = 2.0s timeout
+SPAWN_POLL_INTERVAL=0.1   # seconds
+SPAWN_POLL_MAX_TRIES=20   # 20 × 0.1s = 2.0s timeout
 
 # ============================================================
 # Section 2: Argument Parsing
@@ -90,10 +93,10 @@ validate_args() {
     cat >&2 <<EOF
 Missing terminal command. Usage: $0 [-d] <terminal_command>
 Examples:
-  $0 kitty
-  $0 -d kitty                      (with debug output)
-  $0 'kitty -e zsh'
-  $0 'alacritty --working-directory /home/user'
+  $0 "$TERMINAL"
+  $0 -d "$TERMINAL"                      (with debug output)
+  $0 '"$TERMINAL" -e zsh'
+  $0 '"$TERMINAL" --working-directory /home/user'
 
 State machine:
   ABSENT  + run -> CREATE -> VISIBLE
@@ -112,10 +115,10 @@ EOF
 # Section 4: State File I/O (v3: 4 fields)
 # ============================================================
 
-state_read_addr() { [ -s "$ADDR_FILE" ] && cut -d' ' -f1 "$ADDR_FILE"; }
-state_read_pid() { [ -s "$ADDR_FILE" ] && cut -d' ' -f2 "$ADDR_FILE"; }
+state_read_addr()    { [ -s "$ADDR_FILE" ] && cut -d' ' -f1 "$ADDR_FILE"; }
+state_read_pid()     { [ -s "$ADDR_FILE" ] && cut -d' ' -f2 "$ADDR_FILE"; }
 state_read_monitor() { [ -s "$ADDR_FILE" ] && cut -d' ' -f3 "$ADDR_FILE"; }
-state_read_class() { [ -s "$ADDR_FILE" ] && cut -d' ' -f4 "$ADDR_FILE"; }
+state_read_class()   { [ -s "$ADDR_FILE" ] && cut -d' ' -f4 "$ADDR_FILE"; }
 
 state_clear() {
   rm -f "$ADDR_FILE"
@@ -138,17 +141,17 @@ state_save() {
 # Returns single JSON line of the window matching addr+pid, or empty.
 query_window() {
   local addr="$1" pid="$2"
-  hyprctl clients -j |
-    jq -c --arg ADDR "$addr" --argjson PID "$pid" \
-      '.[] | select(.address == $ADDR and .pid == $PID)' 2>/dev/null
+  "$HYPRCTL" clients -j \
+    | "$JQ" -c --arg ADDR "$addr" --argjson PID "$pid" \
+        '.[] | select(.address == $ADDR and .pid == $PID)' 2>/dev/null
 }
 
 # Echoes "x y w h" of the given window (logical coords), or empty.
 query_window_geometry() {
   local addr="$1"
-  hyprctl clients -j |
-    jq -r --arg ADDR "$addr" \
-      '.[] | select(.address == $ADDR) | "\(.at[0]) \(.at[1]) \(.size[0]) \(.size[1])"' 2>/dev/null
+  "$HYPRCTL" clients -j \
+    | "$JQ" -r --arg ADDR "$addr" \
+        '.[] | select(.address == $ADDR) | "\(.at[0]) \(.at[1]) \(.size[0]) \(.size[1])"' 2>/dev/null
 }
 
 # --- window dispatch actions ---
@@ -160,38 +163,38 @@ query_window_geometry() {
 # active workspace visibly switches, defeating the "hide" illusion.
 action_move_to_workspace_silent() {
   local addr="$1" ws="$2"
-  hyprctl eval "hl.dispatch(hl.dsp.window.move({workspace=\"$ws\",follow=false,window=\"address:$addr\"}))" >/dev/null 2>&1
+  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.move({workspace=\"$ws\",follow=false,window=\"address:$addr\"}))" >/dev/null 2>&1
 }
 
 # Move window to a workspace AND follow focus (legacy movetoworkspace).
 # Used by strategy_show to bring the dropdown onto the active workspace visibly.
 action_move_to_workspace_follow() {
   local addr="$1" ws="$2"
-  hyprctl eval "hl.dispatch(hl.dsp.window.move({workspace=\"$ws\",follow=true,window=\"address:$addr\"}))" >/dev/null 2>&1
+  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.move({workspace=\"$ws\",follow=true,window=\"address:$addr\"}))" >/dev/null 2>&1
 }
 
 # Move window to absolute pixel coords
 action_move_pixel() {
   local addr="$1" x="$2" y="$3"
-  hyprctl eval "hl.dispatch(hl.dsp.window.move({x=$x,y=$y,relative=false,window=\"address:$addr\"}))" >/dev/null 2>&1
+  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.move({x=$x,y=$y,relative=false,window=\"address:$addr\"}))" >/dev/null 2>&1
 }
 
 # Resize window to absolute pixel size
 action_resize() {
   local addr="$1" w="$2" h="$3"
-  hyprctl eval "hl.dispatch(hl.dsp.window.resize({x=$w,y=$h,window=\"address:$addr\"}))" >/dev/null 2>&1
+  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.resize({x=$w,y=$h,window=\"address:$addr\"}))" >/dev/null 2>&1
 }
 
 # Pin a window (show on all workspaces) — uses EXPLICIT action, never toggle
 action_pin_enable() {
   local addr="$1"
-  hyprctl eval "hl.dispatch(hl.dsp.window.pin({action=\"enable\",window=\"address:$addr\"}))" >/dev/null 2>&1
+  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.pin({action=\"enable\",window=\"address:$addr\"}))" >/dev/null 2>&1
 }
 
 # Unpin a window — uses EXPLICIT action, never toggle
 action_pin_disable() {
   local addr="$1"
-  hyprctl eval "hl.dispatch(hl.dsp.window.pin({action=\"disable\",window=\"address:$addr\"}))" >/dev/null 2>&1
+  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.pin({action=\"disable\",window=\"address:$addr\"}))" >/dev/null 2>&1
 }
 
 # Tag a window (per wiki "Minimize windows using special workspaces" pattern).
@@ -200,25 +203,25 @@ action_pin_disable() {
 DROPDOWN_TAG="dropdown"
 action_tag_dropdown() {
   local addr="$1"
-  hyprctl eval "hl.dispatch(hl.dsp.window.tag({tag=\"$DROPDOWN_TAG\",window=\"address:$addr\"}))" >/dev/null 2>&1
+  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.tag({tag=\"$DROPDOWN_TAG\",window=\"address:$addr\"}))" >/dev/null 2>&1
 }
 
 # Clear the dropdown tag from a window
 action_clear_tag_dropdown() {
   local addr="$1"
-  hyprctl eval "hl.dispatch(hl.dsp.window.clear_tags({window=\"address:$addr\"}))" >/dev/null 2>&1
+  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.clear_tags({window=\"address:$addr\"}))" >/dev/null 2>&1
 }
 
 # Focus a window
 action_focus() {
   local addr="$1"
-  hyprctl eval "hl.dispatch(hl.dsp.focus({window=\"address:$addr\"}))" >/dev/null 2>&1
+  "$HYPRCTL" eval "hl.dispatch(hl.dsp.focus({window=\"address:$addr\"}))" >/dev/null 2>&1
 }
 
 # Execute a command with window rules (float + size + workspace)
 action_exec_in_special() {
   # $1=cmd  $2=w  $3=h
-  hyprctl eval "hl.dispatch(hl.dsp.exec_cmd(\"$1\", {float=true, size={$2,$3}, workspace=\"$SPECIAL_WS silent\"}))" >/dev/null 2>&1
+  "$HYPRCTL" eval "hl.dispatch(hl.dsp.exec_cmd(\"$1\", {float=true, size={$2,$3}, workspace=\"$SPECIAL_WS silent\"}))" >/dev/null 2>&1
 }
 
 # ============================================================
@@ -227,8 +230,8 @@ action_exec_in_special() {
 
 # Echoes focused monitor: "x y width height scale name"
 get_focused_monitor_info() {
-  hyprctl monitors -j |
-    jq -r '.[] | select(.focused == true) | "\(.x) \(.y) \(.width) \(.height) \(.scale) \(.name)"' 2>/dev/null
+  "$HYPRCTL" monitors -j \
+    | "$JQ" -r '.[] | select(.focused == true) | "\(.x) \(.y) \(.width) \(.height) \(.scale) \(.name)"' 2>/dev/null
 }
 
 # Echoes "x y w h monitor_name" — computed dropdown position for the focused monitor.
@@ -258,19 +261,19 @@ calculate_dropdown_geometry() {
     local scale_int
     scale_int=$(echo "$mon_scale" | sed 's/\.//' | sed 's/^0*//')
     [ -z "$scale_int" ] && scale_int=100
-    logical_w=$(((mon_w * 100) / scale_int))
-    logical_h=$(((mon_h * 100) / scale_int))
+    logical_w=$(( (mon_w * 100) / scale_int ))
+    logical_h=$(( (mon_h * 100) / scale_int ))
   fi
   [[ "$logical_w" =~ ^-?[0-9]+$ ]] || logical_w=$mon_w
   [[ "$logical_h" =~ ^-?[0-9]+$ ]] || logical_h=$mon_h
 
-  local w=$((logical_w * WIDTH_PERCENT / 100))
-  local h=$((logical_h * HEIGHT_PERCENT / 100))
-  local y_off=$((logical_h * Y_PERCENT / 100))
-  local x_off=$(((logical_w - w) / 2))
+  local w=$(( logical_w * WIDTH_PERCENT  / 100 ))
+  local h=$(( logical_h * HEIGHT_PERCENT / 100 ))
+  local y_off=$(( logical_h * Y_PERCENT / 100 ))
+  local x_off=$(( (logical_w - w) / 2 ))
 
-  local final_x=$((mon_x + x_off))
-  local final_y=$((mon_y + y_off))
+  local final_x=$(( mon_x + x_off ))
+  local final_y=$(( mon_y + y_off ))
 
   debug_echo "monitor=$mon_name logical=${logical_w}x${logical_h} win=${w}x${h} pos=${final_x},${final_y}"
   echo "$final_x $final_y $w $h $mon_name"
@@ -278,7 +281,7 @@ calculate_dropdown_geometry() {
 
 # Echoes the id of the currently active workspace
 get_current_workspace_id() {
-  hyprctl activeworkspace -j | jq -r '.id' 2>/dev/null
+  "$HYPRCTL" activeworkspace -j | "$JQ" -r '.id' 2>/dev/null
 }
 
 # ============================================================
@@ -289,30 +292,30 @@ get_current_workspace_id() {
 # $1=addr  $2=target_x  $3=target_y  $4=w  $5=h
 animate_slide_down() {
   local addr="$1" tx="$2" ty="$3" w="$4" h="$5"
-  local start_y=$((ty - h - 50))
-  local step=$(((ty - start_y) / SLIDE_STEPS))
+  local start_y=$(( ty - h - 50 ))
+  local step=$(( (ty - start_y) / SLIDE_STEPS ))
   local i cy
 
   action_move_pixel "$addr" "$tx" "$start_y"
   sleep "$SLIDE_PREP_SLEEP"
   for i in $(seq 1 $SLIDE_STEPS); do
-    cy=$((start_y + step * i))
+    cy=$(( start_y + step * i ))
     action_move_pixel "$addr" "$tx" "$cy"
     sleep "$SLIDE_DOWN_INTERSTEP_SLEEP"
   done
-  action_move_pixel "$addr" "$tx" "$ty" # exact final
+  action_move_pixel "$addr" "$tx" "$ty"   # exact final
 }
 
 # Slide window UP out of view toward above the screen.
 # $1=addr  $2=cur_x  $3=cur_y  $4=w  $5=h
 animate_slide_up() {
   local addr="$1" cx="$2" cy_start="$3" w="$4" h="$5"
-  local end_y=$((cy_start - h - 50))
-  local step=$(((cy_start - end_y) / SLIDE_STEPS))
+  local end_y=$(( cy_start - h - 50 ))
+  local step=$(( (cy_start - end_y) / SLIDE_STEPS ))
   local i cy
 
   for i in $(seq 1 $SLIDE_STEPS); do
-    cy=$((cy_start - step * i))
+    cy=$(( cy_start - step * i ))
     action_move_pixel "$addr" "$cx" "$cy"
     sleep "$SLIDE_UP_INTERSTEP_SLEEP"
   done
@@ -344,13 +347,11 @@ detect_state() {
 
   # Step 1: must have both addr and numeric pid
   if [ -z "$addr" ] || [ -z "$pid" ]; then
-    echo "$STATE_ABSENT"
-    return
+    echo "$STATE_ABSENT"; return
   fi
   if ! [[ "$pid" =~ ^[0-9]+$ ]]; then
     state_clear
-    echo "$STATE_ABSENT"
-    return
+    echo "$STATE_ABSENT"; return
   fi
 
   # Step 2: window must still be alive (BOTH addr AND pid must match)
@@ -358,12 +359,11 @@ detect_state() {
   if [ -z "$win_json" ] || [ "$win_json" = "null" ]; then
     debug_echo "Stored dropdown (addr=$addr pid=$pid) no longer alive — clearing stale state"
     state_clear
-    echo "$STATE_ABSENT"
-    return
+    echo "$STATE_ABSENT"; return
   fi
 
   # Step 3: workspace location determines VISIBLE vs HIDDEN
-  workspace_name=$(echo "$win_json" | jq -r '.workspace.name' 2>/dev/null)
+  workspace_name=$(echo "$win_json" | "$JQ" -r '.workspace.name' 2>/dev/null)
   if [ "$workspace_name" = "$SPECIAL_WS" ]; then
     echo "$STATE_HIDDEN"
   else
@@ -395,7 +395,7 @@ strategy_create() {
   # 1. Snapshot before-set (all existing addr + pid)
   local before_file before_addrs before_pids
   before_file=$(mktemp /tmp/dt_before.XXXXXX)
-  hyprctl clients -j | jq -r '.[] | "\(.address) \(.pid)"' | sort >"$before_file"
+  "$HYPRCTL" clients -j | "$JQ" -r '.[] | "\(.address) \(.pid)"' | sort >"$before_file"
   before_addrs=$(cut -d' ' -f1 "$before_file" | sort -u)
   before_pids=$(cut -d' ' -f2 "$before_file" | sort -u)
 
@@ -416,11 +416,9 @@ strategy_create() {
       # Cond 2: pid genuinely new
       printf '%s\n' "$before_pids" | grep -qF -- "$p" && continue
       # Cond 3 satisfied by the jq select(.workspace.name == special) above
-      new_addr="$a"
-      new_pid="$p"
-      break
-    done < <(hyprctl clients -j |
-      jq -r ".[] | select(.workspace.name == \"$SPECIAL_WS\") | \"\(.address) \(.pid)\"" 2>/dev/null)
+      new_addr="$a"; new_pid="$p"; break
+    done < <("$HYPRCTL" clients -j \
+              | "$JQ" -r ".[] | select(.workspace.name == \"$SPECIAL_WS\") | \"\(.address) \(.pid)\"" 2>/dev/null)
   done
   rm -f "$before_file"
 
@@ -560,19 +558,19 @@ main() {
   debug_echo "Detected state: $current_state"
 
   case "$current_state" in
-  "$STATE_ABSENT")
-    strategy_create
-    ;;
-  "$STATE_VISIBLE")
-    strategy_hide
-    ;;
-  "$STATE_HIDDEN")
-    strategy_show
-    ;;
-  *)
-    debug_echo "FATAL: unknown state '$current_state'"
-    exit 1
-    ;;
+    "$STATE_ABSENT")
+      strategy_create
+      ;;
+    "$STATE_VISIBLE")
+      strategy_hide
+      ;;
+    "$STATE_HIDDEN")
+      strategy_show
+      ;;
+    *)
+      debug_echo "FATAL: unknown state '$current_state'"
+      exit 1
+      ;;
   esac
 }
 

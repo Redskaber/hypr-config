@@ -5,5 +5,8 @@
 # WeatherWrap.sh moved to sys/scripts in new arch
 weather_script="$HOME/.config/hypr/sys/scripts/WeatherWrap.sh"
 [[ -x "$weather_script" ]] && bash "$weather_script" >/dev/null 2>&1
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 loginctl lock-session

@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # Overview toggle wrapper - tries Quickshell first, falls back to AGS
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 set -euo pipefail
 
@@ -21,7 +24,7 @@ fi
 
 # 2) Fall back to AGS template
 if command -v ags >/dev/null 2>&1; then
-  pkill rofi || true
+  pkill "$ROFI" || true
   if ags -t 'overview' >/dev/null 2>&1; then
     exit 0
   fi
@@ -34,5 +37,5 @@ if command -v ags >/dev/null 2>&1; then
 fi
 
 # If we get here, neither worked
-notify-send "Overview" "Neither Quickshell nor AGS is available" -u low 2>/dev/null || true
+"$NOTIFY" "Overview" "Neither Quickshell nor AGS is available" -u low 2>/dev/null || true
 exit 1

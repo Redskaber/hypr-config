@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # Script for waybar styles
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 IFS=$'\n\t'
 
@@ -7,8 +10,8 @@ IFS=$'\n\t'
 waybar_styles="$HOME/.config/waybar/style"
 waybar_style="$HOME/.config/waybar/style.css"
 SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
-rofi_config="$HOME/.config/rofi/config-waybar-style.rasi"
-msg=' 🎌 NOTE: Some waybar STYLES NOT fully compatible with some LAYOUTS'
+rofi_config="$HOME/.config/rofi/config-"$BAR"-style.rasi"
+msg=' 🎌 NOTE: Some "$BAR" STYLES NOT fully compatible with some LAYOUTS'
 
 # Apply selected style
 apply_style() {
@@ -42,7 +45,7 @@ main() {
   # launch rofi with the annotated list and pre‑selected row
   choice=$(
     printf '%s\n' "${options[@]}" |
-      rofi -i -dmenu \
+      "$ROFI" -i -dmenu \
         -config "$rofi_config" \
         -mesg "$msg" \
         -selected-row "$default_row"
@@ -60,7 +63,7 @@ main() {
 
 # Kill Rofi if already running before execution
 if pgrep -x "rofi" >/dev/null; then
-  pkill rofi
+  pkill "$ROFI"
   #exit 0
 fi
 

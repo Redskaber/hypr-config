@@ -3,6 +3,9 @@
 # as opposed to continous adding of //@theme
 
 # This code is released in public domain by Dave Davenport <qball@gmpclient.org>
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 iDIR="$HOME/.config/swaync/images"
 
@@ -22,11 +25,11 @@ if [ -z "${MKTEMP}" ]; then
   exit 1
 fi
 if [ -z "${ROFI}" ]; then
-  echo "Did not find rofi, there is no point to continue."
+  echo "Did not find "$ROFI", there is no point to continue."
   exit 1
 fi
 if [ -z "${NOTIFY_SEND}" ]; then
-  echo "Did not find 'notify-send', notifications won't work."
+  echo "Did not find '"$NOTIFY"', notifications won't work."
 fi
 
 TMP_CONFIG_FILE=$(${MKTEMP}).rasi
@@ -202,7 +205,7 @@ if select_theme && [ -n "${SELECTED}" ]; then
   # Send notification with the selected theme name
   selection="${theme_names[${SELECTED}]}"
   if [ -n "$NOTIFY_SEND" ]; then
-    notify-send -u low -i "$iDIR/ja.png" "Rofi Theme applied:" "$selection"
+    "$NOTIFY" -u low -i "$iDIR/ja.png" "Rofi Theme applied:" "$selection"
   fi
 fi
 

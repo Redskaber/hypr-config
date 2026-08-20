@@ -1,311 +1,227 @@
-# 配置语法参考 — .lua 与历史 .conf 对照
+# `.conf` ↔ `.lua` Compatibility Reference
 
-> 本文档是 .lua 配置的**语法参考**，对照说明每个配置构造。
-> .conf 形式已弃用（Hyprland v0.55+），仅作历史参考。
->
-> **本仓库的当前形态是 .lua**。如果你想了解迁移历史，查看 git log。
+> Pure `.lua` (Hyprland v0.55+). The repo no longer ships `.conf` files (except
+> `hypridle.conf` and `hyprlock.conf`, because those daemons don't support Lua).
+> This document helps users migrating from `.conf` syntax.
 
----
+## Summary
 
-## 1. 基本结构
+| Aspect | `.conf` (hyprlang, ≤v0.54) | `.lua` (v0.55+) |
+| --- | --- | --- |
+| File extension | `.conf` | `.lua` |
+| Entry point | `~/.config/hypr/hyprland.conf` | `~/.config/hypr/hyprland.lua` |
+| Syntax | DSL (`key = value`) | Lua (`hl.config({key = value})`) |
+| Reload | `hyprctl reload` | auto-reload on file save |
+| Variables | `$var = value` | `_G.HYPR_CONST.var = value` |
+| Binds | `bind = MOD, KEY, dispatcher, args` | `hl.bind("MOD + KEY", hl.dsp.X({...}))` |
+| Window rules | `windowrule = match:class X, effect Y` | `hl.window_rule({ match={...}, effect=Y })` |
+| Exec on start | `exec-once = cmd` | `hl.on("hyprland.start", function() hl.exec_cmd("cmd") end)` |
+| Lua functions in binds | ❌ impossible | ✅ `hl.bind("KEY", function() ... end)` |
 
-### 1.1 入口文件
+## Syntax Translation Table
 
-| 历史形式 (.conf) | 当前形式 (.lua) | 说明 |
-|---|---|---|
-| `hyprland.conf` | `hyprland.lua` | 入口文件 |
-| `source = ./bootstrap/default.conf` | `require("bootstrap.default")` | 加载子模块 |
+### Variables
 
-### 1.2 注释
-
-| .conf | .lua |
-|---|---|
-| `# comment` | `-- comment` |
-
-### 1.3 变量（常量系统）
-
-.lua 时代没有 `$var` 系统——常量在 const 文件中以 table 返回，翻译时已解析为字面值。
-
-| .conf | .lua (const 文件) | 使用处 |
-|---|---|---|
-| `$M = SUPER` | `return { ['M = "SUPER" }` | `hl.bind("SUPER + ...", ...)` |
-| `$M_terminal = kitty` | `return { ['M_terminal = "kitty" }` | `hl.dsp.exec_cmd("kitty")` |
-
-详见 [../02-Architecture/THREE_LAYER_CONSTANTS.md](../02-Architecture/THREE_LAYER_CONSTANTS.md)。
-
----
-
-## 2. 配置块 (sections)
-
-### 2.1 标量配置
-
-```lua
--- .lua 当前形式
-hl.config({ general = { layout = "dwindle" } })
-hl.config({ input = { kb_layout = "us" } })
-hl.config({ decoration = { rounding = 10 } })
+```conf
+# .conf (LEGACY)
+$M_terminal = kitty
+$M = SUPER
 ```
 
-### 2.2 嵌套 section
-
 ```lua
-hl.config({ decoration = { shadow = { enabled = true } } })
-hl.config({ group = { groupbar = { col = { active = "rgb(404143)" } } } })
+-- .lua
+_G.HYPR_CONST = _G.HYPR_CONST or {}
+_G.HYPR_CONST.M_terminal = "kitty"
+_G.HYPR_CONST.M = "SUPER"
 ```
 
-### 2.3 plugin section
+> Note: In `.lua`, the `$var` is replaced by `_G.HYPR_CONST.var` (global table).
+> No `deep_merge()` — last-write-wins on the same table.
 
-```lua
--- scrolling (built-in since v0.55) { column_width = 0.5 }
-hl.config({ plugin = { scrolling layout = { column_width = 0.5 } } })
+### Configuration
+
+```conf
+# .conf (LEGACY)
+input {
+    kb_layout = us,cn
+    follow_mouse = 1
+}
 ```
 
-### 2.4 值类型
-
-| .lua 值 | 类型 | 示例 |
-|---|---|---|
-| `true` / `false` | boolean | `enabled = true` |
-| `10` | integer | `rounding = 10` |
-| `1.0` | float | `active_opacity = 1.0` |
-| `"dwindle"` | string | `layout = "dwindle"` |
-| `"rgb(70717F)"` | color | `color = "rgb(70717F)"` |
-
----
-
-## 3. bind 指令
-
-### 3.1 语法
-
 ```lua
-hl.bind(keystring, dispatcher, flags?)
-```
-
-- `keystring`: `"MODS + KEY"` 格式（每个 mod 用 ` + ` 连接）
-- `dispatcher`: `hl.dsp.exec_cmd("cmd")` 或 `function() ... end`
-- `flags`: 可选 table，如 `{locked=true, repeating=true}`
-
-### 3.2 flags 对照
-
-| .conf 变体 | .lua flags | 说明 |
-|---|---|---|
-| `bindd` | (无) | 描述 |
-| `bindld` | `{locked=true}` | 锁定时激活 |
-| `binded` | `{repeating=true}` | 按住重复 |
-| `bindeld` | `{locked=true, repeating=true}` | 组合 |
-| `bindlnd` | `{locked=true, non_consuming=true}` | 组合 |
-| `bindmd` | `{mouse=true}` | 鼠标 |
-
-### 3.3 dispatcher 类型
-
-```lua
--- exec dispatcher → hl.dsp.exec_cmd
-hl.bind("SUPER + Return", hl.dsp.exec_cmd("kitty"))
-
--- 无参 dispatcher → function 包装
-hl.bind("SUPER + Q", function() hl.dispatch("killactive") end)
-
--- 带参 dispatcher
-hl.bind("SUPER + SHIFT + left", function() hl.dispatch("resizeactive", "-50 0") end, {repeating=true})
-```
-
-### 3.4 完整示例
-
-```lua
--- 启动器
-hl.bind("SUPER + D", hl.dsp.exec_cmd("rofi -show drun"))
-
--- 关闭窗口
-hl.bind("SUPER + Q", function() hl.dispatch("killactive") end)
-
--- 调整大小（按住重复）
-hl.bind("SUPER + SHIFT + left", function() hl.dispatch("resizeactive", "-50 0") end, {repeating=true})
-
--- 媒体键（锁定时激活）
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("Volume.sh --toggle"), {locked=true})
-
--- 鼠标拖拽
-hl.bind("SUPER + mouse:272", hl.dsp.window.move(), {mouse=true})
-```
-
-### 3.5 XF86 keysym 规范
-
-.lua 要求 CamelCase keysym（.conf 时代小写也接受）：
-
-| keysym | .lua 写法 |
-|---|---|
-| 静音 | `XF86AudioMute` |
-| 音量+ | `XF86AudioRaiseVolume` |
-| 音量- | `XF86AudioLowerVolume` |
-| 麦克风静音 | `XF86AudioMicMute` |
-| 播放 | `XF86AudioPlay` |
-| 下一首 | `XF86AudioNext` |
-| 上一首 | `XF86AudioPrev` |
-| 睡眠 | `XF86Sleep` |
-
----
-
-## 4. windowrule 指令
-
-### 4.1 标签注册
-
-```lua
--- sys/tags.lua
-hl.window_rule({
-  match = { class = "^(firefox)$" },
-  tag = "browser",
-})
-```
-
-### 4.2 行为规则
-
-```lua
--- sys/rules.lua
-hl.window_rule({
-  opacity = "0.90 0.80",
-  match = { tag = "terminal" },
-})
-
-hl.window_rule({
-  float = true,
-  match = { tag = "im" },
-})
-
-hl.window_rule({
-  size = "800 600",
-  match = { tag = "im" },
-})
-```
-
-### 4.3 规则关键字 → Lua 字段
-
-| 规则 | .lua 字段 | 值类型 |
-|---|---|---|
-| `opacity X Y` | `opacity = "X Y"` | string |
-| `float on/off` | `float = true/false` | boolean |
-| `center on/off` | `center = true/false` | boolean |
-| `size W H` | `size = "W H"` | string |
-| `pin on/off` | `pin = true/false` | boolean |
-| `idle_inhibit fullscreen` | `idle_inhibit = "fullscreen"` | string |
-
-### 4.4 compound 规则
-
-```lua
--- class + negative:title（标签系统无法表达的复合条件）
-hl.window_rule({
-  float = true,
-  match = {
-    class = "^([Tt]hunar)$",
-    title_negative = "^(.*[Tt]hunar.*)$",
+-- .lua
+hl.config({
+  input = {
+    kb_layout = "us,cn",
+    follow_mouse = 1,
   },
 })
 ```
 
----
+### Binds
 
-## 5. env 指令
-
-```lua
-hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
-hl.env("QT_QPA_PLATFORM", "wayland;xcb")
+```conf
+# .conf (LEGACY)
+bind = SUPER, Return, exec, kitty
+bind = SUPER, Q, killactive
+bindl = , XF86AudioPlay, exec, playerctl play-pause
 ```
 
----
-
-## 6. exec / exec-once
-
-### 6.1 立即执行
-
 ```lua
-hl.exec_cmd("notify-send 'Hello'")
+-- .lua
+local const = _G.HYPR_CONST
+hl.bind(const.M .. " + Return", hl.dsp.exec_cmd(const.M_terminal))
+hl.bind(const.M .. " + Q", hl.dsp.window.close())
+-- Locked flag (fires on lock screen):
+hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 ```
 
-### 6.2 启动时执行（exec-once 替代）
+**Key differences**:
+- `bind = MOD, KEY, ...` becomes `hl.bind("MOD + KEY", ...)` — modifiers joined with ` + `
+- `killactive` becomes `hl.dsp.window.close()`
+- `bindl` (locked) becomes third-arg flags table `{ locked = true }`
 
-.lua 时代用 `hl.on` 事件钩子：
+### Window Rules
+
+```conf
+# .conf (LEGACY)
+windowrule = float, class:^(firefox)$
+windowrule = opacity 0.9 0.8, class:^(kitty)$
+windowrule = move 100 200, class:^(discord)$, title:^(Library)$
+windowrule = size 800 600, class:^(calculator)$
+```
 
 ```lua
--- sys/startup.lua
+-- .lua
+hl.window_rule({ float = true, match = { class = "^([Ff]irefox)$" } })
+hl.window_rule({ opacity = "0.9 0.8", match = { class = "^(kitty)$" } })
+hl.window_rule({
+  move = { "100", "200" },
+  match = { class = "^([Dd]iscord)$", title = "^(Library)$" },  -- AND combined
+})
+hl.window_rule({ size = "800 600", match = { class = "^([Cc]alculator)$" } })
+```
+
+**Key differences**:
+- `windowrule = effect, match:class ^X$` becomes `hl.window_rule({ effect=value, match={class="^X$"} })`
+- Multiple `match:` conditions are AND-combined in one Lua table
+- For OR logic, use multiple `hl.window_rule` calls
+- `size` and `move` use Lua table form for expressions: `{ "monitor_w * 0.5", "monitor_h * 0.5" }`
+- Empty `class = ""` is a BUG (matches all windows) — never use it
+
+### Exec on Start
+
+```conf
+# .conf (LEGACY)
+exec-once = waybar
+exec-once = swaync
+exec-once = hyprsunset -t 4500
+```
+
+```lua
+-- .lua
 hl.on("hyprland.start", function()
   hl.exec_cmd("waybar")
   hl.exec_cmd("swaync")
-  hl.exec_cmd("~/.config/hypr/sys/scripts/KeybindsLayoutInit.sh")
-end)
-
--- 新能力：关闭时清理（.conf 时代不可能）
-hl.on("hyprland.shutdown", function()
-  hl.exec_cmd("pkill swaync 2>/dev/null")
+  hl.exec_cmd("hyprsunset -t 4500")
 end)
 ```
 
----
+**Bonus**: `.lua` also supports `hl.on("hyprland.shutdown", fn)` for cleanup — impossible in `.conf`.
 
-## 7. monitor 指令
+### Workspace Rules
+
+```conf
+# .conf (LEGACY)
+workspace = 1, monitor:DP-1
+workspace = 2, defaultName:browser
+```
 
 ```lua
-hl.monitor({
-  output = "",
-  mode = "preferred",
-  position = "auto",
-  scale = "1",
-})
+-- .lua
+hl.workspace_rule({ workspace = "1", monitor = "DP-1" })
+hl.workspace_rule({ workspace = "2", defaultName = "browser" })
 ```
 
----
+### Monitors
 
-## 8. animation / bezier
-
-### 8.1 bezier 曲线
+```conf
+# .conf (LEGACY)
+monitor = , preferred, auto, 1.0
+monitor = DP-1, 2560x1440@60, 0x0, 1.0
+```
 
 ```lua
-hl.curve("wind", { type = "bezier", points = {{0.05, 0.9}, {0.1, 1.05}} })
+-- .lua
+hl.monitor({ output = "", resolution = "preferred", position = "auto", scale = 1.0 })
+hl.monitor({ output = "DP-1", resolution = "2560x1440@60", position = "0x0", scale = 1.0 })
 ```
 
-### 8.2 animation
+## Common Pitfalls
+
+### 1. `size` expression format
 
 ```lua
-hl.animation({
-  leaf = "windows",
-  enabled = true,
-  speed = 6,
-  bezier = "wind",
-  style = "slide",
-})
+-- BAD (string with parens — Hyprland may misparse)
+hl.window_rule({ size = "(monitor_w*0.60) (monitor_h*0.70)", match = { tag = "im" } })
+
+-- GOOD (Lua table form)
+hl.window_rule({ size = { "monitor_w * 0.60", "monitor_h * 0.70" }, match = { tag = "im" } })
 ```
 
-**注意**：`speed` 必须在 `[0, 100]` 范围内。
-
----
-
-## 9. layerrule 指令
+### 2. `fullscreen` is bool
 
 ```lua
-hl.layer_rule({ rule = "blur on, match:namespace ^(rofi)$" })
+-- BAD (string — truthy in Lua, but not a valid effect value)
+hl.window_rule({ fullscreen = "0", match = { tag = "games" } })
+
+-- GOOD (boolean)
+hl.window_rule({ fullscreen = true, match = { tag = "games" } })
 ```
 
----
+### 3. `keep_aspect_ratio` is NOT a window_rule effect
 
-## 10. hyprlock / hypridle 独立配置
+```lua
+-- BAD (it's a resize() dispatcher param, not a rule effect)
+hl.window_rule({ keep_aspect_ratio = true, match = { tag = "pip" } })
 
-`hyprlock` 和 `hypridle` 是独立守护进程，有各自的配置文件（不被 Hyprland 加载）：
-
-```bash
-# 加载方式
-hyprlock --config ~/.config/hypr/sys/hyprlock.lua
-hypridle --config ~/.config/hypr/sys/hypridle.lua
+-- (Remove from rule; configure via app or dispatcher)
 ```
 
-它们的 `source` 指令在 .lua 时代变为 `require`，路径解析方式相同。
+### 4. `ignore_alpha` is number
 
----
+```lua
+-- BAD (string)
+hl.layer_rule({ ignore_alpha = "0.5", match = { namespace = "..." } })
 
-## 相关文档
+-- GOOD (number)
+hl.layer_rule({ ignore_alpha = 0.5, match = { namespace = "..." } })
+```
 
-- [README.md](README.md) — .lua 配置架构
-- [../02-Architecture/ARCHITECTURE_OVERVIEW.md](../02-Architecture/ARCHITECTURE_OVERVIEW.md) — 架构总览
-- [../02-Architecture/THREE_LAYER_CONSTANTS.md](../02-Architecture/THREE_LAYER_CONSTANTS.md) — 三层常量系统
-- [../03-Core-Systems/TAG_SYSTEM.md](../03-Core-Systems/TAG_SYSTEM.md) — 标签系统
-- [../03-Core-Systems/STATE_MACHINES.md](../03-Core-Systems/STATE_MACHINES.md) — 状态机
+### 5. Empty `class = ""` matches all windows
 
----
+```lua
+-- BAD (matches every window — bug!)
+hl.window_rule({ match = { class = "" }, tag = "settings" })
 
-**Last Updated**: 2026-08-19 · **Hyprland Version**: 0.56.2 · **Config Form**: Lua (native)
+-- GOOD (specific class or title)
+hl.window_rule({ match = { class = "^([Cc]alculator)$" }, tag = "calculator" })
+```
+
+## Daemons That Still Need `.conf`
+
+Two daemons don't support Lua config, so the repo ships `.conf` for them (as symlinks):
+
+| Daemon | Config | Why |
+| --- | --- | --- |
+| `hypridle` | `~/.config/hypr/hypridle.conf` → `sys/hypridle.conf` | Daemon uses hyprlang, not Lua |
+| `hyprlock` | `~/.config/hypr/hyprlock.conf` → `sys/hyprlock.conf` | Daemon uses hyprlang, not Lua |
+
+These are NOT Hyprland config — they're separate daemons with their own config format.
+
+## References
+
+- [Hyprland Window Rules wiki](https://wiki.hypr.land/Configuring/Basics/Window-Rules/) — full effect list
+- [Hyprland Dispatchers wiki](https://wiki.hypr.land/Configuring/Basics/Dispatchers/) — `hl.dsp.*` spec
+- [Hyprland 0.54 wiki (legacy .conf)](https://wiki.hypr.land/0.54.0/) — historical syntax
+- [Project README](../../README.md) — current state

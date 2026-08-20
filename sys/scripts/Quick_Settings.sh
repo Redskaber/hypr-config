@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # Rofi menu for Hyprland Quick Settings (SUPER SHIFT E)
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 HYPR_DIR="$HOME/.config/hypr"
 
 # terminal and editor: prefer env vars set via user/env.lua, fall back to defaults
-term="${HYPR_TERMINAL:-kitty}"
-edit="${EDITOR:-nano}"
+term="${HYPR_TERMINAL:-"$TERMINAL"}"
+edit="${EDITOR:-"$EDITOR"}"
 
 # variables
 sys_conf="$HYPR_DIR/sys"
@@ -17,7 +20,7 @@ scriptsDir="$HYPR_DIR/sys/scripts"
 
 # Function to show info notification
 show_info() {
-  notify-send -i "$iDIR/info.png" "Info" "$1"
+  "$NOTIFY" -i "$iDIR/info.png" "Info" "$1"
 }
 
 # Function to display the menu options
@@ -58,7 +61,7 @@ EOF
 
 # Main function to handle menu selection
 main() {
-  choice=$(menu | rofi -i -dmenu -config $rofi_theme -mesg "$msg")
+  choice=$(menu | "$ROFI" -i -dmenu -config $rofi_theme -mesg "$msg")
 
   case "$choice" in
   "Edit User Constants")              file="$user_conf/const.lua" ;;
@@ -79,35 +82,35 @@ main() {
   "Choose Kitty Terminal Theme") $scriptsDir/Kitty_themes.sh ;;
   "Configure Monitors (nwg-displays)")
     if ! command -v nwg-displays &>/dev/null; then
-      notify-send -i "$iDIR/error.png" "E-R-R-O-R" "Install nwg-displays first"
+      "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install nwg-displays first"
       exit 1
     fi
     nwg-displays
     ;;
   "Configure Workspace Rules (nwg-displays)")
     if ! command -v nwg-displays &>/dev/null; then
-      notify-send -i "$iDIR/error.png" "E-R-R-O-R" "Install nwg-displays first"
+      "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install nwg-displays first"
       exit 1
     fi
     nwg-displays
     ;;
   "GTK Settings (nwg-look)")
     if ! command -v nwg-look &>/dev/null; then
-      notify-send -i "$iDIR/error.png" "E-R-R-O-R" "Install nwg-look first"
+      "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install nwg-look first"
       exit 1
     fi
     nwg-look
     ;;
   "QT Apps Settings (qt6ct)")
     if ! command -v qt6ct &>/dev/null; then
-      notify-send -i "$iDIR/error.png" "E-R-R-O-R" "Install qt6ct first"
+      "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install qt6ct first"
       exit 1
     fi
     qt6ct
     ;;
   "QT Apps Settings (qt5ct)")
     if ! command -v qt5ct &>/dev/null; then
-      notify-send -i "$iDIR/error.png" "E-R-R-O-R" "Install qt5ct first"
+      "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install qt5ct first"
       exit 1
     fi
     qt5ct
@@ -127,8 +130,8 @@ main() {
 }
 
 # Check if rofi is already running
-if pidof rofi >/dev/null; then
-  pkill rofi
+if pidof "$ROFI" >/dev/null; then
+  pkill "$ROFI"
 fi
 
 main

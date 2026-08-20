@@ -11,27 +11,30 @@
 #   scrolling — unbound; hyprscrolling plugin handles column navigation
 #   dwindle   — cyclenext/prev + SUPER+O togglesplit
 #   master    — cyclenext/prev (no SUPER+O)
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 set -euo pipefail
 
-LAYOUT=$(hyprctl -j getoption general:layout | jq -r '.str')
+LAYOUT=$("$HYPRCTL" -j getoption general:layout | "$JQ" -r '.str')
 
 # Clear all layout-managed binds first
-hyprctl keyword unbind SUPER,J || true
-hyprctl keyword unbind SUPER,K || true
-hyprctl keyword unbind SUPER,O || true
+"$HYPRCTL" keyword unbind SUPER,J || true
+"$HYPRCTL" keyword unbind SUPER,K || true
+"$HYPRCTL" keyword unbind SUPER,O || true
 
 case "$LAYOUT" in
 "scrolling")
     # hyprscrolling owns J/K — leave unbound
     ;;
 "dwindle")
-    hyprctl keyword bind SUPER,J,cyclenext
-    hyprctl keyword bind SUPER,K,cyclenext,prev
-    hyprctl keyword bind SUPER,O,togglesplit
+    "$HYPRCTL" keyword bind SUPER,J,cyclenext
+    "$HYPRCTL" keyword bind SUPER,K,cyclenext,prev
+    "$HYPRCTL" keyword bind SUPER,O,togglesplit
     ;;
 "master"|*)
-    hyprctl keyword bind SUPER,J,cyclenext
-    hyprctl keyword bind SUPER,K,cyclenext,prev
+    "$HYPRCTL" keyword bind SUPER,J,cyclenext
+    "$HYPRCTL" keyword bind SUPER,K,cyclenext,prev
     ;;
 esac

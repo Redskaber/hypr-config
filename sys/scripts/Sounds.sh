@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # This script is used to play system sounds.
 # Script is used by Volume.Sh and ScreenShots.sh
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 theme="freedesktop" # Set the theme for the system sounds.
 mute=false          # Set to true to mute the system sounds.

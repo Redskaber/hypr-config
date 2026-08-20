@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Wallust: derive colors from the current wallpaper and update templates
 # Usage: WallustSwww.sh [absolute_path_to_wallpaper]
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 set -euo pipefail
 
@@ -12,10 +15,10 @@ wallpaper_current="$HOME/.config/hypr/wallpaper_effects/.wallpaper_current"
 
 # Helper: get focused monitor name (prefer JSON)
 get_focused_monitor() {
-  if command -v jq >/dev/null 2>&1; then
-    hyprctl monitors -j | jq -r '.[] | select(.focused) | .name'
+  if command -v "$JQ" >/dev/null 2>&1; then
+    "$HYPRCTL" monitors -j | "$JQ" -r '.[] | select(.focused) | .name'
   else
-    hyprctl monitors | awk '/^Monitor/{name=$2} /focused: yes/{print name}'
+    "$HYPRCTL" monitors | awk '/^Monitor/{name=$2} /focused: yes/{print name}'
   fi
 }
 
@@ -55,4 +58,4 @@ cp -f "$wallpaper_path" "$wallpaper_current" || true
 
 # Run wallust (silent) to regenerate templates defined in ~/.config/wallust/wallust.toml
 # -s is used in this repo to keep things quiet and avoid extra prompts
-wallust run -s "$wallpaper_path" || true
+"$COLOR_GEN" run -s "$wallpaper_path" || true

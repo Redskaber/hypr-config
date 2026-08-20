@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
-# Script for Monitor backlights (if supported) using brightnessctl
+# @path: sys/scripts/Brightness.sh
+# @author: redskaber
+# @date: 2026-08-20
+# @description: Monitor brightness control (uses common.sh for DI)
+
+# Source shared library — provides BRIGHTNESS_CONTROL, NOTIFY, dt_notify, etc.
+source "$(dirname "$0")/lib/common.sh"
 
 iDIR="$HOME/.config/swaync/icons"
-notification_timeout=1000
 step=10 # INCREASE/DECREASE BY THIS VALUE
 
 # Get current brightness as an integer (without %)
 get_brightness() {
-  brightnessctl -m | cut -d, -f4 | tr -d '%'
+  "$BRIGHTNESS_CONTROL" -m | cut -d, -f4 | tr -d '%'
 }
 
 # Determine the icon based on brightness level
@@ -20,12 +25,11 @@ get_icon_path() {
   echo "$iDIR/brightness-${level}.png"
 }
 
-# Send notification
+# Send notification (uses dt_notify from common.sh — no hard-coded notify-send)
 send_notification() {
   local brightness=$1
   local icon_path=$2
-
-  notify-send -e \
+  "$NOTIFY" -e \
     -h string:x-canonical-private-synchronous:brightness_notif \
     -h int:value:"$brightness" \
     -u low \
@@ -45,7 +49,7 @@ change_brightness() {
   ((new < 5)) && new=5
   ((new > 100)) && new=100
 
-  brightnessctl set "${new}%"
+  "$BRIGHTNESS_CONTROL" set "${new}%"
 
   icon=$(get_icon_path "$new")
   send_notification "$new" "$icon"
@@ -66,4 +70,3 @@ case "$1" in
   get_brightness
   ;;
 esac
-

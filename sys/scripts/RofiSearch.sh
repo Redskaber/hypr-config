@@ -8,6 +8,9 @@
 #
 # $Search_Engine must contain a URL with '{}' as the query placeholder,
 # e.g. "https://www.google.com/search?q={}"
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 HYPR_DIR="${HOME}/.config/hypr"
 USER_CONST="${HYPR_DIR}/user/const.conf"
@@ -44,9 +47,9 @@ rofi_theme="${HOME}/.config/rofi/config-search.rasi"
 msg='‼️ **note** ‼️ search via default web browser'
 
 # Kill any existing rofi instance before opening a new one
-pkill -x rofi 2>/dev/null
+pkill -x "$ROFI" 2>/dev/null
 
-query=$(echo "" | rofi -dmenu -config "$rofi_theme" -mesg "$msg")
+query=$(echo "" | "$ROFI" -dmenu -config "$rofi_theme" -mesg "$msg")
 
 [[ -z "$query" ]] && exit 0
 

@@ -1,20 +1,23 @@
 #!/usr/bin/env bash
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 # Variables
 rofi_theme="$HOME/.config/rofi/config-emoji.rasi"
 msg='** note ** 👀 Click or Return to choose || Ctrl V to Paste'
 
 # Check if rofi is already running
-if pidof rofi > /dev/null; then
-  pkill rofi
+if pidof "$ROFI" > /dev/null; then
+  pkill "$ROFI"
 fi
 
+
 sed '1,/^# # DATA # #$/d' "$0" | \
-rofi -i -dmenu -mesg "$msg" -config $rofi_theme | \
+"$ROFI" -i -dmenu -mesg "$msg" -config $rofi_theme | \
 awk '{print $1}' | \
 head -n 1 | \
 tr -d '\n' | \
-wl-copy
+"$WL_COPY"
 
 exit
 
@@ -590,7 +593,7 @@ exit
 🐋 whale animal nature sea ocean
 🐬 dolphin animal nature fish sea ocean flipper fins beach
 🐟 fish animal food nature
-🐠 tropical fish animal swim ocean beach nemo
+🐠 tropical fish animal swim ocean beach "$FILE_MANAGER"
 🐡 blowfish animal nature food sea ocean
 🦈 shark animal nature fish sea ocean jaws fins beach
 🐙 octopus animal creature ocean sea nature beach

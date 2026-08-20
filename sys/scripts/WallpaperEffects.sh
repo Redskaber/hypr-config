@@ -2,11 +2,11 @@
 # Wallpaper Effects using ImageMagick (SUPER SHIFT W)
 
 # Variables — override terminal via HYPR_TERMINAL env var (set in user/env.conf)
-terminal="${HYPR_TERMINAL:-kitty}"
+terminal="${HYPR_TERMINAL:-"$TERMINAL"}"
 wallpaper_current="$HOME/.config/hypr/wallpaper_effects/.wallpaper_current"
 wallpaper_output="$HOME/.config/hypr/wallpaper_effects/.wallpaper_modified"
 SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
-focused_monitor=$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .name')
+focused_monitor=$("$HYPRCTL" monitors -j | "$JQ" -r '.[] | select(.focused) | .name')
 rofi_theme="$HOME/.config/rofi/config-wallpaper-effect.rasi"
 
 # Directory for swaync
@@ -46,13 +46,16 @@ declare -A effects=(
 no-effects() {
   awww img -o "$focused_monitor" "$wallpaper_current" $SWWW_PARAMS &&
     wait $!
-  wallust run "$wallpaper_current" -s &&
+  "$COLOR_GEN" run "$wallpaper_current" -s &&
     wait $!
   # Refresh rofi, waybar, wallust palettes
   sleep 2
   "$SCRIPTSDIR/Refresh.sh"
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
-  notify-send -u low -i "$iDIR/ja.png" "No wallpaper" "effects applied"
+
+  "$NOTIFY" -u low -i "$iDIR/ja.png" "No wallpaper" "effects applied"
   # copying wallpaper for rofi menu
   cp "$wallpaper_current" "$wallpaper_output"
 }
@@ -65,7 +68,7 @@ main() {
     [[ "$effect" != "No Effects" ]] && options+=("$effect")
   done
 
-  choice=$(printf "%s\n" "${options[@]}" | LC_COLLATE=C sort | rofi -dmenu -i -config $rofi_theme)
+  choice=$(printf "%s\n" "${options[@]}" | LC_COLLATE=C sort | "$ROFI" -dmenu -i -config $rofi_theme)
 
   # Process user choice
   if [[ -n "$choice" ]]; then
@@ -73,7 +76,7 @@ main() {
       no-effects
     elif [[ "${effects[$choice]+exists}" ]]; then
       # Apply selected effect
-      notify-send -u normal -i "$iDIR/ja.png" "Applying:" "$choice effects"
+      "$NOTIFY" -u normal -i "$iDIR/ja.png" "Applying:" "$choice effects"
       eval "${effects[$choice]}"
 
       # intial kill process
@@ -86,11 +89,11 @@ main() {
 
       sleep 2
 
-      wallust run "$wallpaper_output" -s &
+      "$COLOR_GEN" run "$wallpaper_output" -s &
       sleep 1
       # Refresh rofi, waybar, wallust palettes
       "${SCRIPTSDIR}/Refresh.sh"
-      notify-send -u low -i "$iDIR/ja.png" "$choice" "effects applied"
+      "$NOTIFY" -u low -i "$iDIR/ja.png" "$choice" "effects applied"
     else
       echo "Effect '$choice' not recognized."
     fi
@@ -98,8 +101,8 @@ main() {
 }
 
 # Check if rofi is already running and kill it
-if pidof rofi >/dev/null; then
-  pkill rofi
+if pidof "$ROFI" >/dev/null; then
+  pkill "$ROFI"
 fi
 
 main
@@ -136,7 +139,7 @@ if [[ -n "$choice" ]]; then
 
         # Check if terminal exists
         if ! command -v "$terminal" &>/dev/null; then
-          notify-send -i "$iDIR/ja.png" "Missing $terminal" "Install $terminal to enable setting of wallpaper background"
+          "$NOTIFY" -i "$iDIR/ja.png" "Missing $terminal" "Install $terminal to enable setting of wallpaper background"
           exit 1
         fi
 

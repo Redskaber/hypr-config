@@ -3,6 +3,9 @@
 
 # Find all polkit-gnome executables in the Nix store
 polkit_gnome_paths=$(find /nix/store -name 'polkit-gnome-authentication-agent-1' -type f 2>/dev/null)
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 for polkit_gnome_path in $polkit_gnome_paths; do
   # Extract the directory containing the executable

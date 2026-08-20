@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # weather info from wttr. https://github.com/chubin/wttr.in
 # Remember to add city
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 city=""
 
@@ -13,8 +16,8 @@ fi
 encoded_city="$city"
 if command -v python3 >/dev/null 2>&1; then
   encoded_city=$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))' "$city")
-elif command -v jq >/dev/null 2>&1; then
-  encoded_city=$(printf '%s' "$city" | jq -sRr @uri)
+elif command -v "$JQ" >/dev/null 2>&1; then
+  encoded_city=$(printf '%s' "$city" | "$JQ" -sRr @uri)
 else
   # Minimal fallback: encode a few common special characters
   encoded_city=$(printf '%s' "$city" | sed -e 's/ /%20/g' -e 's/&/%26/g' -e 's/?/%3F/g' -e 's/#/%23/g')

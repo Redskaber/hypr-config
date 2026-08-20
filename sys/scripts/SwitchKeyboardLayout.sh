@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # This is for changing kb_layouts. Set kb_layouts in $settings_file
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 layout_file="$HOME/.cache/kb_layout"
 settings_file="$HOME/.config/hypr/sys/input.conf"
@@ -53,7 +56,7 @@ echo "Next layout: $new_layout"
 
 # Function to get keyboard names
 get_keyboard_names() {
-  hyprctl devices -j | jq -r '.keyboards[].name'
+  "$HYPRCTL" devices -j | "$JQ" -r '.keyboards[].name'
 }
 
 # Function to check if a device matches any ignore pattern
@@ -78,7 +81,7 @@ change_layout() {
     fi
 
     echo "Switching layout for $name to $new_layout..."
-    hyprctl switchxkblayout "$name" "$next_index"
+    "$HYPRCTL" switchxkblayout "$name" "$next_index"
     if [ $? -ne 0 ]; then
       echo "Error while switching layout for $name." >&2
       error_found=true
@@ -91,11 +94,11 @@ change_layout() {
 
 # Execute layout change and notify
 if ! change_layout; then
-  notify-send -u low -t 2000 'kb_layout' " Error:" " Layout change failed"
+  "$NOTIFY" -u low -t 2000 'kb_layout' " Error:" " Layout change failed"
   echo "Layout change failed." >&2
   exit 1
 else
-  notify-send -u low -i "$notif_icon" " kb_layout: $new_layout"
+  "$NOTIFY" -u low -i "$notif_icon" " kb_layout: $new_layout"
   echo "Layout change notification sent."
 fi
 

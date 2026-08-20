@@ -5,11 +5,14 @@
 # up as the wallpaper at regular intervals
 #
 # NOTE: this script uses bash (not POSIX shell) for the RANDOM variable
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
 wallust_refresh="$SCRIPTSDIR/RefreshNoWaybar.sh"
 
-focused_monitor=$(hyprctl monitors | awk '/^Monitor/{name=$2} /focused: yes/{print name}')
+focused_monitor=$("$HYPRCTL" monitors | awk '/^Monitor/{name=$2} /focused: yes/{print name}')
 
 if [[ $# -lt 1 ]] || [[ ! -d $1 ]]; then
   echo "Usage:

@@ -3,6 +3,9 @@
 # and prints it in a human-readable format
 # This is a workaround for system where `uptime` command is taken from coreutils
 # where `uptime -p` is not supported
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 if [[ -r /proc/uptime ]]; then
   s=$(</proc/uptime)

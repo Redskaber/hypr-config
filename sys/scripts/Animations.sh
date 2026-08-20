@@ -2,8 +2,8 @@
 # For applying Animations from different users
 
 # Check if rofi is already running
-if pidof rofi >/dev/null; then
-  pkill rofi
+if pidof "$ROFI" >/dev/null; then
+  pkill "$ROFI"
 fi
 
 # Variables
@@ -16,19 +16,22 @@ msg='❗NOTE:❗ Select an animation preset to apply'
 animations_list=$(find -L "$animations_dir" -maxdepth 1 -type f | sed 's/.*\///' | sed 's/\.conf$//' | sort -V)
 
 # Rofi Menu
-chosen_file=$(echo "$animations_list" | rofi -i -dmenu -config $rofi_theme -mesg "$msg")
+chosen_file=$(echo "$animations_list" | "$ROFI" -i -dmenu -config $rofi_theme -mesg "$msg")
 
 # Check if a file was selected
 if [[ -n "$chosen_file" ]]; then
   full_path="$animations_dir/$chosen_file.conf"
   if [[ ! -f "$full_path" ]]; then
-    notify-send -u critical -i "$iDIR/ja.png" "Animation not found" "$chosen_file"
+    "$NOTIFY" -u critical -i "$iDIR/ja.png" "Animation not found" "$chosen_file"
     exit 1
   fi
   # Apply by sourcing via hyprctl keyword (no file copy needed in new arch)
-  hyprctl reload
-  notify-send -u low -i "$iDIR/ja.png" "$chosen_file" "Hyprland Animation Loaded"
+  "$HYPRCTL" reload
+  "$NOTIFY" -u low -i "$iDIR/ja.png" "$chosen_file" "Hyprland Animation Loaded"
 fi
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 sleep 1
 "$SCRIPTSDIR/RefreshNoWaybar.sh"

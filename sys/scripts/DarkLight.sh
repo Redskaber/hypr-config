@@ -10,7 +10,10 @@ swaync_style="$HOME/.config/swaync/style.css"
 ags_style="$HOME/.config/ags/user/style.css"
 SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
 notif="$HOME/.config/swaync/images/bell.png"
-wallust_rofi="$HOME/.config/wallust/templates/colors-rofi.rasi"
+wallust_rofi="$HOME/.config/wallust/templates/colors-"$ROFI".rasi"
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 kitty_conf="$HOME/.config/kitty/kitty.conf"
 
@@ -19,12 +22,12 @@ pallete_dark="dark16"
 pallete_light="light16"
 
 # initial signal — tell running processes to prepare for theme change
-for pid in waybar rofi swaync ags swaybg; do
+for pid in "$BAR" "$ROFI" "$NOTIFICATION" ags swaybg; do
   killall -SIGUSR1 "$pid" 2>/dev/null || true
 done
 
 # Initialize awww if needed
-awww query || awww-daemon --format argb
+awww query || "$WALLPAPER_DAEMON" --format argb
 
 # Set awww options
 awww="awww img"
@@ -48,7 +51,7 @@ update_theme_mode() {
 
 # Function to notify user
 notify_user() {
-  notify-send -u low -i "$notif" " Switching to" " $1 mode"
+  "$NOTIFY" -u low -i "$notif" " Switching to" " $1 mode"
 }
 
 # Use sed to replace the palette setting in the wallust config file
@@ -111,7 +114,7 @@ else
   sed -i '/^cursor /s/^cursor .*/cursor #000000/' "${kitty_conf}"
 fi
 
-for pid_kitty in $(pidof kitty); do
+for pid_kitty in $(pidof "$TERMINAL"); do
   kill -SIGUSR1 "$pid_kitty"
 done
 
@@ -230,7 +233,7 @@ update_theme_mode
 ${SCRIPTSDIR}/WallustSwww.sh &&
   sleep 2
 # stop services before restart
-for pid1 in waybar rofi swaync ags swaybg; do
+for pid1 in "$BAR" "$ROFI" "$NOTIFICATION" ags swaybg; do
   killall "$pid1" 2>/dev/null || true
 done
 
@@ -239,6 +242,6 @@ ${SCRIPTSDIR}/Refresh.sh
 
 sleep 0.5
 # Display notifications for theme and icon changes
-notify-send -u low -i "$notif" " Themes switched to:" " $next_mode Mode"
+"$NOTIFY" -u low -i "$notif" " Themes switched to:" " $next_mode Mode"
 
 exit 0

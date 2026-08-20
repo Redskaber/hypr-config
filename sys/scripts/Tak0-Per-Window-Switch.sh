@@ -31,12 +31,12 @@ count=${#kb_layouts[@]}
 
 # Get current active window ID
 get_win() {
-  hyprctl activewindow -j | jq -r '.address // .id'
+  "$HYPRCTL" activewindow -j | "$JQ" -r '.address // .id'
 }
 
 # Get available keyboards
 get_keyboards() {
-  hyprctl devices -j | jq -r '.keyboards[].name'
+  "$HYPRCTL" devices -j | "$JQ" -r '.keyboards[].name'
 }
 
 # Save window-specific layout
@@ -59,7 +59,7 @@ load_map() {
 do_switch() {
   local IDX=$1
   for kb in $(get_keyboards); do
-    hyprctl switchxkblayout "$kb" "$IDX" 2>/dev/null
+    "$HYPRCTL" switchxkblayout "$kb" "$IDX" 2>/dev/null
   done
 }
 
@@ -78,7 +78,7 @@ cmd_toggle() {
   NEXT=$(((i + 1) % count))
   do_switch "$NEXT"
   save_map "$W" "${kb_layouts[NEXT]}"
-  notify-send -u low -i "$ICON" "kb_layout: ${kb_layouts[NEXT]}"
+  "$NOTIFY" -u low -i "$ICON" "kb_layout: ${kb_layouts[NEXT]}"
 }
 
 # Restore layout on focus

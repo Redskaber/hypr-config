@@ -6,185 +6,121 @@
 local M = {}
 
 M.specs = {
-	hyprctl = { cmd = "hyprctl", required = true, owned = false, desc = "Hyprland IPC client" },
-	terminal = {
-		cmd = "kitty",
-		fallback = "alacritty",
-		required = true,
-		owned = false,
-		env_var = "HYPR_TERMINAL",
-		desc = "Terminal emulator",
-	},
-	launcher = {
-		cmd = "rofi",
-		fallback = "wofi",
-		required = true,
-		owned = true,
-		config_path = "~/.config/rofi/",
-		desc = "Application launcher",
-	},
-	bar = {
-		cmd = "waybar",
-		fallback = "yambar",
-		required = true,
-		owned = true,
-		config_path = "~/.config/waybar/",
-		desc = "Wayland status bar",
-	},
-	wallpaper_daemon = {
-		cmd = "awww-daemon",
-		fallback = "swww-daemon",
-		required = true,
-		owned = false,
-		default_args = { format = "argb" },
-		desc = "Wallpaper daemon",
-	},
-	color_gen = {
-		cmd = "wallust",
-		fallback = "pywal",
-		required = true,
-		owned = true,
-		config_path = "~/.config/wallust/",
-		desc = "Color scheme generator",
-	},
-	notification = {
-		cmd = "swaync",
-		fallback = "mako",
-		required = true,
-		owned = true,
-		config_path = "~/.config/swaync/",
-		desc = "Notification daemon",
-	},
-	idle_daemon = {
-		cmd = "hypridle",
-		fallback = "swayidle",
-		required = true,
-		owned = true,
-		config_path = "~/.config/hypr/sys/hypridle.conf",
-		desc = "Idle daemon",
-	},
-	lock = {
-		cmd = "hyprlock",
-		fallback = "swaylock",
-		required = true,
-		owned = true,
-		config_path = "~/.config/hypr/sys/hyprlock.conf",
-		desc = "Screen locker",
-	},
-	nightlight = {
-		cmd = "hyprsunset",
-		fallback = "gammastep",
-		required = false,
-		owned = false,
-		desc = "Blue light filter",
-	},
-	clipboard = { cmd = "cliphist", fallback = "clipman", required = true, owned = false, desc = "Clipboard history" },
-	wl_paste = { cmd = "wl-paste", required = true, owned = false, desc = "Wayland clipboard paste" },
-	screenshot = { cmd = "grim", fallback = "hyprshot", required = true, owned = false, desc = "Screenshot" },
-	slurp = { cmd = "slurp", required = false, owned = false, desc = "Region selector" },
-	logout_menu = {
-		cmd = "wlogout",
-		fallback = "wleave",
-		required = false,
-		owned = true,
-		config_path = "~/.config/wlogout/",
-		desc = "Logout menu",
-	},
-	media_control = { cmd = "playerctl", required = false, owned = false, desc = "Media control" },
-	volume_control = { cmd = "pactl", fallback = "amixer", required = true, owned = false, desc = "Volume control" },
-	brightness_control = {
-		cmd = "brightnessctl",
-		fallback = "light",
-		required = false,
-		owned = false,
-		desc = "Brightness",
-	},
-	auth_agent = {
-		cmd = "polkit- gnome-authentication-agent-1",
-		fallback = "lxpolkit",
-		required = true,
-		owned = false,
-		desc = "Polkit agent",
-	},
-	input_method = { cmd = "fcitx5", fallback = "ibus-daemon", required = false, owned = false, desc = "Input method" },
-	network_applet = {
-		cmd = "nm-applet",
-		fallback = "nm-tray",
-		required = false,
-		owned = false,
-		desc = "Network applet",
-	},
-	file_manager = {
-		cmd = "nemo",
-		fallback = "thunar",
-		required = true,
-		owned = false,
-		env_var = "HYPR_FILE_MANAGER",
-		desc = "File manager",
-	},
-	editor = { cmd = os.getenv("EDITOR") or "nano", fallback = "vim", required = true, owned = false, desc = "Editor" },
-	jq = { cmd = "jq", required = true, owned = false, desc = "JSON processor" },
-	notify = { cmd = "notify-send", required = true, owned = false, desc = "Notification sender" },
+  hyprctl = { cmd = "hyprctl", required = true, owned = false, desc = "Hyprland IPC client" },
+  terminal = { cmd = "kitty", fallback = "alacritty", required = true, owned = false, env_var = "HYPR_TERMINAL", desc = "Terminal emulator" },
+  launcher = { cmd = "rofi", fallback = "wofi", required = true, owned = true, config_path = "~/.config/rofi/", desc = "Application launcher" },
+  bar = { cmd = "waybar", fallback = "yambar", required = true, owned = true, config_path = "~/.config/waybar/", desc = "Wayland status bar" },
+  wallpaper_daemon = { cmd = "awww-daemon", fallback = "swww-daemon", required = true, owned = false, default_args = { format = "argb" }, desc = "Wallpaper daemon" },
+  color_gen = { cmd = "wallust", fallback = "pywal", required = true, owned = true, config_path = "~/.config/wallust/", desc = "Color scheme generator" },
+  notification = { cmd = "swaync", fallback = "mako", required = true, owned = true, config_path = "~/.config/swaync/", desc = "Notification daemon" },
+  idle_daemon = { cmd = "hypridle", fallback = "swayidle", required = true, owned = true, config_path = "~/.config/hypr/sys/hypridle.conf", desc = "Idle daemon" },
+  lock = { cmd = "hyprlock", fallback = "swaylock", required = true, owned = true, config_path = "~/.config/hypr/sys/hyprlock.conf", desc = "Screen locker" },
+  nightlight = { cmd = "hyprsunset", fallback = "gammastep", required = false, owned = false, desc = "Blue light filter" },
+  clipboard = { cmd = "cliphist", fallback = "clipman", required = true, owned = false, desc = "Clipboard history" },
+  wl_paste = { cmd = "wl-paste", required = true, owned = false, desc = "Wayland clipboard paste" },
+  wl_copy = { cmd = "wl-copy", required = true, owned = false, desc = "Wayland clipboard copy" },
+  screenshot = { cmd = "grim", fallback = "hyprshot", required = true, owned = false, desc = "Screenshot" },
+  slurp = { cmd = "slurp", required = false, owned = false, desc = "Region selector" },
+  logout_menu = { cmd = "wlogout", fallback = "wleave", required = false, owned = true, config_path = "~/.config/wlogout/", desc = "Logout menu" },
+  media_control = { cmd = "playerctl", required = false, owned = false, desc = "Media control" },
+  volume_control = { cmd = "pamixer", fallback = "pactl", required = true, owned = false, desc = "Volume control" },
+  brightness_control = { cmd = "brightnessctl", fallback = "light", required = false, owned = false, desc = "Brightness" },
+  auth_agent = { cmd = "polkit- gnome-authentication-agent-1", fallback = "lxpolkit", required = true, owned = false, desc = "Polkit agent" },
+  input_method = { cmd = "fcitx5", fallback = "ibus-daemon", required = false, owned = false, desc = "Input method" },
+  network_applet = { cmd = "nm-applet", fallback = "nm-tray", required = false, owned = false, desc = "Network applet" },
+  file_manager = { cmd = "nemo", fallback = "thunar", required = true, owned = false, env_var = "HYPR_FILE_MANAGER", desc = "File manager" },
+  editor = { cmd = os.getenv("EDITOR") or "nano", fallback = "vim", required = true, owned = false, desc = "Editor" },
+  jq = { cmd = "jq", required = true, owned = false, desc = "JSON processor" },
+  notify = { cmd = "notify-send", required = true, owned = false, desc = "Notification sender" },
 }
 
 M._resolved = {}
 
 function M.get(name)
-	local spec = M.specs[name]
-	if not spec then
-		return nil
-	end
-	if M._resolved[name] then
-		return M._resolved[name]
-	end
+  local spec = M.specs[name]
+  if not spec then return nil end
+  if M._resolved[name] then return M._resolved[name] end
 
-	-- 不用 os.execute 检测 (可能阻塞), 直接返回 spec
-	-- env_var 覆盖
-	local cmd = spec.cmd or ""
-	if spec.env_var and os.getenv(spec.env_var) then
-		cmd = os.getenv(spec.env_var) or cmd
-	end
+  -- 不用 os.execute 检测 (可能阻塞), 直接返回 spec
+  -- env_var 覆盖
+  local cmd = spec.cmd or ""
+  if spec.env_var and os.getenv(spec.env_var) then
+    cmd = os.getenv(spec.env_var) or cmd
+  end
 
-	local result = {
-		name = name,
-		cmd = cmd,
-		found = true, -- 假设存在, 用户自行确保
-		owned = spec.owned,
-		config_path = spec.config_path,
-		default_args = spec.default_args,
-		desc = spec.desc,
-	}
-	M._resolved[name] = result
-	return result
+  local result = {
+    name = name,
+    cmd = cmd,
+    found = true,  -- 假设存在, 用户自行确保
+    owned = spec.owned,
+    config_path = spec.config_path,
+    default_args = spec.default_args,
+    desc = spec.desc,
+  }
+  M._resolved[name] = result
+  return result
 end
 
 function M.check_all()
-	return true, {}
+  return true, {}
 end
 
 function M.owned_tools()
-	local out = {}
-	for name, spec in pairs(M.specs) do
-		if spec.owned then
-			table.insert(out, name)
-		end
-	end
-	table.sort(out)
-	return out
+  local out = {}
+  for name, spec in pairs(M.specs) do
+    if spec.owned then table.insert(out, name) end
+  end
+  table.sort(out)
+  return out
 end
 
 function M.cmd(name)
-	local dep = M.get(name)
-	if not dep then
-		return nil
-	end
-	local cmd = dep.cmd or ""
-	if dep.default_args then
-		for k, v in pairs(dep.default_args) do
-			cmd = cmd .. " --" .. k .. " " .. tostring(v)
-		end
-	end
-	return cmd
+  local dep = M.get(name)
+  if not dep then return nil end
+  local cmd = dep.cmd or ""
+  if dep.default_args then
+    for k, v in pairs(dep.default_args) do
+      cmd = cmd .. " --" .. k .. " " .. tostring(v)
+    end
+  end
+  return cmd
+end
+
+-- =============================================================================
+-- Shell Export (Dependency Injection for .sh scripts)
+-- =============================================================================
+-- Problem: 52 .sh scripts hard-coded 24 tool names (451 occurrences).
+--          lib/deps.lua declared them but .sh couldn't read Lua tables.
+-- Solution: Generate a shell-sourceable cache file at Hyprland startup.
+--          .sh scripts source it to get BRIGHTNESSCTL, NOTIFY_SEND, etc.
+--
+-- Usage in .sh:
+--   source "${HYPR_DEPS_CACHE:-$HOME/.config/hypr/.deps_cache.sh}"
+--   "$BRIGHTNESSCTL" set 50%    # uses resolved tool name, not hard-coded
+-- =============================================================================
+
+function M.export_to_shell(path)
+  path = path or (_G.HYPR_CONST.Hypr .. "/.deps_cache.sh")
+  local f = io.open(path, "w")
+  if not f then return false, "cannot open " .. path end
+
+  f:write("#!/bin/sh\n")
+  f:write("# AUTO-GENERATED by lib/deps.lua M.export_to_shell()\n")
+  f:write("# Do not edit — regenerate by restarting Hyprland or: hyprctl eval 'require(\"lib.deps\").export_to_shell()'\n")
+  f:write("# Source this in .sh: source \"${HYPR_DEPS_CACHE:-$HOME/.config/hypr/.deps_cache.sh}\"\n")
+  f:write("# Each var is the resolved command name (env_var override applied).\n\n")
+
+  for name, spec in pairs(M.specs) do
+    local dep = M.get(name)
+    if dep and dep.cmd and dep.cmd ~= "" then
+      -- Convert dep name to UPPER_SNAKE_CASE shell var
+      local var = name:upper():gsub("-", "_")
+      f:write(string.format("export %s=%q\n", var, dep.cmd))
+    end
+  end
+
+  f:close()
+  return true, path
 end
 
 return M

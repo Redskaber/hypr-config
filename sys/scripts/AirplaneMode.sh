@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # Airplane Mode. Turning on or off all wifi using rfkill.
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 notif="$HOME/.config/swaync/images/ja.png"
 
@@ -8,8 +11,8 @@ wifi_blocked=$(rfkill list wifi | grep -o "Soft blocked: yes")
 
 if [ -n "$wifi_blocked" ]; then
   rfkill unblock wifi
-  notify-send -u low -i "$notif" " Airplane" " mode: OFF"
+  "$NOTIFY" -u low -i "$notif" " Airplane" " mode: OFF"
 else
   rfkill block wifi
-  notify-send -u low -i "$notif" " Airplane" " mode: ON"
+  "$NOTIFY" -u low -i "$notif" " Airplane" " mode: ON"
 fi

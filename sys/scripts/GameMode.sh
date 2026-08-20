@@ -3,14 +3,17 @@
 # Kept for reference only. Do not use — the SM module is called directly via hl.bind().
 # sys/scripts/GameMode.sh — Toggle game mode (state machine: on ↔ off)
 # State is read from animations:enabled (1 = normal, 0 = game mode active).
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 notif="$HOME/.config/swaync/images/ja.png"
 SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
 
-GAMEMODE_ACTIVE=$(hyprctl getoption animations:enabled | awk 'NR==1{print $2}')
+GAMEMODE_ACTIVE=$("$HYPRCTL" getoption animations:enabled | awk 'NR==1{print $2}')
 
 _gamemode_on() {
-  hyprctl --batch "\
+  "$HYPRCTL" --batch "\
         keyword animations:enabled 0;\
         keyword decoration:shadow:enabled 0;\
         keyword decoration:blur:enabled 0;\
@@ -18,21 +21,21 @@ _gamemode_on() {
         keyword general:gaps_out 0;\
         keyword general:border_size 1;\
         keyword decoration:rounding 0"
-  hyprctl keyword "windowrule opacity 1 override 1 override 1 override, ^(.*)$"
+  "$HYPRCTL" keyword "windowrule opacity 1 override 1 override 1 override, ^(.*)$"
   awww kill
-  notify-send -e -u low -i "$notif" " Gamemode:" " enabled"
+  "$NOTIFY" -e -u low -i "$notif" " Gamemode:" " enabled"
 }
 
 _gamemode_off() {
-  awww-daemon --format argb &
+  "$WALLPAPER_DAEMON" --format argb &
   sleep 0.3
   awww img "$HOME/.config/rofi/.current_wallpaper"
   sleep 0.1
   "${SCRIPTSDIR}/WallustSwww.sh"
   sleep 0.5
-  hyprctl reload
+  "$HYPRCTL" reload
   "${SCRIPTSDIR}/Refresh.sh"
-  notify-send -e -u normal -i "$notif" " Gamemode:" " disabled"
+  "$NOTIFY" -e -u normal -i "$notif" " Gamemode:" " disabled"
 }
 
 # State machine: 1 = animations on (normal mode) → enter game mode

@@ -2,3 +2,7 @@
 # simple bash script to check if update is available by comparing local version and github version
 
 # Local Paths
+
+
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"

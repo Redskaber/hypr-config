@@ -3,23 +3,26 @@
 
 # Variables
 rofi_theme="$HOME/.config/rofi/config-clipboard.rasi"
-msg='👀 **note**  CTRL DEL = cliphist del (entry)   or   ALT DEL - cliphist wipe (all)'
+msg='👀 **note**  CTRL DEL = "$CLIPBOARD" del (entry)   or   ALT DEL - "$CLIPBOARD" wipe (all)'
 # Actions:
 # CTRL Del to delete an entry
 # ALT Del to wipe clipboard contents
 
 # Check if rofi is already running
-if pidof rofi >/dev/null; then
-  pkill rofi
+if pidof "$ROFI" >/dev/null; then
+  pkill "$ROFI"
 fi
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 while true; do
   result=$(
-    rofi -i -dmenu \
+    "$ROFI" -i -dmenu \
       -kb-custom-1 "Control-Delete" \
       -kb-custom-2 "Alt-Delete" \
       -config $rofi_theme \
-      -mesg "$msg" < <(cliphist list)
+      -mesg "$msg" < <("$CLIPBOARD" list)
   )
 
   case "$?" in
@@ -32,16 +35,16 @@ while true; do
       continue
       ;;
     *)
-      cliphist decode <<<"$result" | wl-copy
+      "$CLIPBOARD" decode <<<"$result" | "$WL_COPY"
       exit
       ;;
     esac
     ;;
   10)
-    cliphist delete <<<"$result"
+    "$CLIPBOARD" delete <<<"$result"
     ;;
   11)
-    cliphist wipe
+    "$CLIPBOARD" wipe
     ;;
   esac
 done

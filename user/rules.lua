@@ -1,4 +1,36 @@
 -- @path: user/rules.lua
 -- @author: redskaber
 -- @date: 2026-08-20
--- @description: User rule additions
+-- @description: User rule additions (extends sys/rules.lua, loaded after)
+
+-- This file is loaded AFTER sys/rules.lua. Rules here are appended to the
+-- registry; later rules win on conflicting effects (last-write-wins).
+--
+-- Examples (uncomment & adapt):
+--
+-- -- Override the default im window size for a specific app
+-- hl.window_rule({
+--   size = { "monitor_w * 0.50", "monitor_h * 0.60" },
+--   match = { tag = "im" },
+-- })
+--
+-- -- Add behavior for a custom tag declared in user/tags.lua
+-- hl.window_rule({ opacity = "1.0",        match = { tag = "video-editing" } })
+-- hl.window_rule({ no_blur = true,         match = { tag = "video-editing" } })
+-- hl.window_rule({ idle_inhibit = "always", match = { tag = "video-editing" } })
+--
+-- -- Compound condition (AND): class AND title
+-- hl.window_rule({
+--   float = true,
+--   match = { class = "^([Tt]hunar)$", title = "^Files$" },
+-- })
+--
+-- IMPORTANT rules of thumb (from Hyprland v0.55+ wiki):
+--   * `size` and `move` expressions use Lua table form:
+--       size = { "monitor_w * 0.50", "monitor_h * 0.60" }
+--     NOT string form "(monitor_w*0.50) (monitor_h*0.60)".
+--   * `fullscreen` is bool (true/false), NOT "0".
+--   * `keep_aspect_ratio` is NOT a window_rule effect (it's a resize() dispatcher param).
+--   * `ignore_alpha` is number (0.5), NOT string ("0.5").
+--   * `match = { class = "" }` matches ALL windows (empty regex matches any string).
+--   * Multiple `match` fields are AND-combined; for OR, use multiple rules.

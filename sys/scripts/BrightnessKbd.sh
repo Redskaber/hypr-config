@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # Script for keyboard backlights (if supported) using brightnessctl
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 iDIR="$HOME/.config/swaync/icons"
 
 # Get keyboard brightness
 get_kbd_backlight() {
-  echo $(brightnessctl -d '*::kbd_backlight' -m | cut -d, -f4)
+  echo $("$BRIGHTNESS_CONTROL" -d '*::kbd_backlight' -m | cut -d, -f4)
 }
 
 # Get icons
@@ -25,12 +28,12 @@ get_icon() {
 }
 # Notify
 notify_user() {
-  notify-send -e -h string:x-canonical-private-synchronous:brightness_notif -h int:value:$current -h boolean:SWAYNC_BYPASS_DND:true -u low -i "$icon" "Keyboard" "Brightness:$current%"
+  "$NOTIFY" -e -h string:x-canonical-private-synchronous:brightness_notif -h int:value:$current -h boolean:SWAYNC_BYPASS_DND:true -u low -i "$icon" "Keyboard" "Brightness:$current%"
 }
 
 # Change brightness
 change_kbd_backlight() {
-  brightnessctl -d *::kbd_backlight set "$1" && get_icon && notify_user
+  "$BRIGHTNESS_CONTROL" -d *::kbd_backlight set "$1" && get_icon && notify_user
 }
 
 # Execute accordingly

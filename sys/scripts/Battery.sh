@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 for i in {0..3}; do
   if [ -f /sys/class/power_supply/BAT$i/capacity ]; then

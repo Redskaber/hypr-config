@@ -2,9 +2,12 @@
 # KeyBinds.sh — Searchable keybind display using rofi
 # 通解: use hyprctl binds -j (runtime query) instead of parsing .lua files
 # This works because Hyprland knows all registered binds at runtime
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 pkill yad 2>/dev/null || true
-if pidof rofi >/dev/null; then pkill rofi; fi
+if pidof "$ROFI" >/dev/null; then pkill "$ROFI"; fi
 
 rofi_theme="$HOME/.config/rofi/config-keybinds.rasi"
 msg='Clicking or ENTER will have NO function (display only)'
@@ -12,19 +15,19 @@ msg='Clicking or ENTER will have NO function (display only)'
 # Query registered binds from Hyprland runtime (JSON format)
 # hyprctl binds -j returns array of bind objects with:
 #   key: key string, modcode: modifier bitmask, desc: description (if bindd)
-if ! command -v jq >/dev/null 2>&1; then
-  echo "Error: jq is required for KeyBinds.sh" >&2
+if ! command -v "$JQ" >/dev/null 2>&1; then
+  echo "Error: "$JQ" is required for KeyBinds.sh" >&2
   exit 1
 fi
 
-binds_json=$(hyprctl binds -j 2>/dev/null)
+binds_json=$("$HYPRCTL" binds -j 2>/dev/null)
 if [ -z "$binds_json" ] || [ "$binds_json" = "[]" ]; then
   echo "No keybinds found or Hyprland not running." >&2
   exit 1
 fi
 
 # Parse JSON into readable format: "MODS + KEY — DESCRIPTION"
-display_keybinds=$(echo "$binds_json" | jq -r '
+display_keybinds=$(echo "$binds_json" | "$JQ" -r '
   .[] | 
   # Convert modcode to modifier names
   (.has_mod? 
@@ -47,4 +50,4 @@ if [ -z "$display_keybinds" ]; then
 fi
 
 # Display with rofi
-printf '%s\n' "$display_keybinds" | rofi -dmenu -i -config "$rofi_theme" -mesg "$msg"
+printf '%s\n' "$display_keybinds" | "$ROFI" -dmenu -i -config "$rofi_theme" -mesg "$msg"

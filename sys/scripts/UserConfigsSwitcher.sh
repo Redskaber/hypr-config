@@ -4,6 +4,9 @@
 # flat-file architecture to the new bootstrap/sys/user layered architecture.
 # In the new arch, user customisations live in user/ — this script is only
 # needed if you still have a UserConfigs directory from a previous install.
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 HYPR_CONFIG_DIR="$HOME/.config/hypr"
 USER_CONFIGS="$HYPR_CONFIG_DIR/UserConfigs"

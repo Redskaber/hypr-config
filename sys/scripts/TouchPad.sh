@@ -2,6 +2,9 @@
 # For disabling touchpad.
 # Set $Touchpad_Device in sys/hardware/laptop.lua (run: hyprctl devices to find name)
 # source https://github.com/hyprwm/Hyprland/discussions/4283?sort=new#discussioncomment-8648109
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 notif="$HOME/.config/swaync/images/ja.png"
 
@@ -9,14 +12,14 @@ export STATUS_FILE="$XDG_RUNTIME_DIR/touchpad.status"
 
 enable_touchpad() {
   printf "true" >"$STATUS_FILE"
-  notify-send -u low -i $notif " Enabling" " touchpad"
-  hyprctl keyword '$TOUCHPAD_ENABLED' "true" -r
+  "$NOTIFY" -u low -i $notif " Enabling" " touchpad"
+  "$HYPRCTL" keyword '$TOUCHPAD_ENABLED' "true" -r
 }
 
 disable_touchpad() {
   printf "false" >"$STATUS_FILE"
-  notify-send -u low -i $notif " Disabling" " touchpad"
-  hyprctl keyword '$TOUCHPAD_ENABLED' "false" -r
+  "$NOTIFY" -u low -i $notif " Disabling" " touchpad"
+  "$HYPRCTL" keyword '$TOUCHPAD_ENABLED' "false" -r
 }
 
 if ! [ -f "$STATUS_FILE" ]; then

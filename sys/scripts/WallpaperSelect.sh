@@ -2,7 +2,7 @@
 # This script for selecting wallpapers (SUPER W)
 
 # WALLPAPERS PATH — override via env var HYPR_WALLPAPER_DIR (set in user/env.conf)
-terminal="${HYPR_TERMINAL:-kitty}"
+terminal="${HYPR_TERMINAL:-"$TERMINAL"}"
 wallDIR="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/wallpapers}"
 SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
 wallpaper_current="$HOME/.config/hypr/wallpaper_effects/.wallpaper_current"
@@ -20,23 +20,26 @@ SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration
 
 # Check if package bc exists
 if ! command -v bc &>/dev/null; then
-  notify-send -i "$iDIR/error.png" "bc missing" "Install package bc first"
+  "$NOTIFY" -i "$iDIR/error.png" "bc missing" "Install package bc first"
   exit 1
 fi
 
 # Variables
 rofi_theme="$HOME/.config/rofi/config-wallpaper.rasi"
-focused_monitor=$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .name')
+focused_monitor=$("$HYPRCTL" monitors -j | "$JQ" -r '.[] | select(.focused) | .name')
 
 # Ensure focused_monitor is detected
 if [[ -z "$focused_monitor" ]]; then
-  notify-send -i "$iDIR/error.png" "E-R-R-O-R" "Could not detect focused monitor"
+  "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Could not detect focused monitor"
   exit 1
 fi
 
 # Monitor details
-scale_factor=$(hyprctl monitors -j | jq -r --arg mon "$focused_monitor" '.[] | select(.name == $mon) | .scale')
-monitor_height=$(hyprctl monitors -j | jq -r --arg mon "$focused_monitor" '.[] | select(.name == $mon) | .height')
+scale_factor=$("$HYPRCTL" monitors -j | "$JQ" -r --arg mon "$focused_monitor" '.[] | select(.name == $mon) | .scale')
+monitor_height=$("$HYPRCTL" monitors -j | "$JQ" -r --arg mon "$focused_monitor" '.[] | select(.name == $mon) | .height')
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 
 icon_size=$(echo "scale=1; ($monitor_height * 3) / ($scale_factor * 150)" | bc)
 adjusted_icon_size=$(echo "$icon_size" | awk '{if ($1 < 15) $1 = 20; if ($1 > 25) $1 = 25; print $1}')
@@ -131,7 +134,7 @@ set_sddm_wallpaper() {
 
       # Check if terminal exists
       if ! command -v "$terminal" &>/dev/null; then
-        notify-send -i "$iDIR/error.png" "Missing $terminal" "Install $terminal to enable setting of wallpaper background"
+        "$NOTIFY" -i "$iDIR/error.png" "Missing $terminal" "Install $terminal to enable setting of wallpaper background"
         exit 1
       fi
 
@@ -157,8 +160,8 @@ apply_image_wallpaper() {
   kill_wallpaper_for_image
 
   if ! pgrep -x "awww-daemon" >/dev/null; then
-    echo "Starting awww-daemon..."
-    awww-daemon --format argb &
+    echo "Starting "$WALLPAPER_DAEMON"..."
+    "$WALLPAPER_DAEMON" --format argb &
   fi
 
   awww img -o "$focused_monitor" "$image_path" $SWWW_PARAMS
@@ -177,7 +180,7 @@ apply_video_wallpaper() {
 
   # Check if mpvpaper is installed
   if ! command -v mpvpaper &>/dev/null; then
-    notify-send -i "$iDIR/error.png" "E-R-R-O-R" "mpvpaper not found"
+    "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "mpvpaper not found"
     return 1
   fi
   kill_wallpaper_for_video
@@ -224,8 +227,8 @@ main() {
 }
 
 # Check if rofi is already running
-if pidof rofi >/dev/null; then
-  pkill rofi
+if pidof "$ROFI" >/dev/null; then
+  pkill "$ROFI"
 fi
 
 main

@@ -1,4 +1,32 @@
 -- @path: user/tags.lua
 -- @author: redskaber
 -- @date: 2026-08-20
--- @description: User tag additions
+-- @description: User tag additions (extends sys/tags.lua, loaded after)
+
+-- This file is loaded AFTER sys/tags.lua, so any hl.window_rule here is appended
+-- to the rule registry. Existing tags can be reused (inherits all sys/rules.lua
+-- behavior automatically) or new tags can be declared (then add rules in
+-- user/rules.lua).
+--
+-- Examples (uncomment & adapt):
+--
+-- -- Add Signal to the existing "im" category (inherits all im rules)
+-- hl.window_rule({
+--   match = { class = "^(signal)$" },
+--   tag = "im",
+-- })
+--
+-- -- Add a brand-new category for video editing
+-- hl.window_rule({
+--   match = { class = "^(davinci-resolve)$" },
+--   tag = "video-editing",
+-- })
+--
+-- -- Tag windows by title (e.g. browser PiP)
+-- hl.window_rule({
+--   match = { title = "^(Picture-in-Picture)$" },
+--   tag = "pip",
+-- })
+--
+-- IMPORTANT: never use `class = ""` (empty regex matches ALL windows!).
+-- Use specific class or title patterns.

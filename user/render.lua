@@ -1,4 +1,12 @@
 -- @path: user/render.lua
 -- @author: redskaber
 -- @date: 2026-08-20
--- @description: User render overrides
+-- @description: User render overrides (deltas from sys/render.lua)
+
+-- Uncomment to override:
+-- hl.config({
+--   render = {
+--     direct_scanout = true,   -- for gaming (lower latency)
+--     explicit_sync = 1,       -- 0=auto, 1=off, 2=on
+--   },
+-- })
