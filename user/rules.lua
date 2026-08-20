@@ -1,0 +1,8 @@
+-- @path: user/rules.lua
+-- @author: redskaber
+-- @date: 2026-08-20
+-- @description: User rule additions
+--
+-- user/rules.lua — User overrides for sys/rules.lua
+-- Edit this file to customize rules settings (incremental override pattern).
+-- Only specify differences from sys/rules.lua; sys defaults inherit automatically.

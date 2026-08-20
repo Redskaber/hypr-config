@@ -1,0 +1,8 @@
+-- @path: user/keybind.lua
+-- @author: redskaber
+-- @date: 2026-08-20
+-- @description: User keybind overrides
+--
+-- user/keybind.lua — User overrides for sys/keybind.lua
+-- Edit this file to customize keybind settings (incremental override pattern).
+-- Only specify differences from sys/keybind.lua; sys defaults inherit automatically.

@@ -1,0 +1,4 @@
+-- @path: sys/hardware/workspaces.lua
+-- @author: redskaber
+-- @date: 2026-08-20
+-- @description: Workspace → monitor assignment

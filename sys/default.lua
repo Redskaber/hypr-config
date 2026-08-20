@@ -1,0 +1,27 @@
+-- @path: sys/default.lua
+-- @author: redskaber
+-- @date: 2026-08-20
+-- @description: System pipeline — require order = override priority (later wins)
+
+require("sys.hardware.default")
+require("sys.policy.default")
+require("sys.env")
+require("user.env")
+require("sys.misc")
+require("user.misc")
+require("sys.input")
+require("user.input")
+require("sys.layout")
+require("user.layout")
+require("sys.decoration")
+require("user.decoration")
+require("sys.render")
+require("user.render")
+require("sys.startup")
+require("user.startup")
+require("sys.keybind")
+require("user.keybind")
+require("sys.tags")
+require("user.tags")
+require("sys.rules")
+require("user.rules")

@@ -1,0 +1,8 @@
+-- @path: user/misc.lua
+-- @author: redskaber
+-- @date: 2026-08-20
+-- @description: User misc overrides
+--
+-- user/misc.lua — User overrides for sys/misc.lua
+-- Edit this file to customize misc settings (incremental override pattern).
+-- Only specify differences from sys/misc.lua; sys defaults inherit automatically.

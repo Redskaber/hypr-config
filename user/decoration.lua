@@ -1,0 +1,8 @@
+-- @path: user/decoration.lua
+-- @author: redskaber
+-- @date: 2026-08-20
+-- @description: User decoration overrides
+--
+-- user/decoration.lua — User overrides for sys/decoration.lua
+-- Edit this file to customize decoration settings (incremental override pattern).
+-- Only specify differences from sys/decoration.lua; sys defaults inherit automatically.

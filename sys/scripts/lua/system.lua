@@ -1,0 +1,89 @@
+-- @path: sys/scripts/lua/system.lua
+-- @author: redskaber
+-- @date: 2026-08-20
+-- @description: System action module (screenshot/logout/lock/kill)
+--
+-- phase-d/sys/scripts/system.lua  — System action scripts (5 scripts → 1 module)
+-- wiki WARNING: io.popen only in startup, NEVER in bind callbacks
+--
+-- MIGRATION: consolidates:
+--   ScreenShot.sh, Wlogout.sh, LockScreen.sh, PortalHyprland.sh, KillActiveProcess.sh
+
+local deps = require("sys.deps")
+local utils = require("lib.script_utils")
+
+local M = {}
+
+-- Screenshot (replaces ScreenShot.sh)
+-- Uses deps.get("screenshot") + deps.get("slurp") — not hardcoded grim/slurp
+function M.screenshot(hl, mode)
+	mode = mode or "region" -- region | full | window
+	local shot = deps.get("screenshot")
+	local slurp = deps.get("slurp")
+	local timestamp = os.date("%Y%m%d_%H%M%S")
+	local outfile = os.getenv("HOME") .. "/Pictures/Screenshots/screenshot_" .. timestamp .. ".png"
+
+	local cmd
+	if mode == "full" then
+		cmd = shot.cmd .. " '" .. outfile .. "'"
+	elseif mode == "region" and slurp.found then
+		cmd = shot.cmd .. ' -g "$(' .. slurp.cmd .. ')" "' .. outfile .. '"'
+	else
+		cmd = shot.cmd .. " '" .. outfile .. "'"
+	end
+	hl.exec_cmd(cmd)
+	utils.notify(hl, "Screenshot", "Saved: " .. outfile)
+end
+
+-- Logout menu (replaces Wlogout.sh)
+function M.logout_menu(hl)
+	local menu = deps.get("logout_menu")
+	if menu.found then
+		hl.exec_cmd(menu.cmd)
+	else
+		-- Fallback: rofi-based menu
+		local items = { "Lock", "Logout", "Suspend", "Reboot", "Shutdown" }
+		local launcher = deps.get("launcher")
+		local cmd = "echo '" .. table.concat(items, "\\n") .. "' | " .. launcher.cmd .. " -dmenu -p 'Power:'"
+		local f = io.popen(cmd)
+		if f then
+			local selected = f:read("*l")
+			f:close()
+			if selected then
+				local actions = {
+					Lock = "hyprlock",
+					Logout = "hyprctl dispatch exit",
+					Suspend = "systemctl suspend",
+					Reboot = "systemctl reboot",
+					Shutdown = "systemctl poweroff",
+				}
+				local action = actions[selected]
+				if action then
+					hl.exec_cmd(action)
+				end
+			end
+		end
+	end
+end
+
+-- Lock screen (replaces LockScreen.sh)
+function M.lock(hl)
+	local lock = deps.get("lock")
+	hl.exec_cmd(lock.cmd)
+end
+
+-- Portal setup (replaces PortalHyprland.sh)
+function M.setup_portal(hl)
+	hl.exec_cmd("systemctl --user start xdg-desktop-portal-hyprland")
+	hl.exec_cmd("systemctl --user start xdg-desktop-portal-gtk 2>/dev/null || true")
+end
+
+-- Kill active process (replaces KillActiveProcess.sh)
+-- Uses hl.dsp.window.kill — the REAL Hyprland Lua API
+-- (in .conf era this was `hyprctl dispatch killwindow`)
+function M.kill_active(hl)
+	hl.dsp.window.kill({})
+	utils.notify(hl, "Kill", "Active window killed")
+end
+
+return M
