@@ -1,123 +1,71 @@
 # Hyprland Configuration
 
-> **⚠️ 本文档以 .lua（Hyprland v0.55+ 原生）为准**。历史 .conf 形式见文末 [Historical .conf form](#historical-conf-form) 节，亦见 git history。
-> 语法对照见 [../../07-Lua-Reference/COMPATIBILITY.md](../../07-Lua-Reference/COMPATIBILITY.md)。
+> **Pure `.lua` Hyprland window manager config** — native Lua API (Hyprland v0.55+).
+> Tested on Hyprland 0.56.2. Historical `.conf` form is preserved in git history only.
 
-> **Production-grade Hyprland window manager configuration** with professional software architecture
-> Applying compilation theory, design patterns, and state machine formalization
->
-> **Config Form**: Lua (native, Hyprland v0.55+) · **Tested**: Hyprland 0.56.2
-> **Historical .conf form**: preserved in git history (pre-v0.55 commits)
+Production-grade desktop environment that applies **compilation pipeline**, **design patterns**,
+and **formal state machines** to a window manager configuration. Every architectural decision is
+documented under [`docs/`](docs/).
 
 ---
 
 ## 🚀 Quick Start
 
-### New to This Configuration?
-
-**[Start Here](docs/01-Getting-Started/README.md)** — Project overview and key concepts
-
-### Want to Get Running Fast?
-
-**[Quick Start Guide](docs/01-Getting-Started/QUICK_START.md)** — 5-minute setup
-
-### Looking for Something Specific?
-
-**[Documentation Index](docs/06-Meta/DOCUMENTATION_INDEX.md)** — Complete navigation hub
-
 ### 5-Minute Install
 
 ```bash
-# Clone the .lua config (no .conf files in this repo)
+# Clone into ~/.config/hypr
 git clone https://github.com/Redskaber/hypr-config ~/.config/hypr
 
-# Edit user/const.lua — set your terminal / file manager / wallpaper dir
-nano ~/.config/hypr/user/const.lua
+# Edit user constants (terminal, search engine, etc.)
+$EDITOR ~/.config/hypr/user/const.lua
 
-# Launch Hyprland (no hyprctl reload needed — .lua auto-reloads on save)
+# Verify the config loads cleanly
+hyprland --verify-config
+
+# Launch Hyprland — .lua files auto-reload on save (no `hyprctl reload` for edits)
 Hyprland
 ```
 
----
+> 💡 **Tip**: If `--verify-config` is unavailable, run `luacheck ~/.config/hypr --codes`
+> (see `.luacheckrc`). A clean `hyprland --verify-config` is the gold standard.
 
-## 📚 Documentation
+### Where to Go Next
 
-This project features a **comprehensive documentation set** organized into 6 categories:
-
-| Category                | Purpose             | Documents                         |
-| ----------------------- | ------------------- | --------------------------------- |
-| **01. Getting Started** | New user guides     | README, Quick Start, Common Tasks |
-| **02. Architecture**    | Design & principles | Pipeline, Constants, Layers       |
-| **03. Core Systems**    | Runtime behavior    | Tags, State Machines, Policies    |
-| **04. Implementation**  | How-to guides       | Config, Scripts, Extensions       |
-| **05. Reference**       | Lookup materials    | Constants, API, Troubleshooting   |
-| **06. Meta**            | Project info        | Index, Contributing, Changelog    |
-
-**📖 Browse all documentation**: [docs/06-Meta/DOCUMENTATION_INDEX.md](docs/06-Meta/DOCUMENTATION_INDEX.md)
+| If you want to… | Read |
+| --- | --- |
+| Understand the big picture | [docs/01-Getting-Started/README.md](docs/01-Getting-Started/README.md) |
+| Install step-by-step | [docs/01-Getting-Started/QUICK_START.md](docs/01-Getting-Started/QUICK_START.md) |
+| Do common customizations | [docs/01-Getting-Started/COMMON_TASKS.md](docs/01-Getting-Started/COMMON_TASKS.md) |
+| Browse all docs | [docs/06-Meta/DOCUMENTATION_INDEX.md](docs/06-Meta/DOCUMENTATION_INDEX.md) |
 
 ---
 
 ## ✨ Key Features
 
 ### 🏗️ Professional Architecture
-
-- **5-stage compilation pipeline** (lexical analysis → code generation)
-- **Three-layer constant system** (bootstrap/sys/user)
-- **Incremental override pattern** (user deltas over system defaults)
-- **Dependency inversion** throughout
+- **Layered pipeline** (bootstrap → sys → user) with last-write-wins merge on `_G.HYPR_CONST`
+- **Three-layer constant system** — path infra / system defaults / user deltas
+- **Incremental override pattern** — every `sys/X.lua` has a paired `user/X.lua`
+- **Dependency inversion** via `lib/deps.lua` (25 external tools declared, 0 hard-coded)
 
 ### ⚙️ Advanced Runtime Systems
-
-- **Tag-driven window management** (28 category tags + 5 behavior tags)
-- **Formal state machines** (layout engine, game mode, night light) — now in `.lua` modules
-- **Strategy pattern policies** (swappable colors, animations)
-- **Process lifecycle management** (service isolation, absolute paths)
+- **Tag-driven window management** — 26 tags in `sys/tags.lua` (categories + behaviors)
+- **Formal state machines** — layout / game mode / night light, sharing `lib/sm.lua` base class
+  (`pcall`-wrapped transitions + invariant assertions + transition log)
+- **Strategy pattern policies** — swappable animation presets + wallust-generated colors
+- **Dropdown terminal** — state machine + strategy + pipeline design (`sys/scripts/Dropterminal.sh`)
 
 ### 🎨 Customization
-
-- **Minimal user config** (only specify differences — return-table style)
-- **Auto-reload** (Hyprland detects `.lua` file changes, no `hyprctl reload` for most edits)
-- **Profile switching** (gaming, productivity, presentation modes)
-- **Extensible tag system** (add custom window rules easily)
+- Minimal user config — only specify deltas in `user/*.lua`
+- Auto-reload on save (Hyprland watches `.lua` files)
+- Profile switching via state machines (game mode, night light)
+- Extensible tag system — add window rules in `user/tags.lua` + `user/rules.lua`
 
 ### 🚀 Performance
-
-- **Fast startup** (~32ms config load time)
-- **Low memory** (~150MB RAM usage)
-- **Optimized rendering** (configurable blur, shadows, animations)
-- **Efficient IPC** (batched `hl.config({...})` calls)
-
----
-
-## 🎯 Learning Paths
-
-Choose the path that matches your expertise level:
-
-### Essential User (15 min)
-
-Learn basics and common tasks
-
-- [README](docs/01-Getting-Started/README.md) → [Common Tasks](docs/01-Getting-Started/COMMON_TASKS.md)
-
-### Power User (90 min)
-
-Understand architecture and customize effectively
-
-- Architecture Overview → Three-Layer Constants → Configuration Guide
-
-### Developer (3.5 hours)
-
-Deep understanding for advanced customization
-
-- All Power User content + Design Principles + Tag System + State Machines
-
-### Architect (8+ hours)
-
-Complete mastery for architectural decisions
-
-- Full documentation suite including pipeline architecture, layer boundaries, performance tuning
-
-**See all learning paths**: [DOCUMENTATION_INDEX.md](docs/06-Meta/DOCUMENTATION_INDEX.md) § Learning Paths
+- Fast startup (config loads in a few ms)
+- Batched `hl.config({...})` calls (single IPC round-trip per file)
+- External tools resolved once at load time (no per-bind `os.execute`)
 
 ---
 
@@ -125,98 +73,68 @@ Complete mastery for architectural decisions
 
 ```bash
 ~/.config/hypr/
-├── hyprland.lua              # Single entry point (requires bootstrap.default)
-├── icon.png                   # notification icon used by hypridle
+├── hyprland.lua              # Entry point: require("bootstrap.default")
+├── architecture.md           # Pointer to docs/02-Architecture/
+├── icon.png                  # Notification icon (used by hypridle)
+├── hypridle.conf → sys/hypridle.conf   # symlink (daemon needs .conf)
+├── hyprlock.conf → sys/hyprlock.conf   # symlink (daemon needs .conf)
 │
-├── bootstrap/                 # Layer 1: Infrastructure constants
-│   ├── const.lua             # Path constants (return-table form)
-│   └── default.lua           # Pipeline orchestrator (requires all layers)
+├── bootstrap/                # Layer 1 — path infrastructure (immutable)
+│   ├── const.lua            # _G.HYPR_CONST.Hypr / .sys / .user / .lock_background
+│   └── default.lua          # Pipeline orchestrator: const layers + sys/default
 │
-├── sys/                       # Layer 2: System defaults (read-only)
-│   ├── const.lua             # System constants ($M, $S, $H, $P, etc.)
-│   ├── default.lua           # System pipeline
-│   ├── env.lua               # hl.env calls
-│   ├── input.lua             # hl.config input settings
-│   ├── layout.lua            # hl.config layout engines
-│   ├── decoration.lua       # hl.config visual decoration
-│   ├── render.lua            # hl.config render pipeline
-│   ├── misc.lua              # hl.config misc options
-│   ├── startup.lua           # hl.on("hyprland.start", fn) hooks
-│   ├── keybind.lua           # hl.bind calls + SM-aware binds
-│   ├── tags.lua              # Tag registry (hl.window_rule)
-│   ├── rules.lua             # Tag-driven window rules (hl.window_rule)
-│   ├── hardware/             # Hardware abstraction (monitors, input)
-│   │   ├── default.lua
-│   │   ├── laptop.lua
-│   │   └── monitors.lua
-│   ├── policy/               # Strategy pattern (colors + animations)
-│   │   ├── default.lua
-│   │   ├── wallust/
-│   │   └── animations/
-│   ├── statemachine/         # F3 backport: in-config Lua SMs
-│   │   ├── layout.lua        # 3-state layout cycle
-│   │   ├── gamemode.lua      # 2-state game mode toggle
-│   │   └── nightlight.lua    # 2-state night light toggle
-│   └── scripts/              # Runtime scripts (~60 .sh files, fallback targets)
+├── sys/                      # Layer 2 — system defaults (read-only, vendor)
+│   ├── const.lua            # M, M_terminal, M_file_manager, S/H/P path prefixes…
+│   ├── default.lua          # require chain (defines override priority)
+│   ├── env.lua              # hl.env() calls
+│   ├── input.lua            # input.* settings
+│   ├── layout.lua           # layout engine defaults (dwindle/scrolling/master)
+│   ├── decoration.lua       # decoration.* settings
+│   ├── render.lua           # render.* settings
+│   ├── misc.lua             # misc.* settings
+│   ├── startup.lua          # hl.on("hyprland.start", fn) hook
+│   ├── keybind.lua          # 132 hl.bind calls + SM-aware binds
+│   ├── tags.lua             # Tag registry (26 tags, hl.window_rule)
+│   ├── rules.lua            # Tag-driven behavior rules
+│   ├── hardware/            # Hardware abstraction (monitors, laptop, workspaces)
+│   ├── policy/              # Strategy pattern: animations/ + wallust/
+│   ├── statemachine/        # Lua-native SMs: layout / gamemode / nightlight
+│   └── scripts/             # 60 .sh runtime scripts (+ 3 .lua helpers)
 │
-├── user/                      # Layer 3: User overrides (edit here)
-│   ├── const.lua             # Constant overrides (return-table)
-│   ├── env.lua               # Environment variable overrides
-│   ├── input.lua             # Input overrides
-│   ├── keybind.lua           # Additional keybinds
-│   ├── tags.lua              # Additional tag registrations
-│   ├── rules.lua             # Additional window rules
-│   └── ...                   # Other overrides
+├── user/                     # Layer 3 — user overrides (EDIT HERE)
+│   ├── const.lua            # Delta overrides only
+│   ├── env.lua  input.lua  layout.lua  decoration.lua  render.lua  misc.lua
+│   ├── startup.lua  keybind.lua  tags.lua  rules.lua
 │
-├── lib/                       # Shared libraries
-│   └── sm.lua                # State machine base class (pcall + invariants)
+├── lib/                      # Shared libraries
+│   ├── sm.lua               # State machine base class (pcall + invariant + log)
+│   ├── deps.lua             # 25-tool external dependency manifest (SSOT + DI)
+│   ├── types.lua            # LuaLS type definitions (hl.* API surface)
+│   └── script_utils.lua     # Helpers shared by shell scripts
 │
-└── docs/                      # Documentation
-    ├── 01-Getting-Started/
-    ├── 02-Architecture/
-    ├── 03-Core-Systems/
-    ├── 04-Implementation/
-    ├── 05-Reference/
-    ├── 06-Meta/
-    └── 07-Lua-Reference/
+├── wallpaper_effects/        # wallust output (gitignored)
+└── docs/                     # Documentation (6 categories, see below)
 ```
 
-**Key Design Principle**: `sys/` is read-only (vendor defaults), `user/` is where you edit. `user/X.lua` contains only the **deltas** from `sys/X.lua` (incremental override pattern).
+**Key principle**: `sys/` is read-only. `user/X.lua` contains only the **deltas** you want to override.
+Later requires win (last-write-wins on `_G.HYPR_CONST`).
 
 ---
 
-## 🔧 Installation
+## 📚 Documentation
 
-### Prerequisites
+Documentation is organized into 6 categories under [`docs/`](docs/):
 
-- Hyprland >= 0.55.0 (Lua config native; tested on 0.56.2)
-- Wayland compositor running
-- Required packages: `awww`, `waybar`, `swaync`, `cliphist`, `hypridle`, `rofi`, `wallust`
+| Category | What's inside | Start here |
+| --- | --- | --- |
+| **01-Getting-Started** | Project overview, quick start, common tasks | [README.md](docs/01-Getting-Started/README.md) |
+| **02-Architecture** | Pipeline, design principles, three-layer constants | [ARCHITECTURE_OVERVIEW.md](docs/02-Architecture/ARCHITECTURE_OVERVIEW.md) |
+| **03-Core-Systems** | Tag system, state machines | [TAG_SYSTEM.md](docs/03-Core-Systems/TAG_SYSTEM.md) |
+| **05-Reference** | Troubleshooting, GPU verification | [TROUBLESHOOTING.md](docs/05-Reference/TROUBLESHOOTING.md) |
+| **06-Meta** | Documentation index, changelog, completion report | [DOCUMENTATION_INDEX.md](docs/06-Meta/DOCUMENTATION_INDEX.md) |
+| **07-Lua-Reference** | Legacy `.conf` ↔ `.lua` compatibility notes | [COMPATIBILITY.md](docs/07-Lua-Reference/COMPATIBILITY.md) |
 
-### Quick Install
-
-```bash
-# Clone or copy this configuration (now .lua-first)
-git clone https://github.com/Redskaber/hypr-config ~/.config/hypr
-
-# Review and customize user constants (Lua return-table style)
-nano ~/.config/hypr/user/const.lua
-
-# Launch Hyprland — no hyprctl reload needed (.lua auto-reloads on save)
-Hyprland
-```
-
-### Static Check (Recommended)
-
-```bash
-# Install luacheck if missing
-sudo luarocks install luacheck
-
-# Run static check — should be 0 warnings/errors
-luacheck ~/.config/hypr --codes
-```
-
-**Detailed installation guide**: [docs/01-Getting-Started/QUICK_START.md](docs/01-Getting-Started/QUICK_START.md)
+> ℹ️ `docs/04-Implementation/` does not exist (deliberately skipped during restructuring).
 
 ---
 
@@ -224,82 +142,101 @@ luacheck ~/.config/hypr --codes
 
 ### 1. Three-Layer Constant System
 
-Constants are returned as **Lua tables** from three layered files. Bootstrap merges them via `deep_merge(C, require(...))` so that user overrides win:
+Constants live in `_G.HYPR_CONST` — a single global table populated by three layered files.
+Each layer writes to the same table; **last-write-wins** gives user overrides priority.
 
 ```lua
--- bootstrap/const.lua (Layer 1: paths, not overridable)
-return {
-  ['Hypr = "~/.config/hypr",
-  ['sys   = "~/.config/hypr/sys",
-  ['user  = "~/.config/hypr/user",
-}
+-- bootstrap/const.lua  (Layer 1 — paths, immutable)
+_G.HYPR_CONST = _G.HYPR_CONST or {}
+_G.HYPR_CONST.Hypr  = "~/.config/hypr"
+_G.HYPR_CONST.sys   = "~/.config/hypr/sys"
+_G.HYPR_CONST.user  = "~/.config/hypr/user"
 
--- sys/const.lua (Layer 2: system defaults)
-return {
-  ['M          = "SUPER",
-  ['M_terminal = "kitty",
-  ['S          = "~/.config/hypr/sys/scripts",
-}
+-- sys/const.lua  (Layer 2 — system defaults, read-only)
+_G.HYPR_CONST.M          = "SUPER"
+_G.HYPR_CONST.M_terminal = "kitty"
+_G.HYPR_CONST.S          = "~/.config/hypr/sys/scripts"
 
--- user/const.lua (Layer 3: your overrides — only the deltas)
-return {
-  ['M_terminal = "ghostty",  -- ← Wins! (deep_merge last-write-wins)
-}
+-- user/const.lua  (Layer 3 — YOUR overrides, deltas only)
+_G.HYPR_CONST = _G.HYPR_CONST or {}
+_G.HYPR_CONST.M_terminal = "ghostty"   -- ← wins (loaded last)
 ```
 
-**Learn more**: [THREE_LAYER_CONSTANTS.md](docs/02-Architecture/THREE_LAYER_CONSTANTS.md)
+> ⚠️ There is no `deep_merge()` or `return { ... }` table form. Constants are plain
+> `_G.HYPR_CONST.key = value` assignments — last-write-wins on the shared global table.
+
+**Learn more**: [docs/02-Architecture/THREE_LAYER_CONSTANTS.md](docs/02-Architecture/THREE_LAYER_CONSTANTS.md)
 
 ### 2. Incremental Override Pattern
 
+Every `sys/X.lua` file has a paired `user/X.lua`. Edit only the user file — it runs
+*after* the sys file in the require chain, so its `hl.config({...})` calls win.
+
 ```lua
--- sys/input.lua (system default)
+-- sys/input.lua  (system default — read-only)
 hl.config({ input = { kb_layout = "us" } })
 
--- user/input.lua (your delta — ONLY this line needed)
-hl.config({ input = { kb_layout = "us,cn" } })  -- last-write-wins
+-- user/input.lua  (your delta — only the fields you want to change)
+hl.config({ input = { kb_layout = "us,cn" } })   -- last-write-wins
 ```
 
-**Learn more**: [DESIGN_PRINCIPLES.md](docs/02-Architecture/DESIGN_PRINCIPLES.md) § Incremental Override
+> ⚠️ Note: `hl.config({...})` does a **table merge at the top-level keys you pass**, not a
+> deep merge of every nested field. Pass the full sub-table you want to override.
+
+**Learn more**: [docs/02-Architecture/DESIGN_PRINCIPLES.md](docs/02-Architecture/DESIGN_PRINCIPLES.md)
 
 ### 3. Tag-Driven Window Management
 
+Two-step pattern decoupling "what an app is" from "how it behaves":
+
 ```lua
--- sys/tags.lua — STEP 1: classify apps (WHAT they ARE)
+-- sys/tags.lua  — STEP 1: classify apps (WHAT they ARE)
 hl.window_rule({
   match = { class = "^([Ff]irefox)$" },
   tag = "browser",
 })
 
--- sys/rules.lua — STEP 2: define behavior (HOW they act)
+-- sys/rules.lua  — STEP 2: define behavior (HOW they act)
 hl.window_rule({
   opacity = "1.00 0.85",
   match = { tag = "browser" },
 })
 ```
 
-**Learn more**: [TAG_SYSTEM.md](docs/03-Core-Systems/TAG_SYSTEM.md)
+**26 tags** defined in `sys/tags.lua`:
+
+- **Category tags** (what an app is):
+  `browser` `terminal` `im` `email` `projects` `notes` `file-manager`
+  `multimedia` `multimedia-video` `screenshare` `games` `gamestore`
+  `viewer` `text-editor` `utils` `calculator` `settings` `audio-mixer`
+  `wallpaper` `notif`
+- **Behavior tags** (how a window behaves):
+  `pip` `auth-dialog` `file-dialog` `no-steal-focus` `suppress-activate`
+- **Helper tags**: `keybindings` (and the `$H_Cheat` / `$H_Settings` constants)
+
+**Learn more**: [docs/03-Core-Systems/TAG_SYSTEM.md](docs/03-Core-Systems/TAG_SYSTEM.md)
 
 ### 4. State Machine Runtime (Lua-native)
 
-The config ships three formal state machines **as Lua modules** under `sys/statemachine/`, sharing the base class `lib/sm.lua`:
+Three formal state machines in `sys/statemachine/`, all sharing the `lib/sm.lua` base class
+(`pcall`-wrapped transitions, invariant assertions, transition log):
+
+| State Machine | States | Trigger | Module |
+| --- | --- | --- | --- |
+| Layout | scrolling ↔ dwindle ↔ master | `SUPER + ALT + L` | `sys/statemachine/layout.lua` |
+| GameMode | normal ↔ gaming | `SUPER + SHIFT + G` | `sys/statemachine/gamemode.lua` |
+| NightLight | off ↔ on (4500K) | `SUPER + N` | `sys/statemachine/nightlight.lua` |
 
 ```lua
--- sys/keybind.lua — SM-aware bind (pcall + .sh fallback)
-local ok_sm, layout_sm = pcall(require, 'sys.statemachine.layout')
+-- sys/keybind.lua — SM-aware bind (state machine is primary, .sh is fallback)
+local layout_sm = require('sys.statemachine.layout').new(hl)
 
 hl.bind("SUPER + ALT + L", function()
-  if ok_sm then layout_sm.new(hl):fire("cycle")
-  else hl.dsp.exec_cmd("~/.config/hypr/sys/scripts/ChangeLayout.sh") end
+  layout_sm:fire("cycle")
 end)
 ```
 
-| State Machine | States                         | Trigger        | Module                            |
-| ------------- | ------------------------------ | -------------- | --------------------------------- |
-| Layout        | scrolling ↔ dwindle ↔ master | SUPER+ALT+L    | `sys/statemachine/layout.lua`     |
-| GameMode      | NORMAL ↔ GAMING               | SUPER+SHIFT+G  | `sys/statemachine/gamemode.lua`   |
-| NightLight    | off ↔ on (4500K)              | SUPER+N        | `sys/statemachine/nightlight.lua` |
-
-**Learn more**: [STATE_MACHINES.md](docs/03-Core-Systems/STATE_MACHINES.md)
+**Learn more**: [docs/03-Core-Systems/STATE_MACHINES.md](docs/03-Core-Systems/STATE_MACHINES.md)
 
 ---
 
@@ -307,113 +244,230 @@ end)
 
 ### Change Terminal Emulator
 
-Edit `user/const.lua` (return-table style):
-
 ```lua
 -- user/const.lua
-return {
-  ['M_terminal = "ghostty",  -- options: kitty, alacritty, foot, wezterm, ghostty
-}
+_G.HYPR_CONST = _G.HYPR_CONST or {}
+_G.HYPR_CONST.M_terminal = "ghostty"   -- kitty, alacritty, foot, wezterm, ghostty…
 ```
 
 Hyprland auto-reloads on save — no `hyprctl reload` needed.
 
-### Modify Keybindings
-
-Edit `user/keybind.lua` (Lua form):
+### Add a Custom Keybind
 
 ```lua
 -- user/keybind.lua
-hl.bind("SUPER + T", hl.dsp.exec_cmd("ghostty"))
+local const = _G.HYPR_CONST
 
--- With locked flag (active on lock screen)
+hl.bind(const.M .. " + T", hl.dsp.exec_cmd("ghostty"))
+
+-- Locked flag (fires on lock screen too)
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 
 -- Lua function dispatcher (impossible in .conf era)
-hl.bind("SUPER + ALT + G", function()
+hl.bind(const.M .. " + ALT + G", function()
   require('sys.statemachine.gamemode').new(hl):fire("toggle")
 end)
 ```
 
 ### Add a New App (Tag + Rule)
 
-1. Add tag in `user/tags.lua`:
+```lua
+-- user/tags.lua  (classify)
+hl.window_rule({
+  match = { class = "^([Mm]yapp)$" },
+  tag = "myapp",
+})
 
-   ```lua
-   -- user/tags.lua
-   hl.window_rule({
-     match = { class = "^([Mm]yapp)$" },
-     tag = "myapp",
-   })
-   ```
-
-2. Define behavior in `user/rules.lua`:
-
-   ```lua
-   -- user/rules.lua
-   hl.window_rule({
-     float = true,
-     match = { tag = "myapp" },
-   })
-   hl.window_rule({
-     size = "1200 800",
-     match = { tag = "myapp" },
-   })
-   ```
+-- user/rules.lua  (behavior)
+hl.window_rule({ float = true, match = { tag = "myapp" } })
+hl.window_rule({ size = { 1200, 800 }, match = { tag = "myapp" } })
+```
 
 ### Override Other Constants
 
 ```lua
 -- user/const.lua
-return {
-  ['M_terminal     = "ghostty",                    -- terminal emulator
-  ['M_file_manager = "thunar",                     -- file manager
-  ['W              = "~/Pictures/my-wallpapers",   -- wallpaper directory
-  ['Search_Engine  = "\"https://google.com/search?q={}\"",  -- used by RofiSearch.sh
-}
+_G.HYPR_CONST = _G.HYPR_CONST or {}
+_G.HYPR_CONST.M_terminal     = "ghostty"
+_G.HYPR_CONST.M_file_manager = "thunar"
+_G.HYPR_CONST.W              = "~/Pictures/my-wallpapers"
+_G.HYPR_CONST.Search_Engine  = "https://google.com/search?q={}"   -- used by RofiSearch.sh
 ```
 
 **More common tasks**: [docs/01-Getting-Started/COMMON_TASKS.md](docs/01-Getting-Started/COMMON_TASKS.md)
 
 ---
 
+## 🔧 Pipeline
+
+```
+hyprland.lua
+  └── bootstrap/default.lua
+        ├── Stage 0: bootstrap/const.lua   (path infra)
+        ├── Stage 0: sys/const.lua         (system defaults)
+        ├── Stage 0: user/const.lua        (user deltas — wins)
+        └── Stage 1: sys/default.lua       (pipeline entry)
+              ├── sys/hardware/default → laptop + monitors + workspaces
+              ├── sys/policy/default   → wallust colors + animation preset
+              ├── sys/env          → user/env.lua
+              ├── sys/misc         → user/misc.lua
+              ├── sys/input        → user/input.lua
+              ├── sys/layout       → user/layout.lua
+              ├── sys/decoration   → user/decoration.lua
+              ├── sys/render       → user/render.lua
+              ├── sys/startup     → user/startup.lua
+              ├── sys/keybind     → user/keybind.lua
+              ├── sys/tags        → user/tags.lua
+              └── sys/rules       → user/rules.lua
+```
+
+**require order = override priority**: later files win on `_G.HYPR_CONST` and on
+`hl.config({...})` top-level keys.
+
+**Learn more**: [docs/02-Architecture/PIPELINE_ARCHITECTURE.md](docs/02-Architecture/PIPELINE_ARCHITECTURE.md)
+
+---
+
+## 🎨 Layout System
+
+Three layouts cycle at runtime via `SUPER + ALT + L` (driven by `sys/statemachine/layout.lua`):
+
+```
+scrolling  →  dwindle  →  master  →  scrolling  → …
+```
+
+| Layout | Description | `SUPER+J/K` | `SUPER+O` |
+| --- | --- | --- | --- |
+| `scrolling` | column-based scrolling layout (built-in since Hyprland v0.55) | built-in column nav | unbound |
+| `dwindle` | binary space partitioning | focus down / up | togglesplit |
+| `master` | master-stack | focus down / up | unbound |
+
+Startup layout is set in `user/layout.lua` (default: `dwindle`).
+
+> ℹ️ `scrolling` is built into Hyprland v0.55+ — no `hyprpm` plugin install needed.
+
+**Learn more**: [docs/03-Core-Systems/STATE_MACHINES.md § Layout Engine](docs/03-Core-Systems/STATE_MACHINES.md)
+
+---
+
+## ⌨️ Keybinds (selected)
+
+132 binds total in `sys/keybind.lua`. Press `SUPER + SHIFT + K` at runtime for a searchable list,
+or `SUPER + H` for the cheat sheet.
+
+| Key | Action |
+| --- | --- |
+| `SUPER + D` | App launcher (rofi) |
+| `SUPER + Return` | Terminal |
+| `SUPER + E` | File manager |
+| `SUPER + Q` | Close window |
+| `SUPER + H` | Cheat sheet |
+| `SUPER + SHIFT + K` | Search keybinds |
+| `SUPER + SHIFT + E` | Quick settings menu |
+| `SUPER + S` | Web search (RofiSearch.sh) |
+| `SUPER + W` | Wallpaper selector |
+| `SUPER + ALT + L` | Cycle layout (SM) |
+| `SUPER + SHIFT + G` | Toggle game mode (SM) |
+| `SUPER + N` | Toggle night light (SM) |
+| `SUPER + ALT + R` | Refresh waybar + swaync |
+| `CTRL + ALT + L` | Lock screen |
+| `CTRL + ALT + Del` | Exit Hyprland |
+
+---
+
+## 📜 Scripts
+
+60 `.sh` scripts live in `sys/scripts/` (+ 3 `.lua` helpers in `sys/scripts/lua/`).
+User-specific scripts go in `user/scripts/` (created on demand).
+
+| Script | Trigger | Purpose |
+| --- | --- | --- |
+| `Dropterminal.sh` | bind / startup | Dropdown terminal — state machine + pipeline design |
+| `ChangeLayout.sh` | `SUPER+ALT+L` fallback | Layout cycle (fallback for Lua SM) |
+| `GameMode.sh` | `SUPER+SHIFT+G` fallback | Toggle game mode (fallback for Lua SM) |
+| `Hyprsunset.sh` | `SUPER+N` fallback | Toggle night light (fallback for Lua SM, persists state) |
+| `WallpaperSelect.sh` | `SUPER+W` | Pick wallpaper + apply wallust colors |
+| `Animations.sh` | `SUPER+SHIFT+A` | Switch animation preset |
+| `RofiSearch.sh` | `SUPER+S` | Web search via `$Search_Engine` |
+| `DarkLight.sh` | Quick Settings | Toggle dark/light theme |
+| `Refresh.sh` | `SUPER+ALT+R` | Restart waybar + swaync |
+| `LockScreen.sh` | `CTRL+ALT+L` | Lock screen (hyprlock) |
+| `Quick_Settings.sh` | `SUPER+SHIFT+E` | Open user config files in editor |
+| `KeybindsLayoutInit.sh` | startup | Initialize layout-aware binds |
+| `KeyHints.sh` | `SUPER+H` | Show keybind cheat sheet |
+| `KeyBinds.sh` | `SUPER+SHIFT+K` | Searchable keybind list |
+
+> ℹ️ The Lua state machine modules in `sys/statemachine/*.lua` are the **primary** implementations.
+> The matching `.sh` scripts survive as `pcall`-protected fallbacks.
+
+---
+
+## 🎭 Policies (Strategy Pattern)
+
+Swappable at runtime without reloading the full config:
+
+- **Animations** — presets in `sys/policy/animations/`:
+  `default` `disable` `end4` `hyde-optimized` `hyde-vertical` `ml4w-fast`
+- **Colors** — generated by wallust into `sys/policy/wallust/wallust-hyprland.lua`
+  on wallpaper change
+
+**Design Pattern**: Strategy Pattern — policies are interchangeable algorithms.
+See [docs/02-Architecture/DESIGN_PRINCIPLES.md](docs/02-Architecture/DESIGN_PRINCIPLES.md).
+
+---
+
+## 📦 Dependencies
+
+External tools are declared once in [`lib/deps.lua`](lib/deps.lua) (SSOT + dependency injection).
+All scripts and config files reference them via `deps.get("name").cmd` — **zero hard-coded tool names**.
+
+**Required** (25 specs in `lib/deps.lua`, top-level ones):
+`hyprland` `hyprlock` `hypridle` `hyprctl`
+`awww` (wallpaper daemon) `waybar` (bar) `swaync` (notifications)
+`rofi` (launcher) `wallust` (color generator) `cliphist` + `wl-clipboard`
+`grim` + `slurp` (screenshots) `pamixer`/`pactl` (volume)
+`brightnessctl` (brightness) `playerctl` (media)
+`nm-applet` (network applet) `jq` (JSON) `notify-send`
+
+**Optional**: `hyprsunset` (night light) `polkit agent` `fcitx5` (input method)
+`wlogout` (logout menu) `mpvpaper` (live wallpapers) `qs` / `quickshell` (overview widget)
+
+**Plugin note**: `scrolling` layout is **built into Hyprland v0.55+** — no `hyprpm` install needed.
+
+---
+
 ## 🐛 Troubleshooting
 
-### Colors Not Working?
-
-Check Stage 2 constraint: policy must load before decoration.
-See: [PIPELINE_ARCHITECTURE.md](docs/02-Architecture/PIPELINE_ARCHITECTURE.md) § Stage 2 Constraints
-
-### Keybinds Not Responding?
-
-Re-initialize layout binds (fallback path):
-
+### Config won't load
 ```bash
+# Gold standard: Hyprland's own verifier
+hyprland --verify-config
+
+# Static analysis (catches undefined globals, unused vars)
+luacheck ~/.config/hypr --codes    # see .luacheckrc; `hl` is a known global
+
+# Runtime log
+journalctl -u hyprland-session -f   # or check your session manager's log
+```
+
+### Colors not applied
+Check pipeline order: `sys/policy/default.lua` must load **before** `sys/decoration.lua`
+(it does, via `sys/default.lua`).
+See [docs/02-Architecture/PIPELINE_ARCHITECTURE.md](docs/02-Architecture/PIPELINE_ARCHITECTURE.md).
+
+### Keybinds not responding
+```bash
+# Re-initialize layout-aware binds (fallback path)
 ~/.config/hypr/sys/scripts/KeybindsLayoutInit.sh
-```
 
-Or check for Lua errors:
-
-```bash
+# Check for Lua errors
 luacheck ~/.config/hypr --codes
-journalctl -u hyprland-session -f
 ```
 
-### Service Not Starting?
-
-Check the `hl.on("hyprland.start", fn)` hook in `sys/startup.lua`:
-
-```lua
--- sys/startup.lua
-hl.on("hyprland.start", function()
-  hl.exec_cmd("awww-daemon --format xrgb")
-  hl.exec_cmd("waybar")
-  hl.exec_cmd("swaync")
-  -- ...
-end)
-```
-
-Daemons need absolute paths. See  _(coming soon)_
+### Service not starting
+Check the `hl.on("hyprland.start", fn)` hook in [`sys/startup.lua`](sys/startup.lua).
+Daemons are launched via `deps.cmd("name")` — if a tool is missing, install it or
+override the spec in `user/` (extend `lib/deps.lua`).
 
 **Full troubleshooting guide**: [docs/05-Reference/TROUBLESHOOTING.md](docs/05-Reference/TROUBLESHOOTING.md)
 
@@ -421,319 +475,60 @@ Daemons need absolute paths. See  _(coming soon)_
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see:
-
-- **[Contributing Guidelines](docs/06-Meta/CONTRIBUTING.md)** _(coming soon)_
-- **[Documentation Standards](docs/06-Meta/CONTRIBUTING.md)** _(coming soon)_
-- **[Code of Conduct](CODE_OF_CONDUCT.md)** _(coming soon)_
-
-**Quick start**:
-
 1. Fork the repository
-2. Create feature branch
-3. Make changes (follow style guide — `luacheck` clean)
-4. Submit pull request
+2. Create a feature branch
+3. Make changes — keep `luacheck` clean and verify with `hyprland --verify-config`
+4. Preserve invariants: every tag should have rules; require order in `sys/default.lua` must be correct
+5. Document changes in the relevant `.md` file
+6. Submit a pull request
+
+**Naming conventions**: `M_*` for apps, `H_*` for helper paths, `U_*` for user paths,
+`S/H/P` for sys/scripts, sys/hardware, sys/policy.
+
+See [docs/02-Architecture/DESIGN_PRINCIPLES.md](docs/02-Architecture/DESIGN_PRINCIPLES.md) for
+architecture guidelines and [docs/06-Meta/DOCUMENTATION_INDEX.md](docs/06-Meta/DOCUMENTATION_INDEX.md)
+for the full doc map.
 
 ---
 
 ## 📊 Project Statistics
 
-| Metric                  | Value                              |
-| ----------------------- | ---------------------------------- |
-| **Configuration Files** | 45 `.lua` files (0 `.conf`)        |
-| **Scripts**             | 60 `.sh` files (runtime + SM fallback) |
-| **Libraries**           | 1 (`lib/sm.lua` — SM base class)   |
-| **Documentation**       | 17 docs across 7 categories         |
-| **Lines of Config**     | ~3,000 lines                       |
-| **Lines of Scripts**    | ~5,000 lines                       |
-| **Lines of Docs**       | ~15,000 lines                      |
+| Metric | Value |
+| --- | --- |
+| Configuration files | 49 `.lua` (0 `.conf` in `sys/`/`user/`/`lib/`/`bootstrap/`) |
+| Daemon configs | 2 `.conf` (`hypridle.conf`, `hyprlock.conf` — daemons don't support Lua) |
+| Runtime scripts | 60 `.sh` + 3 `.lua` helpers |
+| Shared libraries | 4 (`lib/sm.lua`, `lib/deps.lua`, `lib/types.lua`, `lib/script_utils.lua`) |
+| Keybinds | 132 `hl.bind` calls in `sys/keybind.lua` |
+| Window tags | 26 (20 category + 6 behavior/helper) in `sys/tags.lua` |
+| State machines | 3 (`layout`, `gamemode`, `nightlight`) in `sys/statemachine/` |
+| External deps declared | 25 (in `lib/deps.lua`) |
+| Documentation | 18 `.md` files across 6 doc categories |
 
 ---
 
 ## 📜 License
 
-This configuration is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+This configuration is provided as-is for educational and practical use. Feel free to adapt the
+architectural patterns to your own dotfiles.
 
 ---
 
 ## 🙏 Acknowledgments
 
-- **Hyprland Team**: For the amazing Wayland compositor and v0.55 native Lua config
-- **Community Contributors**: For scripts, ideas, and feedback
-- **Software Engineering Literature**: For design patterns and architecture principles
-
----
-
-## 📞 Support
-
-- **Documentation**: [docs/06-Meta/DOCUMENTATION_INDEX.md](docs/06-Meta/DOCUMENTATION_INDEX.md)
-- **Issues**: GitHub Issues (use labels: `bug`, `question`, `documentation`)
-- **Discussions**: GitHub Discussions
-- **Wiki**: [Project Wiki](wiki-link) _(coming soon)_
-
----
-
-## Pipeline
-
-```
-hyprland.lua
-  └── bootstrap/default.lua
-        ├── Stage 0: bootstrap/const.lua   (constants)
-        ├── Stage 0: sys/const.lua         (sys constants)
-        ├── Stage 0: user/const.lua        (user constant overrides)
-        └── Stage 1: sys/default.lua       (entry point)
-              ├── sys/hardware/default.lua → laptop + monitors + workspaces
-              ├── sys/policy/default.lua   → wallust colors + animations
-              ├── sys/env.lua          → user/env.lua
-              ├── sys/misc.lua         → user/misc.lua
-              ├── sys/input.lua        → user/input.lua
-              ├── sys/layout.lua       → user/layout.lua
-              ├── sys/decoration.lua   → user/decoration.lua
-              ├── sys/render.lua       → user/render.lua
-              ├── sys/startup.lua      → user/startup.lua
-              ├── sys/keybind.lua      → user/keybind.lua
-              ├── sys/tags.lua         → user/tags.lua
-              └── sys/rules.lua        → user/rules.lua
-```
-
-require order = override priority: **later wins** (`deep_merge(C, require(...))`).
-
-**See Also**:
-
-- [PIPELINE_ARCHITECTURE.md](docs/02-Architecture/PIPELINE_ARCHITECTURE.md) — Complete pipeline documentation with compiler analogies
-- [DESIGN_PRINCIPLES.md](docs/02-Architecture/DESIGN_PRINCIPLES.md) § Compilation Pipeline — Lexical/syntax/semantic analysis phases
-
-## User Customization
-
-Every `sys/` file has a paired `user/` override. Edit only the `user/` files.
-
-**Common overrides:**
-
-```lua
--- user/const.lua
-return {
-  ['M_terminal     = "ghostty",
-  ['M_file_manager = "thunar",
-  ['W              = "~/Pictures/my-wallpapers",
-  ['Search_Engine  = "\"https://google.com/search?q={}\"",  -- used by RofiSearch.sh (SUPER+S)
-}
-
--- user/env.lua
-hl.env("EDITOR",              "nvim")
-hl.env("HYPR_TERMINAL",       "ghostty")        -- used by wallpaper/waybar scripts
-hl.env("HYPR_WALLPAPER_DIR",  "/path/to/wallpapers")
-hl.env("HYPR_FILE_MANAGER",   "thunar")         -- used by WaybarScripts.sh
-hl.env("GDK_SCALE",           "1.5")             -- HiDPI
-hl.env("QT_SCALE_FACTOR",     "1.5")
-
--- user/layout.lua — startup layout (scrolling requires scrolling layout (built-in since v0.55))
-hl.config({ general = { layout = "dwindle" } })
-
--- user/input.lua
-hl.config({ input = { kb_layout = "us,cn" } })
-
--- user/misc.lua
-hl.config({ misc = { vfr = true } })  -- variable frame rate (power saving)
-```
-
-**Design Principle**: Incremental Override Pattern — user files contain only deltas from system defaults. See [DESIGN_PRINCIPLES.md § Dependency Inversion](docs/02-Architecture/DESIGN_PRINCIPLES.md).
-
-## Layout System
-
-Three layouts are supported, cycled at runtime with `SUPER+ALT+L` (driven by `sys/statemachine/layout.lua`):
-
-```
-scrolling  →  dwindle  →  master  →  scrolling  → …
-```
-
-| Layout      | Description                         | `SUPER+J/K`                    | `SUPER+O`     |
-| ----------- | ----------------------------------- | ------------------------------ | ------------- |
-| `scrolling` | scrolling layout (built-in since v0.55) (column-based) | built-in (column nav)      | unbound       |
-| `dwindle`   | binary space partitioning           | `cyclenext` / `cyclenext,prev` | `togglesplit` |
-| `master`    | master-stack                        | `cyclenext` / `cyclenext,prev` | unbound       |
-
-The startup layout is set in `user/layout.lua` (default: `dwindle`).
-`sys/layout.lua` provides `scrolling (built-in since v0.55) {}` defaults for scrolling layout.
-
-### State Machine Implementation
-
-Layout transitions are managed by an explicit **3-state finite state machine** in `sys/statemachine/layout.lua` (using the base class `lib/sm.lua`). See [STATE_MACHINES.md § Layout Engine](docs/03-Core-Systems/STATE_MACHINES.md) for formal definition, transition functions, and atomicity guarantees.
-
-### scrolling layout Keybinds
-
-| Key                       | Action                            |
-| ------------------------- | --------------------------------- |
-| `SUPER + .`               | Move column right                 |
-| `SUPER + ,`               | Move column left                  |
-| `SUPER + SHIFT + .`       | Move window to right column       |
-| `SUPER + SHIFT + ,`       | Move window to left column        |
-| `SUPER + SHIFT + ↑/↓`     | Move window up/down               |
-| `SUPER + ]`               | Resize column wider (+0.1)        |
-| `SUPER + [`               | Resize column narrower (-0.1)     |
-| `SUPER + CTRL + ]`        | Cycle column width up (`+conf`)   |
-| `SUPER + CTRL + [`        | Cycle column width down (`-conf`) |
-| `SUPER + ALT + F`         | Fit active column into view       |
-| `SUPER + ALT + SHIFT + F` | Fit all visible columns           |
-| `SUPER + CTRL + ,`        | Swap column left                  |
-| `SUPER + CTRL + .`        | Swap column right                 |
-| `SUPER + '`               | Promote window to its own column  |
-| `SUPER + CTRL + T`        | Toggle fit method (center ↔ fit)  |
-
-Override `scrolling (built-in since v0.55)` defaults in `user/layout.lua`.
-
-## Keybinds
-
-| Key                 | Action                                                  |
-| ------------------- | ------------------------------------------------------- |
-| `SUPER + H`         | Cheat sheet                                             |
-| `SUPER + SHIFT + K` | Search keybinds                                         |
-| `SUPER + SHIFT + E` | Quick settings menu                                     |
-| `SUPER + D`         | App launcher (rofi)                                     |
-| `SUPER + Return`    | Terminal                                                |
-| `SUPER + W`         | Wallpaper selector                                      |
-| `SUPER + ALT + L`   | Cycle layout (scrolling → dwindle → master → scrolling) |
-| `SUPER + J / K`     | Cycle windows (dwindle/master) · column nav (scrolling) |
-| `SUPER + O`         | Toggle split (dwindle only)                             |
-| `SUPER + SHIFT + G` | Toggle game mode                                        |
-| `SUPER + N`         | Toggle night light                                      |
-| `SUPER + ALT + R`   | Refresh waybar + swaync                                 |
-
-See `sys/keybind.lua` for the full table, or press `SUPER + SHIFT + K` at runtime.
-
-## Scripts
-
-All scripts live in `sys/scripts/`. User-specific scripts go in `user/scripts/`.
-
-| Script                  | Trigger          | Purpose                                                     |
-| ----------------------- | ---------------- | ----------------------------------------------------------- |
-| `ChangeLayout.sh`       | `SUPER+ALT+L`    | Three-state layout cycle (fallback for Lua SM)              |
-| `KeybindsLayoutInit.sh` | startup          | Initialize layout-aware binds based on current layout       |
-| `GameMode.sh`           | `SUPER+SHIFT+G`  | Toggle animations/blur/gaps off for gaming (fallback for Lua SM) |
-| `WallpaperSelect.sh`    | `SUPER+W`        | Pick wallpaper + apply wallust colors                       |
-| `Animations.sh`         | `SUPER+SHIFT+A`  | Switch animation preset                                     |
-| `RofiSearch.sh`         | `SUPER+S`        | Web search: resolves `$Search_Engine` user → sys → fallback |
-| `DarkLight.sh`          | Quick Settings   | Toggle dark/light theme system-wide                         |
-| `Refresh.sh`            | `SUPER+ALT+R`    | Restart waybar + swaync                                     |
-| `RefreshNoWaybar.sh`    | wallpaper change | Refresh theme without restarting waybar                     |
-| `Hyprsunset.sh`         | `SUPER+N`        | Toggle night light (fallback for Lua SM, state persists)   |
-| `Hypridle.sh`           | waybar module    | Toggle hypridle on/off                                      |
-| `Quick_Settings.sh`     | `SUPER+SHIFT+E`  | Open user config files in editor                            |
-
-**State Machine Modules**: `sys/statemachine/{layout,gamemode,nightlight}.lua` are the **primary** implementations, replacing the `.sh` scripts above. The `.sh` scripts survive as `pcall`-protected fallback targets. See [STATE_MACHINES.md](docs/03-Core-Systems/STATE_MACHINES.md) for the Lua implementation details.
-
-## Policies
-
-Swappable at runtime without reloading the full config:
-
-- **Animations** — presets in `sys/policy/animations/`: `default` `disable` `end4` `hyde-optimized` `hyde-vertical` `ml4w-fast`
-- **Colors** — generated by wallust into `sys/policy/wallust/wallust-hyprland.lua` on wallpaper change
-
-**Design Pattern**: Strategy Pattern — policies are interchangeable algorithms. See [DESIGN_PRINCIPLES.md § Policy Layer](docs/02-Architecture/DESIGN_PRINCIPLES.md).
-
-## Window Tags
-
-Tags are defined in `sys/tags.lua` and consumed by `sys/rules.lua`.
-Add personal app tags in `user/tags.lua` with matching rules in `user/rules.lua`.
-
-**Category tags** (what an app is):
-`browser` `terminal` `im` `email` `projects` `notes` `file-manager` `multimedia` `multimedia-video` `screenshare` `games` `gamestore` `viewer` `text-editor` `utils` `calculator` `settings` `audio-mixer` `wallpaper` `notif`
-
-**Behavior tags** (how a window behaves):
-`pip` `auth-dialog` `file-dialog` `no-steal-focus` `suppress-activate`
-
-**Helper tags**: `$H_Cheat` `$H_Settings` `keybindings`
-
-**Architecture**: Tag-driven rule system implements Strategy Pattern for window management. See [DESIGN_PRINCIPLES.md § Tag-Driven System](docs/02-Architecture/DESIGN_PRINCIPLES.md) and [PIPELINE_ARCHITECTURE.md § Stage 5](docs/02-Architecture/PIPELINE_ARCHITECTURE.md).
-
-## Dependencies
-
-**Required:** `hyprland` `hyprlock` `hypridle` `awww` `waybar` `swaync` `rofi-wayland` `cliphist` `wl-clipboard` `grim` `slurp` `pamixer` `playerctl` `brightnessctl` `nm-applet` `wallust` `jq`
-
-**Optional:** `scrolling layout` (scrolling layout, install via -- hyprpm (not needed for scrolling, built-in since v0.55) (for other plugins, not needed for scrolling)) · `mpvpaper` (live wallpapers) · `fcitx5` (input method) · `nwg-displays` (monitor config GUI) · `kvantummanager` (Qt theming) · `qs` / `quickshell` (overview widget) · `swappy` (screenshot annotation)
-
-> scrolling layout -> departed to in builtins
-
-## Design Philosophy
-
-This configuration treats the desktop environment as a **compiled system** rather than a collection of scripts. Key principles:
-
-1. **Compilation Pipeline**: Config loading mirrors compiler phases (lexical → syntax → semantic → code generation)
-2. **Layered Architecture**: Clear boundaries between bootstrap, system, hardware, policy, and user layers
-3. **Dependency Inversion**: Constants abstract implementation details; user overrides injected at Stage 0
-4. **State Machines**: Runtime behavior changes managed via explicit state transition functions (now in `.lua`)
-5. **Policy-Based Management**: Swappable strategies (colors, animations) without full reload
-6. **Tag-Driven Rules**: Decouple window classification from behavior (Strategy Pattern)
-7. **Single Responsibility**: Each file has one clear purpose
-8. **Incremental Override**: User files contain only deltas from system defaults
-
-For detailed explanations, see [DESIGN_PRINCIPLES.md](docs/02-Architecture/DESIGN_PRINCIPLES.md).
-
-## Contributing
-
-When contributing to this configuration:
-
-1. **Maintain Layer Boundaries**: Don't cross layer responsibilities
-2. **Preserve Invariants**: Every tag must have rules; require order must be correct
-3. **Document Changes**: Update relevant `.md` files
-4. **Test State Transitions**: Verify state machines handle edge cases (use `lib/sm.lua`'s `:fire_n()` helper)
-5. **Follow Naming Conventions**: `M_*` for apps, `H_*` for helpers, `U_*` for user
-
-See [DESIGN_PRINCIPLES.md § Best Practices](docs/02-Architecture/DESIGN_PRINCIPLES.md) for detailed guidelines.
-
-## License
-
-This configuration is provided as-is for educational and practical use. Feel free to adapt the architectural patterns to your own dotfiles.
-
-## Acknowledgments
-
-Architectural patterns inspired by:
-
-- Compiler design (Aho, Lam, Sethi, Ullman - "Compilers: Principles, Techniques, and Tools")
-- Design Patterns (Gamma, Helm, Johnson, Vlissides - "Design Patterns: Elements of Reusable Object-Oriented Software")
-- Linux config.d convention
-- Hyprland community configurations (end-4, prasanthrangan/hyprdots, mylinuxforwork)
-
----
-
-## Historical .conf form
-
-> The following examples show the **legacy `.conf` syntax** preserved here for historical context only. The current repo no longer contains `.conf` files — see git history for the migration commits.
-
-### Example 1: const file + bind (LEGACY `.conf`)
-
-```conf
-# user/const.conf  (LEGACY — not in current repo)
-$M_terminal     = ghostty
-$M_file_manager = thunar
-$W              = $HOME/Pictures/my-wallpapers
-
-# user/keybind.conf  (LEGACY)
-hl.bind("SUPER + Return", hl.dsp.exec_cmd("$M_terminal"))
-bindl = , XF86AudioMute, exec, $S/Volume.sh --toggle
-```
-
-**Equivalence**: In `.lua`, the `$var = value` assignments become `return { ['var = "value" }` table keys in `user/const.lua`. The `bind = MOD, KEY, exec, CMD` directive becomes `hl.bind("MOD + KEY", hl.dsp.exec_cmd("CMD"))` — the modifiers and key are joined into a single ` + `-separated string, and the `bindl` "locked" variant moves to a third-arg flags table `{ locked = true }`.
-
-### Example 2: windowrule + exec-once (LEGACY `.conf`)
-
-```conf
-# user/rules.conf  (LEGACY)
-hl.window_rule({ match = { class = "^(Firefox)$" }, tag = "browser" })
-hl.window_rule({ opacity = "1.00 0.85", match = { tag = "browser" } })
-
-# sys/startup.conf  (LEGACY)
-exec-once = awww-daemon --format xrgb
-exec-once = waybar
-exec-once = $S/Hyprsunset.sh init
-```
-
-**Equivalence**: In `.lua`, `windowrule = match:class ^X$, tag +Y` becomes `hl.window_rule({ match = { class = "^X$" }, tag = "Y" })` — the rule keyword becomes a table field name. `windowrule = opacity V, match:tag X` becomes `hl.window_rule({ opacity = "V", match = { tag = "X" } })`. `exec-once = cmd` becomes `hl.on("hyprland.start", function() hl.exec_cmd("cmd") end)` — event-driven, with the bonus of `hl.on("hyprland.shutdown", fn)` cleanup hooks that were impossible in the `.conf` era.
+- **Hyprland Team** — for the amazing Wayland compositor and v0.55 native Lua config
+- **Community Contributors** — for scripts, ideas, and feedback
+- **Architectural inspiration**:
+  - Compiler design (Aho et al. — *Compilers: Principles, Techniques, and Tools*)
+  - Design Patterns (Gamma, Helm, Johnson, Vlissides — *Design Patterns*)
+  - Linux `config.d` convention
+  - Hyprland community configs (end-4, prasanthrangan/hyprdots, mylinuxforwork)
 
 ---
 
 **⭐ If you find this useful, please star the repository!**
 
-**Last Updated**: 2026-08-19 · **Hyprland Version**: 0.56.2 · **Config Form**: Lua (native)
+**Last Updated**: 2026-08-20 · **Hyprland Version**: 0.56.2 · **Config Form**: Lua (native)
 
 ---
 
