@@ -2,9 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: Visual decoration (colors from wallust, shadow/blur/group)
---
--- sys/decoration.lua — Visual decoration
--- Colors from wallust module (wallust 端负责格式, 直接给 "rgb(...)" 或 "#hex")
 
 local colors = require("sys.policy.wallust.wallust-hyprland")
 

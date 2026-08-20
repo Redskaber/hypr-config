@@ -2,7 +2,3 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: User render overrides
---
--- user/render.lua — User overrides for sys/render.lua
--- Edit this file to customize render settings (incremental override pattern).
--- Only specify differences from sys/render.lua; sys defaults inherit automatically.

@@ -2,11 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: Layer 1: path infrastructure constants (immutable)
---
--- bootstrap/const.lua — Layer 1: path infrastructure (immutable)
--- Writes to global _G.HYPR_CONST (Hyprland require scope-safe pattern)
-
-_G.HYPR_CONST = _G.HYPR_CONST or {}
 
 _G.HYPR_CONST.Hypr = "~/.config/hypr"
 _G.HYPR_CONST.bootstrap = "~/.config/hypr/bootstrap"

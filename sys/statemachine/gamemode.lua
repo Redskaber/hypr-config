@@ -2,11 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: GameMode state machine (NORMAL↔GAMING toggle)
---
--- sys/statemachine/gamemode.lua — Game Mode SM
--- 通解: 不用 io.popen (会阻塞 compositor), 不用 hyprctl reload (会丢 SM 实例)
--- ON: 直接 hl.config 覆盖设置
--- OFF: 直接 hl.config 恢复 sys 原始值
 
 local SM = require("lib.sm")
 local M = {}

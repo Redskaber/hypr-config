@@ -2,11 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: Layout state machine (scrolling↔dwindle↔master cycle)
---
--- sys/statemachine/layout.lua — Layout SM (replaces ChangeLayout.sh)
--- wiki: no hl.getoption API → use default "dwindle"
--- wiki: hl.dsp.layout("cyclenext") not valid — use hl.dsp.focus({direction=...})
--- wiki: hl.unbind() exists — safe to use
 
 local SM = require("lib.sm")
 local M = {}

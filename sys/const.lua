@@ -2,12 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: Layer 2: system default constants (vendor, never edit)
---
--- sys/const.lua — Layer 2: system defaults (vendor, never edit)
--- Writes to global _G.HYPR_CONST (Hyprland require scope-safe pattern)
--- Note: M_editor resolved from EDITOR env var (was ${EDITOR:-nano} in .conf)
-
-_G.HYPR_CONST = _G.HYPR_CONST or {}
 
 _G.HYPR_CONST.M = "SUPER"
 _G.HYPR_CONST.M_terminal = "kitty"

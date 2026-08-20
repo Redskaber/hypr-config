@@ -2,10 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: Shared script utilities (NOTIF_ICON/SCRIPTSDIR/focused_monitor)
---
--- wiki WARNING: "Keybind handlers must not block. Avoid io.popen, network I/O"
--- These functions are ONLY for use in startup (file load time) or .sh scripts,
--- NEVER in hl.bind() callback functions.
 
 local const = _G.HYPR_CONST
 local M = {}

@@ -2,11 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: Input devices & gestures (keyboard/touchpad/tablet/gestures)
---
--- sys/input.lua — Input devices & gestures
---通解: 合并 hl.config, tap_to_click (不是 tap-to-click), hl.gesture (不是 hl.config gestures)
-
-local const = _G.HYPR_CONST
 
 hl.config({
 	input = {
@@ -48,7 +43,3 @@ hl.config({
 hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 -- 4-finger up: zoom in
 hl.gesture({ fingers = 4, direction = "up", action = "close" })
--- 3-finger up: desktop overview (via keybind, not gesture)
-hl.bind(const.M .. " + T", function()
-	hl.dispatch("exec", const.S .. "/desktop-overview.sh")
-end)

@@ -2,22 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: StateMachine base class (pcall + invariant + persistence)
---
--- phase-c/lib/sm.lua  — StateMachine base class (pcall + invariant assertions)
--- Replaces ad-hoc bash `case` logic in ChangeLayout.sh / GameMode.sh / Hyprsunset.sh.
--- REVIEW_REPORT §2 root-cause B fix: pcall makes atomicity a framework property.
---
--- Formal 5-tuple: (Q, Σ, δ, q₀, F)
---   Q (states)      = opts.states
---   Σ (events)      = derived from transitions' `on` field
---   δ (transition)  = opts.transitions[i].{from,on,to,action}
---   q₀ (initial)    = opts.initial
---   F (final)       = N/A (continuous system)
---
--- Persistence strategy field (fixes REVIEW gap A: asymmetric persistence):
---   opts.persistence = "none"      -- stateless (Layout/GameMode via Hyprland option)
---   opts.persistence = "file:path" -- file-based (Hyprsunset via ~/.cache/...)
---   opts.persistence = "hypr:option_name"  -- read from hyprctl getoption
 
 local M = {}
 M.__index = M

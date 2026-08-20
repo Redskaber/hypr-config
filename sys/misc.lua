@@ -2,8 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: Miscellaneous options (vrr/swallow/ANR/session lock)
---
--- sys/misc.lua — Miscellaneous options (merged from 12 individual hl.config calls)
 
 hl.config({
 	misc = {

@@ -2,9 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: NightLight state machine (off↔on toggle, hyprsunset daemon)
---
--- sys/statemachine/nightlight.lua — Night Light SM
--- 通解: toggle on/off with hyprsunset daemon (not hyprctl reload)
 
 local SM = require("lib.sm")
 local M = {}

@@ -2,17 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: EmmyLua type annotations (16 @class schemas for IDE)
---
--- lib/types.lua — EmmyLua type annotations for IDE auto-completion + type checking
---
--- This file provides type schemas for the configuration system.
--- IDEs with lua-language-server (VS Code, Neovim) will use these for:
---   - Auto-completion of hl.config / hl.bind / hl.window_rule fields
---   - Type checking (e.g. opacity must be string, float must be number)
---   - Hover documentation
---
--- Usage: Place this file in the Lua workspace library path.
--- The types are declarations only — no runtime impact.
 
 ---@class Const
 ---@field Hypr string Root config path

@@ -2,18 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: Rofi menu aggregator (search/emoji/calc/music/theme)
---
--- phase-d/sys/scripts/menus.lua  — Rofi menu aggregator (6 scripts → 1 module)
--- wiki WARNING: io.popen only in startup, NEVER in bind callbacks
---
--- MIGRATION: consolidates:
---   RofiSearch.sh, RofiEmoji.sh, RofiCalc.sh, RofiBeats.sh,
---   RofiThemeSelector.sh, RofiThemeSelector-modified.sh
---
--- DESIGN PRINCIPLES:
---   §3 DI: uses deps.get("launcher") not "rofi"
---   §2 SSOT: search engine URL from const, not hardcoded in script
---   §5 Scripts-as-modules: all rofi menus in one module, shared helpers
 
 local deps = require("sys.deps")
 local utils = require("lib.script_utils")
@@ -21,21 +9,29 @@ local utils = require("lib.script_utils")
 local M = {}
 
 -- Helper: run rofi with a mode and return selected item
-local function rofi_dmenu(hl, items, prompt)
+local function rofi_dmenu(_, items, prompt)
 	local launcher = deps.get("launcher")
-	-- Pipe items to rofi -dmenu
+	if not launcher then
+		return nil
+	end
+	local launcher_cmd = launcher.cmd or "rofi"
 	local tmp = os.tmpname()
 	local f = io.open(tmp, "w")
+	if not f then
+		return nil
+	end
 	for _, item in ipairs(items) do
 		f:write(item .. "\n")
 	end
 	f:close()
-	local cmd = string.format("cat %s | %s -dmenu -p '%s'", tmp, launcher.cmd, prompt)
+	local cmd = string.format("cat %s | %s -dmenu -p '%s'", tmp, launcher_cmd, prompt)
 	local pf = io.popen(cmd)
-	local selected = pf and pf:read("*l") or nil
-	if pf then
-		pf:close()
+	if not pf then
+		os.remove(tmp)
+		return nil
 	end
+	local selected = pf:read("*l") or nil
+	pf:close()
 	os.remove(tmp)
 	return selected
 end
@@ -113,9 +109,7 @@ function M.music(hl)
 end
 
 -- Theme selector (replaces RofiThemeSelector.sh + modified variant)
--- KEY: this was 2 scripts (original + modified) — in .lua era, 1 function
--- with a `modified` parameter. Fixes REVIEW #7 (duplicate scripts).
-function M.theme_selector(hl, modified)
+function M.theme_selector(hl)
 	local themes_dir = os.getenv("HOME") .. "/.config/rofi/themes"
 	local f = io.popen("ls " .. themes_dir .. "/*.rasi 2>/dev/null")
 	if not f then
@@ -129,15 +123,10 @@ function M.theme_selector(hl, modified)
 		end
 	end
 	f:close()
-	local selected = rofi_dmenu(hl, items, "Theme:")
+	local selected = rofi_dmenu(nil, items, "Theme:")
 	if selected then
 		local target = themes_dir .. "/" .. selected .. ".rasi"
-		if modified then
-			-- Apply with modifications (replaces RofiThemeSelector-modified.sh)
-			hl.exec_cmd("cp " .. target .. " ~/.config/rofi/config.rasi")
-		else
-			hl.exec_cmd("cp " .. target .. " ~/.config/rofi/config.rasi")
-		end
+		hl.exec_cmd("cp " .. target .. " ~/.config/rofi/config.rasi")
 		utils.notify(hl, "Theme", "Applied: " .. selected)
 	end
 end

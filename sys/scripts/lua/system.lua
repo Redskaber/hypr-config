@@ -2,12 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: System action module (screenshot/logout/lock/kill)
---
--- phase-d/sys/scripts/system.lua  — System action scripts (5 scripts → 1 module)
--- wiki WARNING: io.popen only in startup, NEVER in bind callbacks
---
--- MIGRATION: consolidates:
---   ScreenShot.sh, Wlogout.sh, LockScreen.sh, PortalHyprland.sh, KillActiveProcess.sh
 
 local deps = require("sys.deps")
 local utils = require("lib.script_utils")
@@ -46,6 +40,9 @@ function M.logout_menu(hl)
 		local launcher = deps.get("launcher")
 		local cmd = "echo '" .. table.concat(items, "\\n") .. "' | " .. launcher.cmd .. " -dmenu -p 'Power:'"
 		local f = io.popen(cmd)
+		if not f then
+			return
+		end
 		if f then
 			local selected = f:read("*l")
 			f:close()

@@ -2,14 +2,10 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: Laptop hardware (brightness/media keys/touchpad device)
---
--- sys/hardware/laptop.lua — Laptop hardware config
--- Uses hl.device (per-device config), NOT hl.config({ device = ... })
 
 local const = require("const")
 
 local Touchpad_Device = "asue1209:00-04f3:319f-touchpad"
-local TOUCHPAD_ENABLED = "true"
 
 hl.bind("XF86Kbdbrightnessdown", hl.dsp.exec_cmd(const.S .. "/BrightnessKbd.sh --dec"), { repeating = true })
 hl.bind("XF86Kbdbrightnessup", hl.dsp.exec_cmd(const.S .. "/BrightnessKbd.sh --inc"), { repeating = true })

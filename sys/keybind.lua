@@ -2,9 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: Canonical keybind table (140+ binds, layout-specific, SM)
---
--- sys/keybind.lua — Canonical Keybind Table (vendor defaults)
--- 通解: layout-specific keybinds 用策略模式 + safe_layoutmsg
 
 local layout_mod = require("sys.statemachine.layout")
 local gamemode_mod = require("sys.statemachine.gamemode")

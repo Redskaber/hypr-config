@@ -2,14 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: Window layout engines (dwindle/master/scrolling + binds)
---
--- sys/layout.lua — Window layout engines
--- Three layouts: scrolling (default via user/layout.lua), dwindle, master
--- Runtime cycle: scrolling → dwindle → master → scrolling (via SM module)
---
--- Note: Since Hyprland v0.55, scrolling is a BUILT-IN layout (not a plugin).
--- Config category: `scrolling` (not `plugin:hyprscrolling`).
--- Ref: https://wiki.hypr.land/Configuring/Layouts/Scrolling-Layout/
 
 hl.config({
 	general = {

@@ -2,8 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: Render pipeline + cursor + xwayland
---
--- sys/render.lua — Render pipeline + cursor + xwayland
 
 hl.config({
 	render = {

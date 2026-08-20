@@ -2,7 +2,3 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: User environment variable overrides
---
--- user/env.lua — User overrides for sys/env.lua
--- Edit this file to customize env settings (incremental override pattern).
--- Only specify differences from sys/env.lua; sys defaults inherit automatically.

@@ -2,11 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: External dependency manifest (SSOT + DI, 27 tools)
---
--- lib/deps.lua — External Dependency Manifest (SSOT + DI)
--- 通解: 不用 os.execute (可能阻塞 compositor event loop)
--- 改用: 直接返回 spec (found=true 假设工具存在, 用户自行确保)
--- 如果需要 feature detection, 在 startup.sh 里做 (不在 Lua 里)
 
 local M = {}
 
@@ -145,9 +140,9 @@ function M.get(name)
 
 	-- 不用 os.execute 检测 (可能阻塞), 直接返回 spec
 	-- env_var 覆盖
-	local cmd = spec.cmd
+	local cmd = spec.cmd or ""
 	if spec.env_var and os.getenv(spec.env_var) then
-		cmd = os.getenv(spec.env_var)
+		cmd = os.getenv(spec.env_var) or cmd
 	end
 
 	local result = {
@@ -183,7 +178,7 @@ function M.cmd(name)
 	if not dep then
 		return nil
 	end
-	local cmd = dep.cmd
+	local cmd = dep.cmd or ""
 	if dep.default_args then
 		for k, v in pairs(dep.default_args) do
 			cmd = cmd .. " --" .. k .. " " .. tostring(v)

@@ -2,20 +2,6 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: Wallpaper subsystem module (select/random/set/regenerate)
---
--- phase-d/sys/scripts/wallpaper.lua  — Wallpaper subsystem (6 scripts → 1 module)
--- wiki WARNING: io.popen only in startup, NEVER in bind callbacks
---
--- MIGRATION: consolidates 6 scripts:
---   WallpaperSelect.sh, WallpaperRandom.sh, WallpaperEffects.sh,
---   WallpaperAutoChange.sh, WallustSwww.sh, sddm_wallpaper.sh
--- into 1 Lua module with clear function boundaries.
---
--- DESIGN PRINCIPLES:
---   §5 Scripts-as-modules: 6→1 compression, eliminates script-to-script calls
---   §3 DI: uses deps.get("wallpaper_daemon") not hardcoded "awww-daemon"
---   §2 SSOT: wallpaper dir from deps, not hardcoded $W
---   §1 Event-driven: WallpaperAutoChange becomes hl.on timer (not infinite loop)
 
 local deps = require("lib.deps")
 local utils = require("lib.script_utils")
@@ -25,9 +11,12 @@ local M = {}
 -- Select wallpaper via rofi menu (replaces WallpaperSelect.sh)
 function M.select(hl)
 	local launcher = deps.get("launcher")
+	if not launcher then
+		return
+	end
+	local launcher_cmd = launcher.cmd or "rofi"
 	local wp_dir = os.getenv("HOME") .. "/Pictures/wallpapers"
-	-- List wallpapers, pipe to rofi for selection
-	local cmd = string.format("ls %s/*.{jpg,png} 2>/dev/null | %s -dmenu -p 'Wallpaper:'", wp_dir, launcher.cmd)
+	local cmd = string.format("ls %s/*.{jpg,png} 2>/dev/null | %s -dmenu -p 'Wallpaper:'", wp_dir, launcher_cmd)
 	local f = io.popen(cmd)
 	if not f then
 		return nil
@@ -43,10 +32,13 @@ end
 -- Fixes REVIEW #8: unify --format argb (was xrgb in startup, argb in restart)
 function M.set(hl, wallpaper_path)
 	local wp_daemon = deps.get("wallpaper_daemon")
+	if not wp_daemon then
+		return
+	end
 	-- Use deps.cmd() which includes default_args (format=argb) — SSOT
-	local cmd = wp_daemon.cmd .. " img '" .. wallpaper_path .. "'"
+	local cmd = (wp_daemon.cmd or "awww-daemon") .. " img '" .. wallpaper_path .. "'"
 	if wp_daemon.default_args and wp_daemon.default_args.format then
-		cmd = wp_daemon.cmd .. " --format " .. wp_daemon.default_args.format
+		cmd = (wp_daemon.cmd or "awww-daemon") .. " --format " .. wp_daemon.default_args.format
 		cmd = cmd .. " img '" .. wallpaper_path .. "'"
 	end
 	hl.exec_cmd(cmd)
@@ -67,12 +59,22 @@ end
 -- In .lua era, it's a function call — explicit, typed, testable
 function M.regenerate_colors(hl)
 	local color_gen = deps.get("color_gen")
-	-- wallust generates colors from wallpaper, updates templates
-	hl.exec_cmd(color_gen.cmd .. " 2>/dev/null || true")
-	-- Reload waybar/swaync to pick up new colors (matches Refresh.sh subset)
-	utils.kill_existing(deps.get("bar").cmd)
-	hl.exec_cmd(deps.get("bar").cmd .. " &")
-	hl.exec_cmd(deps.get("notification").cmd .. "-client --reload-config 2>/dev/null || true")
+	if not color_gen then
+		return
+	end
+	local color_cmd = color_gen.cmd or "wallust"
+	hl.exec_cmd(color_cmd .. " 2>/dev/null || true")
+	local bar = deps.get("bar")
+	if bar then
+		local bar_cmd = bar.cmd or "waybar"
+		utils.kill_existing(hl, bar_cmd)
+		hl.exec_cmd(bar_cmd .. " &")
+	end
+	local notif = deps.get("notification")
+	if notif then
+		local notif_cmd = notif.cmd or "swaync"
+		hl.exec_cmd(notif_cmd .. "-client --reload-config 2>/dev/null || true")
+	end
 end
 
 -- Random wallpaper (replaces WallpaperRandom.sh)
@@ -81,9 +83,12 @@ function M.random(hl)
 	local cmd = string.format("ls %s/*.{jpg,png} 2>/dev/null | shuf -n 1", wp_dir)
 	local f = io.popen(cmd)
 	if not f then
+		return nil
+	end
+	if not f then
 		return
 	end
-	local random_wp = f:read("*l")
+	local random_wp = f:read("*l") or ""
 	f:close()
 	if random_wp and #random_wp > 0 then
 		M.set(hl, random_wp)
