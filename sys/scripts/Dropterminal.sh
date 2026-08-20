@@ -1,379 +1,579 @@
 #!/usr/bin/env bash
+# @path: sys/scripts/Dropterminal.sh
+# @author: redskaber
+# @date: 2026-08-20
+# @version: 3.0
+# @description: Dropdown Terminal — state machine + strategy pattern + pipeline design.
 #
-# Made and brought to by Kiran George
-# /* -- ✨ https://github.com/SherLock707 ✨ -- */  ##
-# Dropdown Terminal
-# Usage: ./Dropdown.sh [-d] <terminal_command>
-# Example: ./Dropdown.sh foot
-#          ./Dropdown.sh -d foot (with debug output)
-#          ./Dropdown.sh "kitty -e zsh"
-#          ./Dropdown.sh "alacritty --working-directory /home/user"
+# Design patterns applied:
+#   1. State Machine  — 3 states (ABSENT / VISIBLE / HIDDEN) with explicit transitions.
+#   2. Strategy       — one strategy function per state (create / show / hide).
+#   3. Pipeline       — each strategy is a sequential pipeline of atomic Hyprland actions,
+#                       each step verified before proceeding to the next.
+#
+# State diagram:
+#
+#     ┌─────────┐  run()   ┌─────────┐  run()   ┌─────────┐
+#     │ ABSENT  │─────────▶│ VISIBLE │─────────▶│ HIDDEN  │
+#     │(no term)│ create   │(shown)  │  hide    │(scratch)│
+#     └─────────┘          └─────────┘          └─────────┘
+#          ▲                     │                     │
+#          │                     │  run()              │  run()
+#          │  process            ▼                     ▼
+#          │  killed        ┌─────────┐          ┌─────────┐
+#          └────────────────│detected │◀─────────│  show   │
+#                           │  ABSENT │          │         │
+#                           └─────────┘          └─────────┘
+#
+# Usage:
+#   Dropterminal.sh <terminal_command>
+#   Dropterminal.sh -d <terminal_command>   # debug output
+#   Dropterminal.sh kitty
+#   Dropterminal.sh "kitty -e zsh"
+#
+# ADDR_FILE format (v3): "<address> <pid> <monitor_name> <terminal_class>"
+
+# ============================================================
+# Section 1: Configuration & Constants
+# ============================================================
 
 DEBUG=false
 SPECIAL_WS="special:scratchpad"
 ADDR_FILE="/tmp/dropdown_terminal_addr"
 
-# Dropdown size and position configuration (percentages)
-WIDTH_PERCENT=65  # Width as percentage of screen width
-HEIGHT_PERCENT=65 # Height as percentage of screen height
-Y_PERCENT=10      # Y position as percentage from top (X is auto-centered)
+# State enum (bash has no enum, use string constants for readability)
+STATE_ABSENT="ABSENT"   # no dropdown terminal (ADDR_FILE missing or process dead)
+STATE_VISIBLE="VISIBLE" # dropdown is shown on a normal workspace
+STATE_HIDDEN="HIDDEN"   # dropdown is parked in special:scratchpad
 
-# Animation settings
-ANIMATION_DURATION=100 # milliseconds
+# Dropdown geometry (percentages of logical monitor space)
+WIDTH_PERCENT=65
+HEIGHT_PERCENT=65
+Y_PERCENT=10 # X is auto-centered
+
+# Animation
 SLIDE_STEPS=5
-SLIDE_DELAY=5 # milliseconds between steps
+SLIDE_DOWN_INTERSTEP_SLEEP=0.03 # seconds
+SLIDE_UP_INTERSTEP_SLEEP=0.03
+SLIDE_PREP_SLEEP=0.05
 
-# Parse arguments
+# Spawn polling
+SPAWN_POLL_INTERVAL=0.1 # seconds
+SPAWN_POLL_MAX_TRIES=20 # 20 × 0.1s = 2.0s timeout
+
+# ============================================================
+# Section 2: Argument Parsing
+# ============================================================
+
 if [ "$1" = "-d" ]; then
   DEBUG=true
   shift
 fi
 
 TERMINAL_CMD="$1"
+TERMINAL_CLASS=$(echo "$TERMINAL_CMD" | awk '{print $1}')
 
-# Debug echo function
+# ============================================================
+# Section 3: Utility Functions
+# ============================================================
+
 debug_echo() {
   if [ "$DEBUG" = true ]; then
-    echo "$@"
+    echo "[DEBUG] $*" >&2
   fi
 }
 
-# Validate input
-if [ -z "$TERMINAL_CMD" ]; then
-  echo "Missing terminal command. Usage: $0 [-d] <terminal_command>"
-  echo "Examples:"
-  echo "  $0 foot"
-  echo "  $0 -d foot (with debug output)"
-  echo "  $0 'kitty -e zsh'"
-  echo "  $0 'alacritty --working-directory /home/user'"
-  echo ""
-  echo "Edit the script to modify size and position:"
-  echo "  WIDTH_PERCENT  - Width as percentage of screen (default: 50)"
-  echo "  HEIGHT_PERCENT - Height as percentage of screen (default: 50)"
-  echo "  Y_PERCENT      - Y position from top as percentage (default: 5)"
-  echo "  Note: X position is automatically centered"
-  exit 1
-fi
+# Validate terminal command argument (called from main, not at top-level —
+# this keeps the script sourceable for unit testing).
+validate_args() {
+  if [ -z "$TERMINAL_CMD" ]; then
+    cat >&2 <<EOF
+Missing terminal command. Usage: $0 [-d] <terminal_command>
+Examples:
+  $0 kitty
+  $0 -d kitty                      (with debug output)
+  $0 'kitty -e zsh'
+  $0 'alacritty --working-directory /home/user'
 
-# Function to get window geometry
-get_window_geometry() {
-  local addr="$1"
-  hyprctl clients -j | jq -r --arg ADDR "$addr" '.[] | select(.address == $ADDR) | "\(.at[0]) \(.at[1]) \(.size[0]) \(.size[1])"'
+State machine:
+  ABSENT  + run -> CREATE -> VISIBLE
+  VISIBLE + run -> HIDE   -> HIDDEN
+  HIDDEN  + run -> SHOW   -> VISIBLE
+  (process killed -> detected as ABSENT on next run)
+
+Config knobs (edit in source):
+  WIDTH_PERCENT / HEIGHT_PERCENT / Y_PERCENT
+EOF
+    exit 1
+  fi
 }
 
-# Function to animate window slide down (show)
-animate_slide_down() {
-  local addr="$1"
-  local target_x="$2"
-  local target_y="$3"
-  local width="$4"
-  local height="$5"
+# ============================================================
+# Section 4: State File I/O (v3: 4 fields)
+# ============================================================
 
-  debug_echo "Animating slide down for window $addr to position $target_x,$target_y"
+state_read_addr() { [ -s "$ADDR_FILE" ] && cut -d' ' -f1 "$ADDR_FILE"; }
+state_read_pid() { [ -s "$ADDR_FILE" ] && cut -d' ' -f2 "$ADDR_FILE"; }
+state_read_monitor() { [ -s "$ADDR_FILE" ] && cut -d' ' -f3 "$ADDR_FILE"; }
+state_read_class() { [ -s "$ADDR_FILE" ] && cut -d' ' -f4 "$ADDR_FILE"; }
 
-  # Start position (above screen)
-  local start_y=$((target_y - height - 50))
-
-  # Calculate step size
-  local step_y=$(((target_y - start_y) / SLIDE_STEPS))
-
-  # Move window to start position instantly (off-screen)
-  hyprctl dispatch "movewindowpixel exact $target_x $start_y,address:$addr" >/dev/null 2>&1
-  sleep 0.05
-
-  # Animate slide down
-  for i in $(seq 1 $SLIDE_STEPS); do
-    local current_y=$((start_y + (step_y * i)))
-    hyprctl dispatch "movewindowpixel exact $target_x $current_y,address:$addr" >/dev/null 2>&1
-    sleep 0.03
-  done
-
-  # Ensure final position is exact
-  hyprctl dispatch "movewindowpixel exact $target_x $target_y,address:$addr" >/dev/null 2>&1
+state_clear() {
+  rm -f "$ADDR_FILE"
 }
 
-# Function to animate window slide up (hide)
-animate_slide_up() {
-  local addr="$1"
-  local start_x="$2"
-  local start_y="$3"
-  local width="$4"
-  local height="$5"
-
-  debug_echo "Animating slide up for window $addr from position $start_x,$start_y"
-
-  # End position (above screen)
-  local end_y=$((start_y - height - 50))
-
-  # Calculate step size
-  local step_y=$(((start_y - end_y) / SLIDE_STEPS))
-
-  # Animate slide up
-  for i in $(seq 1 $SLIDE_STEPS); do
-    local current_y=$((start_y - (step_y * i)))
-    hyprctl dispatch "movewindowpixel exact $start_x $current_y,address:$addr" >/dev/null 2>&1
-    sleep 0.03
-  done
-
-  debug_echo "Slide up animation completed"
+state_save() {
+  # $1=addr  $2=pid  $3=monitor  $4=class
+  echo "$1 $2 $3 $4" >"$ADDR_FILE"
 }
 
-# Function to get monitor info including scale and name of focused monitor
-get_monitor_info() {
-  local monitor_data=$(hyprctl monitors -j | jq -r '.[] | select(.focused == true) | "\(.x) \(.y) \(.width) \(.height) \(.scale) \(.name)"')
-  if [ -z "$monitor_data" ] || [[ "$monitor_data" =~ ^null ]]; then
-    debug_echo "Error: Could not get focused monitor information"
+# ============================================================
+# Section 5: Hyprland Atomic Actions (pipeline primitives)
+#
+# Each function is ONE atomic step. Returns 0 on success.
+# They are the building blocks composed by strategies below.
+# ============================================================
+
+# --- window queries ---
+
+# Returns single JSON line of the window matching addr+pid, or empty.
+query_window() {
+  local addr="$1" pid="$2"
+  hyprctl clients -j |
+    jq -c --arg ADDR "$addr" --argjson PID "$pid" \
+      '.[] | select(.address == $ADDR and .pid == $PID)' 2>/dev/null
+}
+
+# Echoes "x y w h" of the given window (logical coords), or empty.
+query_window_geometry() {
+  local addr="$1"
+  hyprctl clients -j |
+    jq -r --arg ADDR "$addr" \
+      '.[] | select(.address == $ADDR) | "\(.at[0]) \(.at[1]) \(.size[0]) \(.size[1])"' 2>/dev/null
+}
+
+# --- window dispatch actions ---
+
+# Move window to a workspace WITHOUT following focus (silent move).
+# This is the Lua equivalent of legacy `movetoworkspacesilent`.
+# Per wiki: move({workspace, follow?, window?}) — follow=false keeps focus on current ws.
+# Critical for hide(): if focus follows the window into special:scratchpad, the
+# active workspace visibly switches, defeating the "hide" illusion.
+action_move_to_workspace_silent() {
+  local addr="$1" ws="$2"
+  hyprctl eval "hl.dispatch(hl.dsp.window.move({workspace=\"$ws\",follow=false,window=\"address:$addr\"}))" >/dev/null 2>&1
+}
+
+# Move window to a workspace AND follow focus (legacy movetoworkspace).
+# Used by strategy_show to bring the dropdown onto the active workspace visibly.
+action_move_to_workspace_follow() {
+  local addr="$1" ws="$2"
+  hyprctl eval "hl.dispatch(hl.dsp.window.move({workspace=\"$ws\",follow=true,window=\"address:$addr\"}))" >/dev/null 2>&1
+}
+
+# Move window to absolute pixel coords
+action_move_pixel() {
+  local addr="$1" x="$2" y="$3"
+  hyprctl eval "hl.dispatch(hl.dsp.window.move({x=$x,y=$y,relative=false,window=\"address:$addr\"}))" >/dev/null 2>&1
+}
+
+# Resize window to absolute pixel size
+action_resize() {
+  local addr="$1" w="$2" h="$3"
+  hyprctl eval "hl.dispatch(hl.dsp.window.resize({x=$w,y=$h,window=\"address:$addr\"}))" >/dev/null 2>&1
+}
+
+# Pin a window (show on all workspaces) — uses EXPLICIT action, never toggle
+action_pin_enable() {
+  local addr="$1"
+  hyprctl eval "hl.dispatch(hl.dsp.window.pin({action=\"enable\",window=\"address:$addr\"}))" >/dev/null 2>&1
+}
+
+# Unpin a window — uses EXPLICIT action, never toggle
+action_pin_disable() {
+  local addr="$1"
+  hyprctl eval "hl.dispatch(hl.dsp.window.pin({action=\"disable\",window=\"address:$addr\"}))" >/dev/null 2>&1
+}
+
+# Tag a window (per wiki "Minimize windows using special workspaces" pattern).
+# Used so we can address the hidden dropdown by tag instead of address,
+# which is more robust against address reuse across Hyprland restarts.
+DROPDOWN_TAG="dropdown"
+action_tag_dropdown() {
+  local addr="$1"
+  hyprctl eval "hl.dispatch(hl.dsp.window.tag({tag=\"$DROPDOWN_TAG\",window=\"address:$addr\"}))" >/dev/null 2>&1
+}
+
+# Clear the dropdown tag from a window
+action_clear_tag_dropdown() {
+  local addr="$1"
+  hyprctl eval "hl.dispatch(hl.dsp.window.clear_tags({window=\"address:$addr\"}))" >/dev/null 2>&1
+}
+
+# Focus a window
+action_focus() {
+  local addr="$1"
+  hyprctl eval "hl.dispatch(hl.dsp.focus({window=\"address:$addr\"}))" >/dev/null 2>&1
+}
+
+# Execute a command with window rules (float + size + workspace)
+action_exec_in_special() {
+  # $1=cmd  $2=w  $3=h
+  hyprctl eval "hl.dispatch(hl.dsp.exec_cmd(\"$1\", {float=true, size={$2,$3}, workspace=\"$SPECIAL_WS silent\"}))" >/dev/null 2>&1
+}
+
+# ============================================================
+# Section 6: Geometry Pipeline
+# ============================================================
+
+# Echoes focused monitor: "x y width height scale name"
+get_focused_monitor_info() {
+  hyprctl monitors -j |
+    jq -r '.[] | select(.focused == true) | "\(.x) \(.y) \(.width) \(.height) \(.scale) \(.name)"' 2>/dev/null
+}
+
+# Echoes "x y w h monitor_name" — computed dropdown position for the focused monitor.
+calculate_dropdown_geometry() {
+  local mon_info
+  mon_info=$(get_focused_monitor_info)
+  if [ -z "$mon_info" ] || [ "$mon_info" = "null" ]; then
+    debug_echo "Failed to get focused monitor; using fallback 100 100 800 600 fallback"
+    echo "100 100 800 600 fallback"
     return 1
   fi
-  echo "$monitor_data"
-}
 
-# Function to calculate dropdown position with proper scaling and centering
-calculate_dropdown_position() {
-  local monitor_info=$(get_monitor_info)
+  local mon_x mon_y mon_w mon_h mon_scale mon_name
+  read -r mon_x mon_y mon_w mon_h mon_scale mon_name <<<"$mon_info"
 
-  if [ $? -ne 0 ] || [ -z "$monitor_info" ]; then
-    debug_echo "Error: Failed to get monitor info, using fallback values"
-    echo "100 100 800 600 fallback-monitor"
-    return 1
-  fi
-
-  local mon_x=$(echo $monitor_info | cut -d' ' -f1)
-  local mon_y=$(echo $monitor_info | cut -d' ' -f2)
-  local mon_width=$(echo $monitor_info | cut -d' ' -f3)
-  local mon_height=$(echo $monitor_info | cut -d' ' -f4)
-  local mon_scale=$(echo $monitor_info | cut -d' ' -f5)
-  local mon_name=$(echo $monitor_info | cut -d' ' -f6)
-
-  debug_echo "Monitor info: x=$mon_x, y=$mon_y, width=$mon_width, height=$mon_height, scale=$mon_scale"
-
-  # Validate scale value and provide fallback
+  # Sanitize scale
   if [ -z "$mon_scale" ] || [ "$mon_scale" = "null" ] || [ "$mon_scale" = "0" ]; then
-    debug_echo "Invalid scale value, using 1.0 as fallback"
     mon_scale="1.0"
   fi
 
-  # Calculate logical dimensions by dividing physical dimensions by scale
-  local logical_width logical_height
+  # Logical size = physical / scale
+  local logical_w logical_h
   if command -v bc >/dev/null 2>&1; then
-    # Use bc for precise floating point calculation
-    logical_width=$(echo "scale=0; $mon_width / $mon_scale" | bc | cut -d'.' -f1)
-    logical_height=$(echo "scale=0; $mon_height / $mon_scale" | bc | cut -d'.' -f1)
+    logical_w=$(echo "scale=0; $mon_w / $mon_scale" | bc | cut -d'.' -f1)
+    logical_h=$(echo "scale=0; $mon_h / $mon_scale" | bc | cut -d'.' -f1)
   else
-    # Fallback to integer math (multiply by 100 for precision, then divide)
-    local scale_int=$(echo "$mon_scale" | sed 's/\.//' | sed 's/^0*//')
-    if [ -z "$scale_int" ]; then scale_int=100; fi
-
-    logical_width=$(((mon_width * 100) / scale_int))
-    logical_height=$(((mon_height * 100) / scale_int))
+    local scale_int
+    scale_int=$(echo "$mon_scale" | sed 's/\.//' | sed 's/^0*//')
+    [ -z "$scale_int" ] && scale_int=100
+    logical_w=$(((mon_w * 100) / scale_int))
+    logical_h=$(((mon_h * 100) / scale_int))
   fi
+  [[ "$logical_w" =~ ^-?[0-9]+$ ]] || logical_w=$mon_w
+  [[ "$logical_h" =~ ^-?[0-9]+$ ]] || logical_h=$mon_h
 
-  # Ensure we have valid integer values
-  if ! [[ "$logical_width" =~ ^-?[0-9]+$ ]]; then logical_width=$mon_width; fi
-  if ! [[ "$logical_height" =~ ^-?[0-9]+$ ]]; then logical_height=$mon_height; fi
+  local w=$((logical_w * WIDTH_PERCENT / 100))
+  local h=$((logical_h * HEIGHT_PERCENT / 100))
+  local y_off=$((logical_h * Y_PERCENT / 100))
+  local x_off=$(((logical_w - w) / 2))
 
-  debug_echo "Physical resolution: ${mon_width}x${mon_height}"
-  debug_echo "Logical resolution: ${logical_width}x${logical_height} (physical ÷ scale)"
+  local final_x=$((mon_x + x_off))
+  local final_y=$((mon_y + y_off))
 
-  # Calculate window dimensions based on LOGICAL space percentages
-  local width=$((logical_width * WIDTH_PERCENT / 100))
-  local height=$((logical_height * HEIGHT_PERCENT / 100))
-
-  # Calculate Y position from top based on percentage of LOGICAL height
-  local y_offset=$((logical_height * Y_PERCENT / 100))
-
-  # Calculate centered X position in LOGICAL space
-  local x_offset=$(((logical_width - width) / 2))
-
-  # Apply monitor offset to get final positions in logical coordinates
-  local final_x=$((mon_x + x_offset))
-  local final_y=$((mon_y + y_offset))
-
-  debug_echo "Window size: ${width}x${height} (logical pixels)"
-  debug_echo "Final position: x=$final_x, y=$final_y (logical coordinates)"
-  debug_echo "Hyprland will scale these to physical coordinates automatically"
-
-  echo "$final_x $final_y $width $height $mon_name"
+  debug_echo "monitor=$mon_name logical=${logical_w}x${logical_h} win=${w}x${h} pos=${final_x},${final_y}"
+  echo "$final_x $final_y $w $h $mon_name"
 }
 
-# Get the current workspace
-CURRENT_WS=$(hyprctl activeworkspace -j | jq -r '.id')
-
-# Function to get stored terminal address
-get_terminal_address() {
-  if [ -f "$ADDR_FILE" ] && [ -s "$ADDR_FILE" ]; then
-    cut -d' ' -f1 "$ADDR_FILE"
-  fi
+# Echoes the id of the currently active workspace
+get_current_workspace_id() {
+  hyprctl activeworkspace -j | jq -r '.id' 2>/dev/null
 }
 
-# Function to get stored monitor name
-get_terminal_monitor() {
-  if [ -f "$ADDR_FILE" ] && [ -s "$ADDR_FILE" ]; then
-    cut -d' ' -f2- "$ADDR_FILE"
-  fi
+# ============================================================
+# Section 7: Animation Pipeline
+# ============================================================
+
+# Slide window DOWN into view from above the screen.
+# $1=addr  $2=target_x  $3=target_y  $4=w  $5=h
+animate_slide_down() {
+  local addr="$1" tx="$2" ty="$3" w="$4" h="$5"
+  local start_y=$((ty - h - 50))
+  local step=$(((ty - start_y) / SLIDE_STEPS))
+  local i cy
+
+  action_move_pixel "$addr" "$tx" "$start_y"
+  sleep "$SLIDE_PREP_SLEEP"
+  for i in $(seq 1 $SLIDE_STEPS); do
+    cy=$((start_y + step * i))
+    action_move_pixel "$addr" "$tx" "$cy"
+    sleep "$SLIDE_DOWN_INTERSTEP_SLEEP"
+  done
+  action_move_pixel "$addr" "$tx" "$ty" # exact final
 }
 
-# Function to check if terminal exists
-terminal_exists() {
-  local addr=$(get_terminal_address)
-  if [ -n "$addr" ]; then
-    hyprctl clients -j | jq -e --arg ADDR "$addr" 'any(.[]; .address == $ADDR)' >/dev/null 2>&1
+# Slide window UP out of view toward above the screen.
+# $1=addr  $2=cur_x  $3=cur_y  $4=w  $5=h
+animate_slide_up() {
+  local addr="$1" cx="$2" cy_start="$3" w="$4" h="$5"
+  local end_y=$((cy_start - h - 50))
+  local step=$(((cy_start - end_y) / SLIDE_STEPS))
+  local i cy
+
+  for i in $(seq 1 $SLIDE_STEPS); do
+    cy=$((cy_start - step * i))
+    action_move_pixel "$addr" "$cx" "$cy"
+    sleep "$SLIDE_UP_INTERSTEP_SLEEP"
+  done
+}
+
+# ============================================================
+# Section 8: State Detection Pipeline
+#
+#   read state file
+#      │
+#      ▼
+#   addr/pid valid? ──no──▶ ABSENT
+#      │yes
+#      ▼
+#   window alive (addr+pid in clients)? ──no──▶ clear state, ABSENT
+#      │yes
+#      ▼
+#   workspace == special:scratchpad? ──yes──▶ HIDDEN
+#      │no
+#      ▼
+#   VISIBLE
+# ============================================================
+
+detect_state() {
+  local addr pid win_json workspace_name
+
+  addr=$(state_read_addr)
+  pid=$(state_read_pid)
+
+  # Step 1: must have both addr and numeric pid
+  if [ -z "$addr" ] || [ -z "$pid" ]; then
+    echo "$STATE_ABSENT"
+    return
+  fi
+  if ! [[ "$pid" =~ ^[0-9]+$ ]]; then
+    state_clear
+    echo "$STATE_ABSENT"
+    return
+  fi
+
+  # Step 2: window must still be alive (BOTH addr AND pid must match)
+  win_json=$(query_window "$addr" "$pid")
+  if [ -z "$win_json" ] || [ "$win_json" = "null" ]; then
+    debug_echo "Stored dropdown (addr=$addr pid=$pid) no longer alive — clearing stale state"
+    state_clear
+    echo "$STATE_ABSENT"
+    return
+  fi
+
+  # Step 3: workspace location determines VISIBLE vs HIDDEN
+  workspace_name=$(echo "$win_json" | jq -r '.workspace.name' 2>/dev/null)
+  if [ "$workspace_name" = "$SPECIAL_WS" ]; then
+    echo "$STATE_HIDDEN"
   else
+    echo "$STATE_VISIBLE"
+  fi
+}
+
+# ============================================================
+# Section 9: Strategy — CREATE (ABSENT → VISIBLE)
+#
+# Pipeline:
+#   1. snapshot existing windows (addr+pid sets)
+#   2. exec terminal into special:scratchpad silent
+#   3. poll for genuinely new window (3 conditions)
+#   4. save state
+#   5. move to current workspace + pin enable
+#   6. animate slide down + focus
+# ============================================================
+
+strategy_create() {
+  debug_echo "Strategy: CREATE (ABSENT -> VISIBLE)"
+
+  local pos
+  pos=$(calculate_dropdown_geometry)
+  local tx ty w h mon_name
+  read -r tx ty w h mon_name <<<"$pos"
+  debug_echo "geometry: pos=${tx},${ty} size=${w}x${h} mon=$mon_name"
+
+  # 1. Snapshot before-set (all existing addr + pid)
+  local before_file before_addrs before_pids
+  before_file=$(mktemp /tmp/dt_before.XXXXXX)
+  hyprctl clients -j | jq -r '.[] | "\(.address) \(.pid)"' | sort >"$before_file"
+  before_addrs=$(cut -d' ' -f1 "$before_file" | sort -u)
+  before_pids=$(cut -d' ' -f2 "$before_file" | sort -u)
+
+  # 2. Launch terminal into special workspace (silent, no visible spawn)
+  action_exec_in_special "$TERMINAL_CMD" "$w" "$h"
+
+  # 3. Poll for genuinely new window (up to SPAWN_POLL_MAX_TRIES)
+  local new_addr="" new_pid="" waited=0
+  while [ "$waited" -lt "$SPAWN_POLL_MAX_TRIES" ] && [ -z "$new_addr" ]; do
+    sleep "$SPAWN_POLL_INTERVAL"
+    waited=$((waited + 1))
+
+    # Iterate over windows currently in special:scratchpad
+    while IFS=' ' read -r a p; do
+      [ -z "$a" ] && continue
+      # Cond 1: address genuinely new
+      printf '%s\n' "$before_addrs" | grep -qF -- "$a" && continue
+      # Cond 2: pid genuinely new
+      printf '%s\n' "$before_pids" | grep -qF -- "$p" && continue
+      # Cond 3 satisfied by the jq select(.workspace.name == special) above
+      new_addr="$a"
+      new_pid="$p"
+      break
+    done < <(hyprctl clients -j |
+      jq -r ".[] | select(.workspace.name == \"$SPECIAL_WS\") | \"\(.address) \(.pid)\"" 2>/dev/null)
+  done
+  rm -f "$before_file"
+
+  if [ -z "$new_addr" ] || [ -z "$new_pid" ]; then
+    debug_echo "ERROR: no genuinely new dropdown window appeared within $((waited * 100))ms — aborting"
     return 1
   fi
+  debug_echo "new dropdown: addr=$new_addr pid=$new_pid class=$TERMINAL_CLASS"
+
+  # 4. Save state
+  state_save "$new_addr" "$new_pid" "$mon_name" "$TERMINAL_CLASS"
+
+  # 5. Move to current workspace (follow=true so it appears on active ws) +
+  #    tag the window for robust later addressing + pin enable.
+  #    Pin must come AFTER the move: pinned windows ignore workspace moves
+  #    (wiki: "pinning is ignored for non-floating windows" — but also, a
+  #    pinned window stays visible across workspaces, so we pin last).
+  sleep 0.2
+  local current_ws
+  current_ws=$(get_current_workspace_id)
+  action_move_to_workspace_follow "$new_addr" "$current_ws"
+  action_tag_dropdown "$new_addr"
+  action_pin_enable "$new_addr"
+
+  # 6. Animate slide down + focus
+  animate_slide_down "$new_addr" "$tx" "$ty" "$w" "$h"
+  action_focus "$new_addr"
 }
 
-# Function to check if terminal is in special workspace
-terminal_in_special() {
-  local addr=$(get_terminal_address)
-  if [ -n "$addr" ]; then
-    hyprctl clients -j | jq -e --arg ADDR "$addr" 'any(.[]; .address == $ADDR and .workspace.name == "special:scratchpad")' >/dev/null 2>&1
+# ============================================================
+# Section 10: Strategy — SHOW (HIDDEN → VISIBLE)
+#
+# Pipeline (per wiki "Minimize windows using special workspaces" pattern):
+#   1. read stored state (addr, pid, stored monitor)
+#   2. calculate geometry for current monitor
+#   3. detect monitor change -> update state file
+#   4. move to current workspace (follow=true so it visibly appears)
+#   5. pin enable (after move, per pin semantics)
+#   6. resize (ensure correct size on the possibly new monitor)
+#   7. animate slide down + focus
+# ============================================================
+
+strategy_show() {
+  debug_echo "Strategy: SHOW (HIDDEN -> VISIBLE)"
+
+  local addr pid stored_mon
+  addr=$(state_read_addr)
+  pid=$(state_read_pid)
+  stored_mon=$(state_read_monitor)
+
+  local pos
+  pos=$(calculate_dropdown_geometry)
+  local tx ty w h cur_mon
+  read -r tx ty w h cur_mon <<<"$pos"
+
+  # 3. Monitor change handling — if user switched focus to another monitor,
+  #    reposition the dropdown there and persist the new monitor name.
+  if [ -n "$stored_mon" ] && [ "$stored_mon" != "$cur_mon" ]; then
+    debug_echo "Monitor changed: $stored_mon -> $cur_mon, repositioning"
+    state_save "$addr" "$pid" "$cur_mon" "$TERMINAL_CLASS"
+  fi
+
+  # 4. Move to current workspace (follow=true so the dropdown visibly appears).
+  #    Per wiki minimize pattern, the window is addressed by tag, but since
+  #    we have the addr verified in state, we use addr directly.
+  local current_ws
+  current_ws=$(get_current_workspace_id)
+  action_move_to_workspace_follow "$addr" "$current_ws"
+  action_pin_enable "$addr"
+
+  # 5. Resize to ensure correct size on the (possibly new) monitor
+  action_resize "$addr" "$w" "$h"
+
+  # 6. Animate slide down + focus
+  animate_slide_down "$addr" "$tx" "$ty" "$w" "$h"
+  action_focus "$addr"
+}
+
+# ============================================================
+# Section 11: Strategy — HIDE (VISIBLE → HIDDEN)
+#
+# Pipeline (per wiki "Minimize windows using special workspaces" pattern):
+#   1. read stored state (addr, pid)
+#   2. query current window geometry (for animation start point)
+#   3. animate slide up (window moves above screen)
+#   4. pin disable (MUST happen BEFORE the workspace move — a pinned window
+#      is shown on ALL workspaces, so moving it to special:scratchpad would
+#      have no visible effect while pinned)
+#   5. move to special:scratchpad with follow=false (silent — do NOT switch
+#      the active workspace; this is the critical difference from the old code)
+# ============================================================
+
+strategy_hide() {
+  debug_echo "Strategy: HIDE (VISIBLE -> HIDDEN)"
+
+  local addr pid
+  addr=$(state_read_addr)
+  pid=$(state_read_pid)
+
+  # 2. Query current geometry for the slide-up animation
+  local geom cx cy cw ch
+  geom=$(query_window_geometry "$addr")
+  if [ -n "$geom" ]; then
+    read -r cx cy cw ch <<<"$geom"
+    debug_echo "current geometry: ${cx},${cy} ${cw}x${ch}"
+
+    # 3. Animate slide up
+    animate_slide_up "$addr" "$cx" "$cy" "$cw" "$ch"
   else
-    return 1
+    debug_echo "Could not read geometry; hiding without animation"
   fi
+
+  # 4. Pin disable — MUST come BEFORE the workspace move.
+  #    A pinned window is shown on all workspaces, so move(workspace=...) would
+  #    have no visible effect while pinned. We unpin first so the subsequent
+  #    silent move actually parks the window in special:scratchpad.
+  sleep 0.05
+  action_pin_disable "$addr"
+
+  # 5. Move to special workspace with follow=false (silent).
+  #    follow=false means the active workspace does NOT switch — only the
+  #    window moves. This is the Lua equivalent of legacy `movetoworkspacesilent`
+  #    and is the key fix for the "terminal doesn't hide properly" bug.
+  sleep 0.05
+  action_move_to_workspace_silent "$addr" "$SPECIAL_WS"
 }
 
-# Function to spawn terminal and capture its address
-spawn_terminal() {
-  debug_echo "Creating new dropdown terminal with command: $TERMINAL_CMD"
+# ============================================================
+# Section 12: Main — State Machine Dispatcher
+# ============================================================
 
-  # Calculate dropdown position for later use
-  local pos_info=$(calculate_dropdown_position)
-  if [ $? -ne 0 ]; then
-    debug_echo "Warning: Using fallback positioning"
-  fi
+main() {
+  validate_args
 
-  local target_x=$(echo $pos_info | cut -d' ' -f1)
-  local target_y=$(echo $pos_info | cut -d' ' -f2)
-  local width=$(echo $pos_info | cut -d' ' -f3)
-  local height=$(echo $pos_info | cut -d' ' -f4)
-  local monitor_name=$(echo $pos_info | cut -d' ' -f5)
+  local current_state
+  current_state=$(detect_state)
+  debug_echo "Detected state: $current_state"
 
-  debug_echo "Target position: ${target_x},${target_y}, size: ${width}x${height}"
-
-  # Get window count before spawning
-  local windows_before=$(hyprctl clients -j)
-  local count_before=$(echo "$windows_before" | jq 'length')
-
-  # Launch terminal directly in special workspace to avoid visible spawn
-  hyprctl dispatch exec "[float; size $width $height; workspace special:scratchpad silent] $TERMINAL_CMD"
-
-  # Wait for window to appear
-  sleep 0.1
-
-  # Get windows after spawning
-  local windows_after=$(hyprctl clients -j)
-  local count_after=$(echo "$windows_after" | jq 'length')
-
-  local new_addr=""
-
-  if [ "$count_after" -gt "$count_before" ]; then
-    # Find the new window by comparing before/after lists
-    new_addr=$(comm -13 \
-      <(echo "$windows_before" | jq -r '.[].address' | sort) \
-      <(echo "$windows_after" | jq -r '.[].address' | sort) |
-      head -1)
-  fi
-
-  # Fallback: try to find by the most recently mapped window
-  if [ -z "$new_addr" ] || [ "$new_addr" = "null" ]; then
-    new_addr=$(hyprctl clients -j | jq -r 'sort_by(.focusHistoryID) | .[-1] | .address')
-  fi
-
-  if [ -n "$new_addr" ] && [ "$new_addr" != "null" ]; then
-    # Store the address and monitor name
-    echo "$new_addr $monitor_name" >"$ADDR_FILE"
-    debug_echo "Terminal created with address: $new_addr in special workspace on monitor $monitor_name"
-
-    # Small delay to ensure it's properly in special workspace
-    sleep 0.2
-
-    # Now bring it back with the same animation as subsequent shows
-    # Use movetoworkspacesilent to avoid affecting workspace history
-    hyprctl dispatch "movetoworkspacesilent $CURRENT_WS,address:$new_addr"
-    hyprctl dispatch "pin address:$new_addr"
-    animate_slide_down "$new_addr" "$target_x" "$target_y" "$width" "$height"
-
-    return 0
-  fi
-
-  debug_echo "Failed to get terminal address"
-  return 1
+  case "$current_state" in
+  "$STATE_ABSENT")
+    strategy_create
+    ;;
+  "$STATE_VISIBLE")
+    strategy_hide
+    ;;
+  "$STATE_HIDDEN")
+    strategy_show
+    ;;
+  *)
+    debug_echo "FATAL: unknown state '$current_state'"
+    exit 1
+    ;;
+  esac
 }
 
-# Main logic
-if terminal_exists; then
-  TERMINAL_ADDR=$(get_terminal_address)
-  debug_echo "Found existing terminal: $TERMINAL_ADDR"
-  focused_monitor=$(get_monitor_info | awk '{print $6}')
-  dropdown_monitor=$(get_terminal_monitor)
-  if [ "$focused_monitor" != "$dropdown_monitor" ]; then
-    debug_echo "Monitor focus changed: moving dropdown to $focused_monitor"
-    # Calculate new position for focused monitor
-    pos_info=$(calculate_dropdown_position)
-    target_x=$(echo $pos_info | cut -d' ' -f1)
-    target_y=$(echo $pos_info | cut -d' ' -f2)
-    width=$(echo $pos_info | cut -d' ' -f3)
-    height=$(echo $pos_info | cut -d' ' -f4)
-    monitor_name=$(echo $pos_info | cut -d' ' -f5)
-    # Move and resize window
-    hyprctl dispatch "movewindowpixel exact $target_x $target_y,address:$TERMINAL_ADDR"
-    hyprctl dispatch "resizewindowpixel exact $width $height,address:$TERMINAL_ADDR"
-    # Update ADDR_FILE
-    echo "$TERMINAL_ADDR $monitor_name" >"$ADDR_FILE"
-  fi
-
-  if terminal_in_special; then
-    debug_echo "Bringing terminal from scratchpad with slide down animation"
-
-    # Calculate target position
-    pos_info=$(calculate_dropdown_position)
-    target_x=$(echo $pos_info | cut -d' ' -f1)
-    target_y=$(echo $pos_info | cut -d' ' -f2)
-    width=$(echo $pos_info | cut -d' ' -f3)
-    height=$(echo $pos_info | cut -d' ' -f4)
-
-    # Use movetoworkspacesilent to avoid affecting workspace history
-    hyprctl dispatch "movetoworkspacesilent $CURRENT_WS,address:$TERMINAL_ADDR"
-    hyprctl dispatch "pin address:$TERMINAL_ADDR"
-
-    # Set size and animate slide down
-    hyprctl dispatch "resizewindowpixel exact $width $height,address:$TERMINAL_ADDR"
-    animate_slide_down "$TERMINAL_ADDR" "$target_x" "$target_y" "$width" "$height"
-
-    hyprctl dispatch "focuswindow address:$TERMINAL_ADDR"
-  else
-    debug_echo "Hiding terminal to scratchpad with slide up animation"
-
-    # Get current geometry for animation
-    geometry=$(get_window_geometry "$TERMINAL_ADDR")
-    if [ -n "$geometry" ]; then
-      curr_x=$(echo $geometry | cut -d' ' -f1)
-      curr_y=$(echo $geometry | cut -d' ' -f2)
-      curr_width=$(echo $geometry | cut -d' ' -f3)
-      curr_height=$(echo $geometry | cut -d' ' -f4)
-
-      debug_echo "Current geometry: ${curr_x},${curr_y} ${curr_width}x${curr_height}"
-
-      # Animate slide up first
-      animate_slide_up "$TERMINAL_ADDR" "$curr_x" "$curr_y" "$curr_width" "$curr_height"
-
-      # Small delay then move to special workspace and unpin
-      sleep 0.1
-      hyprctl dispatch "pin address:$TERMINAL_ADDR" # Unpin (toggle)
-      hyprctl dispatch "movetoworkspacesilent $SPECIAL_WS,address:$TERMINAL_ADDR"
-    else
-      debug_echo "Could not get window geometry, moving to scratchpad without animation"
-      hyprctl dispatch "pin address:$TERMINAL_ADDR"
-      hyprctl dispatch "movetoworkspacesilent $SPECIAL_WS,address:$TERMINAL_ADDR"
-    fi
-  fi
-else
-  debug_echo "No existing terminal found, creating new one"
-  if spawn_terminal; then
-    TERMINAL_ADDR=$(get_terminal_address)
-    if [ -n "$TERMINAL_ADDR" ]; then
-      hyprctl dispatch "focuswindow address:$TERMINAL_ADDR"
-    fi
-  fi
-fi
+main "$@"
