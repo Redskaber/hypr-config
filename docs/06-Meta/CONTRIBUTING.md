@@ -28,17 +28,28 @@ git push origin my-feature
 ## Development Environment
 
 ### Required Tools
-
 - `python3` with `lupa` package (`pip install lupa`) — for Lua syntax checking + hypr-sim
 - `bash` — for running scripts
 - `luacheck` (optional, recommended) — static analysis
+
+### Validation Tools (3 layers)
+
+| Tool | Command | Catches |
+| --- | --- | --- |
+| `lupa` Lua syntax | `python3 -c "..."` | Syntax errors in .lua files |
+| `hypr-sim` | `python3 hypr-sim.py` | Runtime errors + API whitelist + orphaned tags |
+| `validate_tags.sh` | `bash sys/scripts/validate_tags.sh` | Orphaned tags (defined but no rule) |
+
+Run all at once:
+```bash
+bash scripts/pre-commit.sh
+```
 
 ## Coding Standards
 
 ### Lua (`.lua` files)
 
 1. **File header** — every file starts with:
-
    ```lua
    -- @path: sys/path/to/file.lua
    -- @author: redskaber
@@ -47,7 +58,6 @@ git push origin my-feature
    ```
 
 2. **Dependency Injection** — never hard-code tool names:
-
    ```lua
    -- BAD
    hl.bind("SUPER + Return", hl.dsp.exec_cmd("kitty"))
@@ -63,7 +73,6 @@ git push origin my-feature
    - `hl.animation` params: `curve` not `bezier` (see [Animations wiki](https://wiki.hypr.land/Configuring/Advanced-and-Cool/Animations/))
 
 4. **State machines** — use `lib/sm.lua` base class with pcall fallback:
-
    ```lua
    local ok, sm_mod = pcall(require, 'sys.statemachine.layout')
    local sm = ok and sm_mod.new(hl) or nil
@@ -75,7 +84,6 @@ git push origin my-feature
 5. **Never use `class = ""`** — empty regex matches ALL windows (BUG-1).
 
 6. **`size`/`move` expressions** — use Lua table form:
-
    ```lua
    -- BAD
    hl.window_rule({ size = "(monitor_w*0.5) (monitor_h*0.5)", ... })
@@ -86,14 +94,12 @@ git push origin my-feature
 ### Shell (`.sh` files)
 
 1. **Source `common.sh`** — every script starts with:
-
    ```bash
    #!/usr/bin/env bash
    source "$(dirname "$0")/lib/common.sh"
    ```
 
 2. **Use variables, not hard-coded tool names**:
-
    ```bash
    # BAD
    notify-send "Hello"
@@ -113,7 +119,6 @@ git push origin my-feature
 ## Architecture Overview
 
 Read [docs/02-Architecture/ARCHITECTURE_OVERVIEW.md](docs/02-Architecture/ARCHITECTURE.md) for:
-
 - Layered pipeline (bootstrap → sys → user)
 - Three-layer constants (`_G.HYPR_CONST`)
 - Tag-driven window management (26 tags)
@@ -134,6 +139,8 @@ Read [docs/02-Architecture/ARCHITECTURE_OVERVIEW.md](docs/02-Architecture/ARCHIT
 ## Pull Request Checklist
 
 - [ ] All `.lua` files pass `lupa` syntax check
+- [ ] `hypr-sim.py` reports 0 errors
+- [ ] `validate_tags.sh` reports 0 orphaned tags
 - [ ] `bash -n` passes on all modified `.sh` files
 - [ ] No hard-coded tool names in `.sh` (use `common.sh` variables)
 - [ ] No `class = ""` in `tags.lua` or `rules.lua`
