@@ -4,7 +4,7 @@
 -- @description: Pipeline orchestrator — Stage 0 const load + Stage 1+ sys pipeline
 
 -- Stage 0: load three const layers (each writes to _G.HYPR_CONST, last-wins)
-_G.HYPR_CONST = {}
+_G.HYPR_CONST = _G.HYPR_CONST or {}
 
 -- Stage 0: load (bootstrap, sys, user) consts
 require("bootstrap.const")

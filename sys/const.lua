@@ -3,6 +3,8 @@
 -- @date: 2026-08-20
 -- @description: Layer 2: system default constants (vendor, never edit)
 
+_G.HYPR_CONST = _G.HYPR_CONST or {}
+
 _G.HYPR_CONST.M = "SUPER"
 _G.HYPR_CONST.M_terminal = "kitty"
 _G.HYPR_CONST.M_file_manager = "nemo"
