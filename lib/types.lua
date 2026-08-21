@@ -170,7 +170,7 @@
 ---@field float fun(opts?: {action?: string, window?: string}): nil
 ---@field fullscreen fun(opts?: {mode?: string, action?: string, window?: string}): nil
 ---@field pin fun(opts?: {action?: string, window?: string}): nil
----@field move fun(opts?: {workspace?: string, follow?: boolean, window?: string}): nil
+---@field move fun(opts?: {workspace?: string|integer, follow?: boolean, window?: string}): nil
 ---@field move fun(opts?: {x: number|string, y: number|string, relative?: boolean, window?: string}): nil
 ---@field resize fun(opts?: {x: number|string, y: number|string, relative?: boolean, window?: string}): nil
 ---@field center fun(opts?: {window?: string}): nil
@@ -187,7 +187,7 @@
 ---@class HLDispatcherWorkspace
 ---@field rename fun(opts: {workspace: string, name?: string}): nil
 ---@field change_id fun(opts: {workspace: string, id: integer}): nil
----@field move fun(opts: {workspace?: string, monitor: string}): nil
+---@field move fun(opts: {workspace?: string|integer, monitor: string}): nil
 ---@field swap_monitors fun(opts: {monitor1: string, monitor2: string}): nil
 ---@field toggle_special fun(special_name: string): nil
 
@@ -230,7 +230,7 @@
 ---@field layer_rule fun(opts: LayerRule): LayerRule Register layer rule
 ---@field on fun(event: string, fn: function): nil Register event hook
 ---@field env fun(key: string, value: string): nil Set env var
----@field exec_cmd fun(cmd: string): nil Execute command (async)
+---@field exec_cmd fun(cmd: string|nil, rules?: table): nil Execute command (async)
 ---@field monitor fun(opts: {output: string, mode: string, position: string, scale: number}): nil Configure monitor
 ---@field device fun(opts: {name: string, enabled: boolean}): nil Configure input device
 ---@field gesture fun(opts: table): nil Configure gesture
