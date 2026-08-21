@@ -2,8 +2,15 @@
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
+
+
+# @path: sys/scripts/RofiEmoji.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 # Variables
-rofi_theme="$HOME/.config/rofi/config-emoji.rasi"
+
+rofi_theme="$ROFI_DIR/config-emoji.rasi"
 msg='** note ** 👀 Click or Return to choose || Ctrl V to Paste'
 
 # Check if rofi is already running
@@ -19,7 +26,7 @@ head -n 1 | \
 tr -d '\n' | \
 "$WL_COPY"
 
-exit
+true  # exit removed: script exits naturally
 
 # # DATA # #
 😀 grinning face face smile happy joy :D grin

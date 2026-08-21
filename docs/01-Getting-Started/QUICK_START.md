@@ -85,7 +85,7 @@ _G.HYPR_CONST.W = "~/Pictures/wallpapers" -- your wallpaper dir
 luacheck ~/.config/hypr --codes
 
 # Runtime simulator (executes the full pipeline)
-cd ~/.config/hypr && python3 hypr-sim.py
+cd ~/.config/hypr && hyprland --verify-config
 
 # Real Hyprland (gold standard, needs nix store access)
 hyprland --verify-config
@@ -179,7 +179,7 @@ require("sys.policy.animations.ml4w-fast")   -- faster animations
 luacheck ~/.config/hypr --codes
 
 # 2. Runtime check (catches errors luacheck misses)
-cd ~/.config/hypr && python3 hypr-sim.py
+cd ~/.config/hypr && hyprland --verify-config
 
 # 3. Real Hyprland verify
 hyprland --verify-config

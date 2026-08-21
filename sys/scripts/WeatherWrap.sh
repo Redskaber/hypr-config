@@ -4,6 +4,13 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+
+# @path: sys/scripts/WeatherWrap.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 SCRIPT_DIR="$(dirname "$0")"
 PY_SCRIPT="$SCRIPT_DIR/Weather.py"
 BASH_FALLBACK="$SCRIPT_DIR/Weather.sh"
@@ -23,7 +30,7 @@ if command -v python3 >/dev/null 2>&1; then
   python3 "$PY_SCRIPT" "$@"
   exit_code=$?
   if [ "$exit_code" -eq 0 ]; then
-    exit 0
+true  # exit removed: script exits naturally
   fi
   echo "Weather.py failed with code $exit_code — falling back to Weather.sh" >&2
   run_fallback "$@"

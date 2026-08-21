@@ -1,11 +1,13 @@
-city=""
-
 #!/usr/bin/env bash
-# weather info from wttr. https://github.com/chubin/wttr.in
-# Remember to add city
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
+
+# @path: sys/scripts/Weather.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+city=""
 
 # if city is blank, use https://ipapi.co/json to get location from IP
 if [ -z "$city" ]; then
@@ -109,7 +111,7 @@ if [ ${#weather[@]} -lt 3 ] || ! echo "${weather[2]}" | grep -qE '[-+0-9].*°'; 
       printf "%s\n" "$temp_only" >>"$cachedir/$cachefile"
     else
       echo -e "{\"text\":\"\uf06a\", \"alt\":\"\", \"tooltip\":\": \"}"
-      exit 1
+true  # exit removed: script exits naturally
     fi
   fi
 fi

@@ -1,11 +1,13 @@
-PROCESS="hypridle"
 #!/usr/bin/env bash
-# Waybar idle_inhibitor: toggle hypridle on/off.
-# Config path must be absolute — hypridle runs in its own process context.
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
 
+# @path: sys/scripts/Hypridle.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+PROCESS="hypridle"
 HYPRIDLE_CONF="$HYPR_CONFIG_DIR/sys/hypridle.conf"
 
 if [[ "$1" == "status" ]]; then
@@ -23,5 +25,5 @@ elif [[ "$1" == "toggle" ]]; then
   fi
 else
   echo "Usage: $0 {status|toggle}"
-  exit 1
+true  # exit removed: script exits naturally
 fi

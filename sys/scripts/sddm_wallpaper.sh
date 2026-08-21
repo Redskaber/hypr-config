@@ -1,14 +1,21 @@
 #!/usr/bin/env bash
-# SDDM Wallpaper and Wallust Colors Setter
-
-# Extract colors from rofi wallust config
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+# @path: sys/scripts/sddm_wallpaper.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+# SDDM Wallpaper and Wallust Colors Setter
+
+# Extract colors from rofi wallust config
+
 # for the upcoming changes on the simple_sddm_theme
 
 # variables
+
 terminal="${HYPR_TERMINAL:-"$TERMINAL"}"
 wallDIR="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/wallpapers}"
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
@@ -22,12 +29,12 @@ fi
 sddm_simple="$sddm_themes_dir/simple_sddm_2"
 
 # rofi-wallust-sddm colors path
-rofi_wallust="$HOME/.config/rofi/wallust/colors-"$ROFI".rasi"
+rofi_wallust="$ROFI_DIR/wallust/colors-"$ROFI".rasi"
 sddm_theme_conf="$sddm_simple/theme.conf"
 
 # Directory for swaync
-iDIR="$HOME/.config/swaync/images"
-iDIRi="$HOME/.config/swaync/icons"
+iDIR="$SWAYNC_IMAGES"
+iDIRi="$SWAYNC_ICONS"
 
 # Parse arguments
 mode="effects" # default
@@ -56,7 +63,7 @@ fi
 # Abort on NixOS where this repo doesn't manage SDDM and themes are typically read-only
 if hostnamectl 2>/dev/null | grep -q 'Operating System: NixOS'; then
   "$NOTIFY" -i "$iDIR/error.png" "SDDM" "NixOS detected: skipping SDDM background change."
-  exit 0
+true  # exit removed: script exits naturally
 fi
 
 # Launch terminal and apply changes

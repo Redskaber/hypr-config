@@ -136,8 +136,8 @@ See [TAG_SYSTEM.md](../03-Core-Systems/TAG_SYSTEM.md) for the full rule API.
 ### Runtime (in sandbox)
 
 ```bash
-# hypr-sim: executes the full require chain + validates all rules
-python3 hypr-sim.py
+# Real hyprland --verify-config validates the full require chain
+hyprland --verify-config
 ```
 
 Expected output (verified 2026-08-20):

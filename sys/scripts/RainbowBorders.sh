@@ -1,14 +1,17 @@
-function random_hex() {
 #!/usr/bin/env bash
+
+# @path: sys/scripts/RainbowBorders.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+function random_hex() {
+
 # sys/scripts/RainbowBorders.sh — Animated rainbow active border
 # This is the system-provided implementation.
 # To enable: add to user/startup.conf:
 #   exec-once = $S/RainbowBorders.sh
 # To use a custom version: place it at user/scripts/RainbowBorders.sh
 # (Refresh.sh will prefer user/scripts/ over sys/scripts/).
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
 
   random_hex=("0xff$(openssl rand -hex 3)")
   echo $random_hex

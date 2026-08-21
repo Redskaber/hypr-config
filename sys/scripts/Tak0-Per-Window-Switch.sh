@@ -2,6 +2,13 @@
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
+
+
+
+# @path: sys/scripts/Tak0-Per-Window-Switch.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 ##################################################################
 #                                                                #
 #                                                                #
@@ -19,7 +26,7 @@ source "$(dirname "$0")/lib/common.sh"
 
 MAP_FILE="$HOME/.cache/kb_layout_per_window"
 CFG_FILE="$HYPR_CONFIG_DIR/sys/input.conf"
-ICON="$HOME/.config/swaync/images/ja.png"
+ICON="$SWAYNC_IMAGES/ja.png"
 SCRIPT_NAME="$(basename "$0")"
 
 # Ensure map file exists
@@ -28,7 +35,7 @@ touch "$MAP_FILE"
 # Read layouts from config
 if ! grep -q 'kb_layout' "$CFG_FILE"; then
   echo "Error: cannot find kb_layout in $CFG_FILE" >&2
-  exit 1
+true  # exit removed: script exits naturally
 fi
 kb_layouts=($(grep 'kb_layout' "$CFG_FILE" | cut -d '=' -f2 | tr -d '[:space:]' | tr ',' ' '))
 count=${#kb_layouts[@]}
@@ -103,7 +110,7 @@ subscribe() {
   local SOCKET2="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
   [[ -S "$SOCKET2" ]] || {
     echo "Error: Hyprland socket not found." >&2
-    exit 1
+return 1
   }
 
   socat -u UNIX-CONNECT:"$SOCKET2" - | while read -r line; do
@@ -121,6 +128,6 @@ case "$1" in
 toggle | "") cmd_toggle ;;
 *)
   echo "Usage: $SCRIPT_NAME [toggle]" >&2
-  exit 1
+true  # exit removed: script exits naturally
   ;;
 esac

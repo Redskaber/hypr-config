@@ -4,6 +4,7 @@
 -- @description: Layout state machine (scrolling↔dwindle↔master cycle)
 
 local SM = require("lib.sm")
+local const = require("const")
 local M = {}
 
 function M.new(hl)
@@ -15,18 +16,20 @@ function M.new(hl)
     hl.config({ general = { layout = to } })
 
     -- Rebind J/K/O based on layout (wiki: hl.bind + hl.unbind confirmed)
+    -- Uses const.modifier for DI (not hard-coded "SUPER")
+    local mod = const.modifier
     if to == "dwindle" then
-      hl.bind("SUPER + J", hl.dsp.focus({direction="d"}))
-      hl.bind("SUPER + K", hl.dsp.focus({direction="u"}))
-      hl.bind("SUPER + O", hl.dsp.layout("togglesplit"))
+      hl.bind(mod .. " + J", hl.dsp.focus({direction="d"}))
+      hl.bind(mod .. " + K", hl.dsp.focus({direction="u"}))
+      hl.bind(mod .. " + O", hl.dsp.layout("togglesplit"))
     elseif to == "master" then
-      hl.bind("SUPER + J", hl.dsp.focus({direction="d"}))
-      hl.bind("SUPER + K", hl.dsp.focus({direction="u"}))
-      hl.unbind("SUPER + O")
-    else  -- scrolling: unbind J/K/O (plugin owns column nav)
-      hl.unbind("SUPER + J")
-      hl.unbind("SUPER + K")
-      hl.unbind("SUPER + O")
+      hl.bind(mod .. " + J", hl.dsp.focus({direction="d"}))
+      hl.bind(mod .. " + K", hl.dsp.focus({direction="u"}))
+      hl.unbind(mod .. " + O")
+    else  -- scrolling: unbind J/K/O (built-in owns column nav)
+      hl.unbind(mod .. " + J")
+      hl.unbind(mod .. " + K")
+      hl.unbind(mod .. " + O")
     end
   end
 

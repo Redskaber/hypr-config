@@ -4,13 +4,20 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+
+# @path: sys/scripts/WaybarLayout.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 IFS=$'\n\t'
 
 # Define directories
-waybar_layouts="$HOME/.config/waybar/configs"
-waybar_config="$HOME/.config/waybar/config"
+waybar_layouts="$WAYBAR_DIR/configs"
+waybar_config="$WAYBAR_DIR/config"
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
-rofi_config="$HOME/.config/rofi/config-"$BAR"-layout.rasi"
+rofi_config="$ROFI_DIR/config-"$BAR"-layout.rasi"
 msg=' 🎌 NOTE: Some "$BAR" LAYOUT NOT fully compatible with some STYLES'
 
 # Apply selected configuration
@@ -52,7 +59,7 @@ main() {
   # Exit if nothing chosen
   [[ -z "$choice" ]] && {
     echo "No option selected. Exiting."
-    exit 0
+return 0
   }
 
   # Strip marker before applying

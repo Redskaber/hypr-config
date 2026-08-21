@@ -17,7 +17,7 @@ local layout_sm = ok_layout and layout_mod.new(hl) or nil
 local gamemode_sm = ok_gamemode and gamemode_mod.new(hl) or nil
 local nightlight_sm = ok_nightlight and nightlight_mod.new(hl) or nil
 
--- 预解析 deps (在文件加载时, 不在 bind 回调里)
+-- Pre-resolve deps (at file load, not in bind callbacks)
 local launcher_cmd = deps.get("launcher").cmd or "rofi"
 local terminal_cmd = deps.get("terminal").cmd or "kitty"
 local file_manager_cmd = deps.get("file_manager").cmd or "nemo"
@@ -25,8 +25,8 @@ local notification_cmd = deps.get("notification").cmd or "swaync"
 local bar_cmd = deps.get("bar").cmd or "waybar"
 
 
--- 注意: get_current_layout 用 hl.exec_cmd 不会阻塞, 但也无法返回值
--- 用户可以通过 keybind 配置只绑定当前 layout 的 keybinds
+-- Note: get_current_layout uses hl.exec_cmd (non-blocking, but no return value)
+-- Users can configure layout-specific keybinds
 
 -- ── STANDARD — launchers & apps ────────────────────────────────────
 hl.bind(const.modifier .. " + D", hl.dsp.exec_cmd("pkill " .. launcher_cmd .. " || true && " .. launcher_cmd .. " -show drun -modi drun filebrowser run window"))

@@ -1,23 +1,30 @@
 #!/usr/bin/env bash
-# For Dark and Light switching
-# Note: Scripts are looking for keywords Light or Dark except for wallpapers as the are in a separate directories
-
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+# @path: sys/scripts/DarkLight.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+# For Dark and Light switching
+# Note: Scripts are looking for keywords Light or Dark except for wallpapers as the are in a separate directories
+
+
 # Paths
+
 wallpaper_base_path="$HOME/Pictures/wallpapers/Dynamic-Wallpapers"
 dark_wallpapers="$wallpaper_base_path/Dark"
 light_wallpapers="$wallpaper_base_path/Light"
-swaync_style="$HOME/.config/swaync/style.css"
+swaync_style="$SWAYNC_DIR/style.css"
 ags_style="$HOME/.config/ags/user/style.css"
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
-notif="$HOME/.config/swaync/images/bell.png"
-wallust_rofi="$HOME/.config/wallust/templates/colors-"$ROFI".rasi"
-kitty_conf="$HOME/.config/kitty/kitty.conf"
+notif="$SWAYNC_IMAGES/bell.png"
+wallust_rofi="$WALLUST_DIR/templates/colors-"$ROFI".rasi"
+kitty_conf="$KITTY_DIR/kitty.conf"
 
-wallust_config="$HOME/.config/wallust/wallust.toml"
+wallust_config="$WALLUST_DIR/wallust.toml"
 pallete_dark="dark16"
 pallete_light="light16"
 
@@ -27,7 +34,7 @@ for pid in "$BAR" "$ROFI" "$NOTIFICATION" ags swaybg; do
 done
 
 # Initialize awww if needed
-awww query || "$WALLPAPER_DAEMON" --format argb
+awww query 2>/dev/null
 
 # Set awww options
 awww="awww img"
@@ -64,8 +71,8 @@ fi
 # Function to set Waybar style
 set_waybar_style() {
   theme="$1"
-  waybar_styles="$HOME/.config/waybar/style"
-  waybar_style_link="$HOME/.config/waybar/style.css"
+  waybar_styles="$WAYBAR_DIR/style"
+  waybar_style_link="$WAYBAR_DIR/style.css"
   style_prefix="\\[${theme}\\].*\\.css$"
 
   style_file=$(find -L "$waybar_styles" -maxdepth 1 -type f -regex ".*$style_prefix" | shuf -n 1)
@@ -131,16 +138,16 @@ $awww "${next_wallpaper}" $effect
 # Set Kvantum Manager theme & QT5/QT6 settings
 if [ "$next_mode" = "Dark" ]; then
   kvantum_theme="catppuccin-mocha-blue"
-  qt5ct_color_scheme="$HOME/.config/qt5ct/colors/Catppuccin-Mocha.conf"
-  qt6ct_color_scheme="$HOME/.config/qt6ct/colors/Catppuccin-Mocha.conf"
+  qt5ct_color_scheme="$QT_DIR/qt5ct/colors/Catppuccin-Mocha.conf"
+  qt6ct_color_scheme="$QT_DIR/qt6ct/colors/Catppuccin-Mocha.conf"
 else
   kvantum_theme="catppuccin-latte-blue"
-  qt5ct_color_scheme="$HOME/.config/qt5ct/colors/Catppuccin-Latte.conf"
-  qt6ct_color_scheme="$HOME/.config/qt6ct/colors/Catppuccin-Latte.conf"
+  qt5ct_color_scheme="$QT_DIR/qt5ct/colors/Catppuccin-Latte.conf"
+  qt6ct_color_scheme="$QT_DIR/qt6ct/colors/Catppuccin-Latte.conf"
 fi
 
-sed -i "s|^color_scheme_path=.*$|color_scheme_path=$qt5ct_color_scheme|" "$HOME/.config/qt5ct/qt5ct.conf"
-sed -i "s|^color_scheme_path=.*$|color_scheme_path=$qt6ct_color_scheme|" "$HOME/.config/qt6ct/qt6ct.conf"
+sed -i "s|^color_scheme_path=.*$|color_scheme_path=$qt5ct_color_scheme|" "$QT_DIR/qt5ct/qt5ct.conf"
+sed -i "s|^color_scheme_path=.*$|color_scheme_path=$qt6ct_color_scheme|" "$QT_DIR/qt6ct/qt6ct.conf"
 kvantummanager --set "$kvantum_theme"
 
 # set the rofi color for background
@@ -210,8 +217,8 @@ set_custom_gtk_theme() {
     gsettings set $icon_setting "$selected_icon"
 
     ## QT5ct icon_theme
-    sed -i "s|^icon_theme=.*$|icon_theme=$selected_icon|" "$HOME/.config/qt5ct/qt5ct.conf"
-    sed -i "s|^icon_theme=.*$|icon_theme=$selected_icon|" "$HOME/.config/qt6ct/qt6ct.conf"
+    sed -i "s|^icon_theme=.*$|icon_theme=$selected_icon|" "$QT_DIR/qt5ct/qt5ct.conf"
+    sed -i "s|^icon_theme=.*$|icon_theme=$selected_icon|" "$QT_DIR/qt6ct/qt6ct.conf"
 
     # Flatpak GTK apps (icons)
     if command -v flatpak &>/dev/null; then
@@ -244,4 +251,3 @@ sleep 0.5
 # Display notifications for theme and icon changes
 "$NOTIFY" -u low -i "$notif" " Themes switched to:" " $next_mode Mode"
 
-exit 0

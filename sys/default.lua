@@ -4,7 +4,9 @@
 -- @description: System pipeline — require order = override priority (later wins)
 
 require("sys.hardware.default")
+require("user.hardware.default")
 require("sys.policy.default")
+require("user.policy.default")
 require("sys.env")
 require("user.env")
 require("sys.misc")

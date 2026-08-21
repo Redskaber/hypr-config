@@ -1,5 +1,11 @@
-notif="$HOME/.config/swaync/images/ja.png"
 #!/usr/bin/env bash
+
+# @path: sys/scripts/ChangeLayout.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+notif="$SWAYNC_IMAGES/ja.png"
+
 # DEPRECATED: This script is replaced by the Lua state machine module (sys/statemachine/).
 # Kept for reference only. Do not use — the SM module is called directly via hl.bind().
 # sys/scripts/ChangeLayout.sh — Cycle layout: scrolling → dwindle → master → scrolling
@@ -12,9 +18,6 @@ notif="$HOME/.config/swaync/images/ja.png"
 # J/K ownership:
 #   scrolling — unbound here; hyprscrolling plugin handles column navigation
 #   dwindle / master — bound to cyclenext / cyclenext,prev
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
 
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 

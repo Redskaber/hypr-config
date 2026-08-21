@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
-# This script for selecting wallpapers (SUPER W)
+# @path: sys/scripts/WallpaperSelect.sh
+# @author: redskaber
+# @date: 2026-08-20
+# @description: Wallpaper selector (SUPER W) — rofi menu + awww + wallust
 
-# Source shared library — provides DI for tool names
+# Source shared library — SSOT paths + DI variables
 source "$(dirname "$0")/lib/common.sh"
 
-
 # WALLPAPERS PATH — override via env var HYPR_WALLPAPER_DIR (set in user/env.conf)
+
 terminal="${HYPR_TERMINAL:-"$TERMINAL"}"
 wallDIR="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/wallpapers}"
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 wallpaper_current="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_current"
 
 # Directory for swaync
-iDIR="$HOME/.config/swaync/images"
-iDIRi="$HOME/.config/swaync/icons"
+iDIR="$SWAYNC_IMAGES"
+iDIRi="$SWAYNC_ICONS"
 
 # awww transition config
 FPS=60
@@ -25,17 +28,17 @@ SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration
 # Check if package bc exists
 if ! command -v bc &>/dev/null; then
   "$NOTIFY" -i "$iDIR/error.png" "bc missing" "Install package bc first"
-  exit 1
+  return 1
 fi
 
 # Variables
-rofi_theme="$HOME/.config/rofi/config-wallpaper.rasi"
+rofi_theme="$ROFI_DIR/config-wallpaper.rasi"
 focused_monitor=$("$HYPRCTL" monitors -j | "$JQ" -r '.[] | select(.focused) | .name')
 
 # Ensure focused_monitor is detected
 if [[ -z "$focused_monitor" ]]; then
   "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Could not detect focused monitor"
-  exit 1
+  return 1
 fi
 
 # Monitor details
@@ -54,6 +57,8 @@ kill_wallpaper_for_video() {
 }
 
 # Kill existing wallpaper daemons for image
+# NOTE: Do NOT kill or restart awww-daemon here! It's already running
+# (started by sys/startup.lua). Killing it causes panic on restart.
 kill_wallpaper_for_image() {
   pkill mpvpaper 2>/dev/null
   pkill swaybg 2>/dev/null
@@ -135,10 +140,11 @@ set_sddm_wallpaper() {
       # Check if terminal exists
       if ! command -v "$terminal" &>/dev/null; then
         "$NOTIFY" -i "$iDIR/error.png" "Missing $terminal" "Install $terminal to enable setting of wallpaper background"
-        exit 1
+        return 1
       fi
 
-      exec "$SCRIPTSDIR/sddm_wallpaper.sh" --normal
+      # Run in subshell — do NOT use exec (replaces process, can crash session)
+      bash "$SCRIPTSDIR/sddm_wallpaper.sh" --normal &
 
     fi
   fi
@@ -159,12 +165,11 @@ apply_image_wallpaper() {
 
   kill_wallpaper_for_image
 
-  if ! pgrep -x "awww-daemon" >/dev/null; then
-    echo "Starting "$WALLPAPER_DAEMON"..."
-    "$WALLPAPER_DAEMON" --format argb &
-  fi
-
-  awww img -o "$focused_monitor" "$image_path" $SWWW_PARAMS
+  # Do NOT restart awww-daemon! It's already running (started by sys/startup.lua).
+  # Restarting it causes: "There is an awww-daemon instance already running on this socket!"
+  # → panic → abort → core dumped → can crash Hyprland session.
+  # Just use awww img to set the wallpaper image.
+  awww img --format argb -o "$focused_monitor" "$image_path" $SWWW_PARAMS
 
   # Run additional scripts (pass the image path to avoid cache race conditions)
   "$SCRIPTSDIR/WallustSwww.sh" "$image_path"
@@ -197,7 +202,7 @@ main() {
 
   if [[ -z "$choice" ]]; then
     echo "No choice selected. Exiting."
-    exit 0
+    return 0
   fi
 
   # Handle random selection correctly
@@ -212,7 +217,7 @@ main() {
 
   if [[ -z "$selected_file" ]]; then
     echo "File not found. Selected choice: $choice"
-    exit 1
+    return 1
   fi
 
   # Modify the Startup_Apps.conf file based on wallpaper type

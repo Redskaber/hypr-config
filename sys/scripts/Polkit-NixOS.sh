@@ -5,7 +5,14 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+# @path: sys/scripts/Polkit-NixOS.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 # Find all polkit-gnome executables in the Nix store
+
 polkit_gnome_paths=$(find /nix/store -name 'polkit-gnome-authentication-agent-1' -type f 2>/dev/null)
 for polkit_gnome_path in $polkit_gnome_paths; do
   # Extract the directory containing the executable
@@ -15,7 +22,7 @@ for polkit_gnome_path in $polkit_gnome_paths; do
   if [ -x "$polkit_gnome_dir/polkit-gnome-authentication-agent-1" ]; then
     # Start the Polkit-GNOME Authentication Agent
     "$polkit_gnome_dir/polkit-gnome-authentication-agent-1" &
-    exit 0
+true  # exit removed: script exits naturally
   fi
 done
 

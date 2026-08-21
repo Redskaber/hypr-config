@@ -4,7 +4,14 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-iDIR="$HOME/.config/swaync/icons"
+
+
+
+# @path: sys/scripts/BrightnessKbd.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+iDIR="$SWAYNC_ICONS"
 
 # Get keyboard brightness
 get_kbd_backlight() {

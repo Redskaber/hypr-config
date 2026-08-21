@@ -1,49 +1,89 @@
 -- @path: sys/const.lua
 -- @author: redskaber
 -- @date: 2026-08-20
--- @version: 3.0
+-- @version: 4.0
 -- @description: Layer 2: system default constants (vendor, read-only)
 --
--- REFACTOR (Task 85): Pure module — no _G.HYPR_CONST legacy.
---   Consumers use: local const = require("sys.const")
---   const.apps.terminal, const.modifier, const.dirs.scripts, etc.
+-- ARCHITECTURE (Task 90): SSOT for ALL paths + DI variables.
+--   This module is the SINGLE SOURCE OF TRUTH for:
+--     - Application commands (terminal, editor, ...)
+--     - Modifier key
+--     - Internal directory paths (scripts, hardware, policy, ...)
+--     - External tool config paths (swaync, rofi, waybar, wallust, kitty, qt)
+--     - Helper tags
+--     - Search engine
+--     - Wallpaper directory
+--
+--   These values flow to two consumers:
+--     1. Lua config (via require("const") → merged by bootstrap/default.lua)
+--     2. Shell scripts (via deps.export_to_shell() → .deps_cache.sh)
+--
+--   User overrides in user/const.lua replace specific keys (incremental override).
 
 local paths = require("bootstrap.const")
 
 local M = {}
 
--- ── Application commands (DI: resolved via deps.lua at use site) ──────────
+-- ── Application commands (resolved via deps.lua at use site) ──────────────
 M.apps = {
-  terminal     = "kitty",
-  file_manager = "nemo",
-  editor       = os.getenv("EDITOR") or "nano",
+	terminal = "kitty",
+	file_manager = "nemo",
+	editor = os.getenv("EDITOR") or "nano",
 }
 
 -- ── Main modifier key ──────────────────────────────────────────────────────
 M.modifier = "SUPER"
 
--- ── Directory paths (derived, never hard-coded) ────────────────────────────
+-- ── Internal directory paths (derived from config_root, never hard-coded) ───
 M.dirs = {
-  scripts    = paths.sys .. "/scripts",
-  hardware   = paths.sys .. "/hardware",
-  policy     = paths.sys .. "/policy",
-  wallust    = paths.sys .. "/policy/wallust",
-  animations = paths.sys .. "/policy/animations",
-  -- User-side equivalents
-  user_scripts    = paths.user .. "/scripts",
-  user_hardware   = paths.user .. "/hardware",
-  user_policy     = paths.user .. "/policy",
-  user_wallust    = paths.user .. "/policy/wallust",
-  user_animations = paths.user .. "/policy/animations",
+	scripts = paths.sys .. "/scripts",
+	hardware = paths.sys .. "/hardware",
+	policy = paths.sys .. "/policy",
+	wallust = paths.sys .. "/policy/wallust",
+	animations = paths.sys .. "/policy/animations",
+	-- User-side equivalents (for user/ overrides)
+	user_scripts = paths.user .. "/scripts",
+	user_hardware = paths.user .. "/hardware",
+	user_policy = paths.user .. "/policy",
+	user_wallust = paths.user .. "/policy/wallust",
+	user_animations = paths.user .. "/policy/animations",
+	-- Runtime output
+	wallust_effects = paths.wallust_effects,
+	lock_background = paths.lock_background,
 }
+
+-- ── External tool config directories (SSOT for shell scripts too) ─────────
+-- These are exported to .deps_cache.sh by M.export_to_shell().
+-- Users override via user/const.lua M.external or env vars.
+--
+-- NAMING: ALL keys end in "_DIR" (or "_ICONS"/"_IMAGES" for sub-paths).
+--   export_to_shell converts to UPPER_SNAKE_CASE: swaync_dir → SWAYNC_DIR.
+M.external = {
+	-- execute
+	rofi = "rofi",
+
+	-- dirs
+	swaync_dir = os.getenv("HOME") .. "/.config/swaync",
+	swaync_icons = nil, -- derived below
+	swaync_images = nil, -- derived below
+	rofi_dir = os.getenv("HOME") .. "/.config/rofi",
+	waybar_dir = os.getenv("HOME") .. "/.config/waybar",
+	wallust_dir = os.getenv("HOME") .. "/.config/wallust",
+	kitty_dir = os.getenv("HOME") .. "/.config/kitty",
+	qt_dir = os.getenv("HOME") .. "/.config/qt",
+}
+
+-- Derive sub-paths (from swaync_dir)
+M.external.swaync_icons = M.external.swaync_dir .. "/icons"
+M.external.swaync_images = M.external.swaync_dir .. "/images"
 
 -- ── Helper tags (window tag names for help/config UI) ──────────────────────
 M.helpers = {
-  cheat    = "Help_Cheat",
-  settings = "Help_Settings",
+	cheat = "Help_Cheat",
+	settings = "Help_Settings",
 }
 
--- ── Search engine URL template ({}) is replaced by query) ──────────────────
+-- ── Search engine URL template ({} is replaced by query) ───────────────────
 M.search_engine = "https://www.google.com/search?q={}"
 
 -- ── Wallpaper directory (user home, not config dir) ────────────────────────
@@ -54,5 +94,59 @@ M.notify_icon = paths.icon
 
 -- ── Config root (for scripts that need the base path) ──────────────────────
 M.config_root = paths.config_root
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- Shell Export: generate .deps_cache.sh from this SSOT
+-- ════════════════════════════════════════════════════════════════════════════
+-- Called by bootstrap/default.lua after merging user overrides.
+-- Exports ALL constants (apps + dirs + external) as shell variables.
+-- Shell scripts source .deps_cache.sh to get DI variables.
+
+function M.export_to_shell()
+	local const = require("const") -- get merged const (with user overrides)
+	local f = io.open(const.config_root .. "/.deps_cache.sh", "w")
+	if not f then
+		return false
+	end
+
+	f:write("#!/bin/sh\n")
+	f:write("# AUTO-GENERATED by sys/const.lua M.export_to_shell()\n")
+	f:write('# Source this in .sh: source "${HYPR_DEPS_CACHE:-$HOME/.config/hypr/.deps_cache.sh}"\n')
+	f:write("# This is the SINGLE SOURCE OF TRUTH for all paths + DI variables.\n\n")
+
+	-- Config paths
+	f:write(string.format("export HYPR_CONFIG_DIR=%q\n", const.config_root))
+	f:write(string.format("export HYPR_SCRIPTS_DIR=%q\n", const.dirs.scripts))
+	f:write(string.format("export HYPR_HARDWARE_DIR=%q\n", const.dirs.hardware))
+	f:write(string.format("export HYPR_POLICY_DIR=%q\n", const.dirs.policy))
+	f:write(string.format("export HYPR_SYS_DIR=%q\n", const.config_root .. "/sys"))
+	f:write(string.format("export HYPR_USER_DIR=%q\n", const.config_root .. "/user"))
+	f:write(string.format("export HYPR_SEARCH_ENGINE=%q\n", const.search_engine))
+	f:write(string.format("export HYPR_WALLUST_DIR=%q\n", const.dirs.wallust_effects))
+	f:write(string.format("export HYPR_NOTIFY_ICON=%q\n", const.notify_icon))
+	f:write(string.format("export HYPR_LOCK_BG=%q\n", const.dirs.lock_background))
+	f:write(string.format("export HYPR_WALLPAPER_DIR=%q\n", const.wallpaper_dir))
+	f:write("\n")
+
+	-- External tool config paths
+	for name, path in pairs(const.external) do
+		local var = name:upper()
+		f:write(string.format("export %s=%q\n", var, path))
+	end
+	f:write("\n")
+
+	-- Application commands (from deps.lua specs too)
+	local deps = require("lib.deps")
+	for name in pairs(deps.specs) do
+		local dep = deps.get(name)
+		if dep and dep.cmd and dep.cmd ~= "" then
+			local var = name:upper():gsub("-", "_")
+			f:write(string.format("export %s=%q\n", var, dep.cmd))
+		end
+	end
+
+	f:close()
+	return true
+end
 
 return M

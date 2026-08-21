@@ -1,0 +1,7 @@
+-- @path: user/policy/animations/default.lua
+-- @author: redskaber
+-- @date: 2026-08-20
+-- @description: User animation overrides (empty — inherits sys/policy/animations/default.lua)
+--
+-- To override animations, add hl.animation() calls here.
+-- They will override the sys defaults (loaded after).

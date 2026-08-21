@@ -4,11 +4,18 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+
+# @path: sys/scripts/RofiBeats.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 mDIR="$HOME/Music/"
-iDIR="$HOME/.config/swaync/icons"
-rofi_theme="$HOME/.config/rofi/config-"$ROFI"-Beats.rasi"
-rofi_theme_menu="$HOME/.config/rofi/config-"$ROFI"-Beats-menu.rasi"
-music_list="$HOME/.config/rofi/online_music.list"
+iDIR="$SWAYNC_ICONS"
+rofi_theme="$ROFI_DIR/config-"$ROFI"-Beats.rasi"
+rofi_theme_menu="$ROFI_DIR/config-"$ROFI"-Beats-menu.rasi"
+music_list="$ROFI_DIR/online_music.list"
 
 mkdir -p "$(dirname "$music_list")"
 [[ -f "$music_list" ]] || touch "$music_list"
@@ -72,7 +79,7 @@ shuffle_local_music() {
 play_online_music() {
   if [ ! -s "$music_list" ]; then
     "$NOTIFY" -u low -i "$iDIR/music.png" "No online music found" "Add some with Manage Music"
-    exit 0
+return 0
   fi
   choice=$(awk -F'|' '{print $1}' "$music_list" | sort | "$ROFI" -i -dmenu -config "$rofi_theme" \
     -theme-str 'entry { placeholder: "🌐 Choose Online Station"; }')
@@ -80,7 +87,7 @@ play_online_music() {
   link=$(awk -F'|' -v name="$choice" '$1 == name {print $2; exit}' "$music_list")
   [[ -z "$link" ]] && {
     "$NOTIFY" -u low -i "$iDIR/music.png" "URL not found for" "$choice"
-    exit 1
+return 1
   }
   music_playing && stop_music
   notification "Now Playing:" "$choice"

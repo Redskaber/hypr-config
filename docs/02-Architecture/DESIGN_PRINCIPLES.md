@@ -257,7 +257,7 @@ luacheck ~/.config/hypr --codes    # see .luacheckrc; hl is a known global
 
 ### Runtime (sandbox)
 ```bash
-python3 hypr-sim.py    # executes full require chain + validates all rules
+hyprland --verify-config    # executes full require chain + validates all rules
 ```
 hypr-sim catches runtime errors that `load()` and `luacheck` miss (e.g.,
 `require("nonexistent")`, `nil` indexing).

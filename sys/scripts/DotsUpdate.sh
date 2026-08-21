@@ -4,5 +4,12 @@
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
-# Local Paths
 
+
+
+
+# @path: sys/scripts/DotsUpdate.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+# Local Paths

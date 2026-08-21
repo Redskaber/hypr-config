@@ -4,13 +4,20 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+
+# @path: sys/scripts/WaybarStyles.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 IFS=$'\n\t'
 
 # Define directories
-waybar_styles="$HOME/.config/waybar/style"
-waybar_style="$HOME/.config/waybar/style.css"
+waybar_styles="$WAYBAR_DIR/style"
+waybar_style="$WAYBAR_DIR/style.css"
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
-rofi_config="$HOME/.config/rofi/config-"$BAR"-style.rasi"
+rofi_config="$ROFI_DIR/config-"$BAR"-style.rasi"
 msg=' 🎌 NOTE: Some "$BAR" STYLES NOT fully compatible with some LAYOUTS'
 
 # Apply selected style
@@ -53,7 +60,7 @@ main() {
 
   [[ -z "$choice" ]] && {
     echo "No option selected. Exiting."
-    exit 0
+return 0
   }
 
   # remove annotation and apply

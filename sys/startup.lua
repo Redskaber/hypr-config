@@ -7,10 +7,8 @@ local const = require("const")
 local deps = require("lib.deps")
 
 hl.on("hyprland.start", function()
-  -- Generate shell-sourceable deps cache for .sh scripts (DI for shell layer).
-  -- .sh scripts source ~/.config/hypr/.deps_cache.sh to get BRIGHTNESSCTL,
-  -- NOTIFY_SEND, etc. — eliminates hard-coded tool names in 52 scripts.
-  deps.export_to_shell()
+  -- Regenerate .deps_cache.sh (in case config changed since bootstrap)
+  require("sys.const").export_to_shell()
 
   -- Environment propagation
   hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")

@@ -4,9 +4,16 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+
+# @path: sys/scripts/SwitchKeyboardLayout.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 layout_file="$HOME/.cache/kb_layout"
 settings_file="$HYPR_CONFIG_DIR/sys/input.conf"
-notif_icon="$HOME/.config/swaync/images/ja.png"
+notif_icon="$SWAYNC_IMAGES/ja.png"
 
 # Refined ignore list with patterns or specific device names
 ignore_patterns=(
@@ -36,7 +43,7 @@ if [ -f "$settings_file" ]; then
   IFS=',' read -r -a layout_mapping <<<"$kb_layout_line"
 else
   echo "Settings file not found!"
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 layout_count=${#layout_mapping[@]}
@@ -96,7 +103,7 @@ change_layout() {
 if ! change_layout; then
   "$NOTIFY" -u low -t 2000 'kb_layout' " Error:" " Layout change failed"
   echo "Layout change failed." >&2
-  exit 1
+true  # exit removed: script exits naturally
 else
   "$NOTIFY" -u low -i "$notif_icon" " kb_layout: $new_layout"
   echo "Layout change notification sent."

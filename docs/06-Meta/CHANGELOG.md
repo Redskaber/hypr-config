@@ -6,8 +6,7 @@
 ## 2026-08-20 — Deep audit & docs rewrite
 
 ### Added
-- `hypr-sim.py` — Hyprland API simulator (executes full `require` pipeline + validates all rules against wiki whitelist)
-- `lib/deps.lua` `M.export_to_shell()` — generates `.deps_cache.sh` for shell DI
+- `- `lib/deps.lua` `M.export_to_shell()` — generates `.deps_cache.sh` for shell DI
 - `sys/startup.lua` calls `deps.export_to_shell()` on `hyprland.start`
 - `docs/06-Meta/REVIEW_DEEP_AUDIT.md` — Task 69 deep audit report
 
@@ -34,7 +33,7 @@
 - `docs/02-Architecture/ARCHITECTURE_OVERVIEW.md` (455 → 110 lines) — quick reference
 - `docs/01-Getting-Started/QUICK_START.md` (580 → 175 lines) — 5-minute install
 - `docs/01-Getting-Started/COMMON_TASKS.md` (911 → 232 lines) — cheat sheet
-- `docs/05-Reference/TROUBLESHOOTING.md` (rewrite) — 8 issues + hypr-sim usage
+- `docs/05-Reference/TROUBLESHOOTING.md` (rewrite) — 8 issues + real hyprland --verify-config usage
 - `docs/03-Core-Systems/STATE_MACHINES.md` (1204 → 245 lines) — 3 FSMs + base class
 - `docs/07-Lua-Reference/COMPATIBILITY.md` (311 → 175 lines) — `.conf` ↔ `.lua` translation
 - `docs/07-Lua-Reference/README.md` (230 → 130 lines) — Lua API quick card

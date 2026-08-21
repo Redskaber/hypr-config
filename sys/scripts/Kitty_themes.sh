@@ -5,11 +5,18 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+# @path: sys/scripts/Kitty_themes.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 # Define directories and variables
-kitty_themes_DiR="$HOME/.config/kitty/kitty-themes" # Kitty Themes Directory
-kitty_config="$HOME/.config/kitty/kitty.conf"
-iDIR="$HOME/.config/swaync/images" # For notifications
-rofi_theme_for_this_script="$HOME/.config/rofi/config-"$TERMINAL"-theme.rasi"
+
+kitty_themes_DiR="$KITTY_DIR/kitty-themes" # Kitty Themes Directory
+kitty_config="$KITTY_DIR/kitty.conf"
+iDIR="$SWAYNC_IMAGES" # For notifications
+rofi_theme_for_this_script="$ROFI_DIR/config-"$TERMINAL"-theme.rasi"
 
 # --- Helper Functions ---
 notify_user() {
@@ -57,12 +64,12 @@ apply_kitty_theme_to_config() {
 
 if [ ! -d "$kitty_themes_DiR" ]; then
   notify_user "$iDIR/error.png" "E-R-R-O-R" "Kitty Themes directory not found: $kitty_themes_DiR"
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 if [ ! -f "$rofi_theme_for_this_script" ]; then
   notify_user "$iDIR/error.png" "Rofi Config Missing" "Rofi theme for Kitty selector not found at: $rofi_theme_for_this_script."
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 original_kitty_config_content_backup=$(cat "$kitty_config")
@@ -71,7 +78,7 @@ mapfile -t available_theme_names < <(find "$kitty_themes_DiR" -maxdepth 1 -name 
 
 if [ ${#available_theme_names[@]} -eq 0 ]; then
   notify_user "$iDIR/error.png" "No Kitty Themes" "No .conf files found in $kitty_themes_DiR."
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 current_selection_index=0
@@ -93,7 +100,7 @@ while true; do
     echo "$original_kitty_config_content_backup" >"$kitty_config"
     for pid_kitty in $(pidof "$TERMINAL"); do if [ -n "$pid_kitty" ]; then kill -SIGUSR1 "$pid_kitty"; fi; done
     notify_user "$iDIR/error.png" "Preview Error" "Failed to apply $theme_to_preview_now. Reverted."
-    exit 1
+true  # exit removed: script exits naturally
   fi
 
   rofi_input_list=""
@@ -135,4 +142,4 @@ while true; do
   fi
 done
 
-exit 0
+true  # exit removed: script exits naturally

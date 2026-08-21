@@ -12,7 +12,7 @@ When encountering issues, follow this flow:
 ```
 1. Identify symptoms
 2. luacheck (static analysis)
-3. hypr-sim (runtime pipeline simulator)
+3. hyprland --verify-config (real Hyprland loader)
 4. hyprland --verify-config (gold standard)
 5. Check runtime logs
 6. Isolate component
@@ -24,7 +24,7 @@ When encountering issues, follow this flow:
 
 | Symptom | Likely Cause | Quick Fix |
 | --- | --- | --- |
-| Config won't load | Lua syntax / require error | `luacheck` + `python3 hypr-sim.py` |
+| Config won't load | Lua syntax / require error | `luacheck` + `hyprland --verify-config` |
 | `module 'X' not found` | Wrong require path | [Issue 1](#issue-1-module-not-found) |
 | `attempt to index global 'hl' (a nil value)` | Hyprland < 0.55 | Upgrade Hyprland |
 | `attempt to call a nil value (field 'X')` | Unknown `hl.X` API | [Issue 2](#issue-2-unknown-hl-api) |
@@ -47,10 +47,10 @@ luacheck ~/.config/hypr --codes
 - Catches: undefined globals, unused variables, syntax errors
 - Config: [`.luacheckrc`](../../.luacheckrc) (declares `hl` as known global)
 
-### 2. hypr-sim (runtime simulator)
+### 2. hyprland --verify-config (real Hyprland loader)
 
 ```bash
-cd ~/.config/hypr && python3 hypr-sim.py
+cd ~/.config/hypr && hyprland --verify-config
 ```
 - **Executes the full require pipeline** (catches errors luacheck misses)
 - Validates all `hl.window_rule` effects against wiki API whitelist

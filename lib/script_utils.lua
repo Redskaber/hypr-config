@@ -11,8 +11,10 @@ M.NOTIF_ICON = const.notify_icon
 M.SCRIPTSDIR = const.dirs.scripts
 
 -- Get focused monitor (ONLY at startup, not in bind callbacks)
+-- DI: uses deps.get("hyprctl").cmd instead of hard-coded "hyprctl"
 function M.focused_monitor()
-  local f = io.popen("hyprctl monitors -j 2>/dev/null")
+  local hyprctl_cmd = deps.cmd("hyprctl") or "hyprctl"
+  local f = io.popen(hyprctl_cmd .. " monitors -j 2>/dev/null")
   if not f then return nil end
   local json = f:read("*a")
   f:close()

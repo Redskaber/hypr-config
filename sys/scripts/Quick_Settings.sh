@@ -4,6 +4,13 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+
+# @path: sys/scripts/Quick_Settings.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 HYPR_DIR="$HYPR_CONFIG_DIR"
 
 # terminal and editor: prefer env vars set via user/env.lua, fall back to defaults
@@ -13,9 +20,9 @@ edit="${EDITOR:-"$EDITOR"}"
 # variables
 sys_conf="$HYPR_DIR/sys"
 user_conf="$HYPR_DIR/user"
-rofi_theme="$HOME/.config/rofi/config-edit.rasi"
+rofi_theme="$ROFI_DIR/config-edit.rasi"
 msg=' ⁉️ Choose what to do ⁉️'
-iDIR="$HOME/.config/swaync/images"
+iDIR="$SWAYNC_IMAGES"
 scriptsDir="$HYPR_DIR/sys/scripts"
 
 # Function to show info notification
@@ -26,7 +33,7 @@ show_info() {
 # Function to display the menu options
 menu() {
   cat <<EOF
---- USER CUSTOMIZATIONS ---
+# --- USER CUSTOMIZATIONS ---
 Edit User Constants
 Edit User ENV variables
 Edit User Keybinds
@@ -38,12 +45,12 @@ Edit User Input Settings
 Edit User Misc Settings
 Edit User Animations
 Edit User Laptop Settings
---- SYSTEM DEFAULTS  ---
+# --- SYSTEM DEFAULTS  ---
 Edit System Default Keybinds
 Edit System Default Startup Apps
 Edit System Default Window Rules
 Edit System Default Settings
---- UTILITIES ---
+# --- UTILITIES ---
 Choose Kitty Terminal Theme
 Configure Monitors (nwg-displays)
 Configure Workspace Rules (nwg-displays)
@@ -83,35 +90,35 @@ main() {
   "Configure Monitors (nwg-displays)")
     if ! command -v nwg-displays &>/dev/null; then
       "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install nwg-displays first"
-      exit 1
+return 1
     fi
     nwg-displays
     ;;
   "Configure Workspace Rules (nwg-displays)")
     if ! command -v nwg-displays &>/dev/null; then
       "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install nwg-displays first"
-      exit 1
+return 1
     fi
     nwg-displays
     ;;
   "GTK Settings (nwg-look)")
     if ! command -v nwg-look &>/dev/null; then
       "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install nwg-look first"
-      exit 1
+return 1
     fi
     nwg-look
     ;;
   "QT Apps Settings (qt6ct)")
     if ! command -v qt6ct &>/dev/null; then
       "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install qt6ct first"
-      exit 1
+return 1
     fi
     qt6ct
     ;;
   "QT Apps Settings (qt5ct)")
     if ! command -v qt5ct &>/dev/null; then
       "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install qt5ct first"
-      exit 1
+return 1
     fi
     qt5ct
     ;;

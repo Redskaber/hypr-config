@@ -1,13 +1,18 @@
-# HYPR_CONFIG_DIR already set by common.sh
 #!/usr/bin/env bash
+
+
+
+# @path: sys/scripts/UserConfigsSwitcher.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+# HYPR_CONFIG_DIR already set by common.sh
+
 # sys/scripts/UserConfigsSwitcher.sh — Legacy migration helper
 # Manages UserConfigs ↔ UserConfigsBak swap for users migrating from the old
 # flat-file architecture to the new bootstrap/sys/user layered architecture.
 # In the new arch, user customisations live in user/ — this script is only
 # needed if you still have a UserConfigs directory from a previous install.
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
 
 USER_CONFIGS="$HYPR_CONFIG_DIR/UserConfigs"
 USER_CONFIGS_BAK="$HYPR_CONFIG_DIR/UserConfigsBak"

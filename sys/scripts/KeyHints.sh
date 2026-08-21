@@ -4,7 +4,14 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+# @path: sys/scripts/KeyHints.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 # GDK BACKEND. Change to either wayland or x11 if having issues
+
 BACKEND=wayland
 
 # Check if rofi or yad is running and kill them if they are

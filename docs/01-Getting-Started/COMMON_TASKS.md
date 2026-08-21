@@ -278,7 +278,7 @@ Press `SUPER + W` → wallpaper selector → wallust auto-generates colors into
 luacheck ~/.config/hypr --codes
 
 # 2. Runtime simulator (catches errors luacheck misses)
-cd ~/.config/hypr && python3 hypr-sim.py
+cd ~/.config/hypr && hyprland --verify-config
 
 # 3. Real Hyprland verify
 hyprland --verify-config

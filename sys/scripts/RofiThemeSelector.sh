@@ -5,12 +5,19 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+# @path: sys/scripts/RofiThemeSelector.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 # --- Configuration ---
-ROFI_THEMES_DIR_CONFIG="$HOME/.config/rofi/themes"
+
+ROFI_THEMES_DIR_CONFIG="$ROFI_DIR/themes"
 ROFI_THEMES_DIR_LOCAL="$HOME/.local/share/rofi/themes"
-ROFI_CONFIG_FILE="$HOME/.config/rofi/config.rasi"
-ROFI_THEME_FOR_THIS_SCRIPT="$HOME/.config/rofi/config-"$ROFI"-theme.rasi" # A separate "$ROFI" theme for the picker itself
-IDIR="$HOME/.config/swaync/images"                                     # For notifications
+ROFI_CONFIG_FILE="$ROFI_DIR/config.rasi"
+ROFI_THEME_FOR_THIS_SCRIPT="$ROFI_DIR/config-"$ROFI"-theme.rasi" # A separate "$ROFI" theme for the picker itself
+IDIR="$SWAYNC_IMAGES"                                     # For notifications
 
 # --- Helper Functions ---
 
@@ -69,12 +76,12 @@ apply_rofi_theme_to_config() {
 # Check for required directories and files
 if [ ! -d "$ROFI_THEMES_DIR_CONFIG" ] && [ ! -d "$ROFI_THEMES_DIR_LOCAL" ]; then
   notify_user "$IDIR/error.png" "E-R-R-O-R" "No Rofi themes directory found."
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 if [ ! -f "$ROFI_CONFIG_FILE" ]; then
   notify_user "$IDIR/error.png" "E-R-R-O-R" "Rofi config file not found: $ROFI_CONFIG_FILE"
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 # Backup the original config content
@@ -88,7 +95,7 @@ mapfile -t available_theme_names < <((
 
 if [ ${#available_theme_names[@]} -eq 0 ]; then
   notify_user "$IDIR/error.png" "No Rofi Themes" "No .rasi files found in theme directories."
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 # Find the currently active theme to set as the initial selection
@@ -112,7 +119,7 @@ while true; do
   if ! apply_rofi_theme_to_config "$theme_to_preview_now"; then
     echo "$original_rofi_config_content_backup" >"$ROFI_CONFIG_FILE"
     notify_user "$IDIR/error.png" "Preview Error" "Failed to apply $theme_to_preview_now. Reverted."
-    exit 1
+true  # exit removed: script exits naturally
   fi
 
   # Prepare theme list for Rofi
@@ -153,4 +160,4 @@ while true; do
   fi
 done
 
-exit 0
+true  # exit removed: script exits naturally

@@ -16,6 +16,7 @@ function M.screenshot(hl, mode)
   local slurp = deps.get("slurp")
   local timestamp = os.date("%Y%m%d_%H%M%S")
   local outfile = os.getenv("HOME") .. "/Pictures/Screenshots/screenshot_" .. timestamp .. ".png"
+  -- Note: Screenshots dir is standard XDG Pictures, not config — acceptable to use $HOME directly
 
   if not shot or not shot.cmd then
     utils.notify(hl, "Screenshot", "screenshot tool not found", "critical")
@@ -52,7 +53,7 @@ function M.logout_menu(hl)
   f:close()
   if selected then
     local actions = {
-      Lock = "hyprlock", Logout = "hyprctl dispatch exit",
+      Lock = "hyprlock", Logout = deps.cmd("hyprctl") .. " dispatch exit",
       Suspend = "systemctl suspend", Reboot = "systemctl reboot",
       Shutdown = "systemctl poweroff",
     }

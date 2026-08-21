@@ -5,15 +5,22 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+# @path: sys/scripts/ZshChangeTheme.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 # preview of theme can be view here: https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
 # after choosing theme, TTY need to be closed and re-open
 
 # Variables
-iDIR="$HOME/.config/swaync/images"
-rofi_theme="$HOME/.config/rofi/config-zsh-theme.rasi"
+
+iDIR="$SWAYNC_IMAGES"
+rofi_theme="$ROFI_DIR/config-zsh-theme.rasi"
 if [ -n "$(grep -i nixos </etc/os-release)" ]; then
   "$NOTIFY" -i "$iDIR/note.png" "NOT Supported" "Sorry NixOS does not support this feature"
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 themes_dir="$HOME/.oh-my-zsh/themes"
@@ -37,7 +44,7 @@ main() {
 
   # if nothing selected, script won't change anything
   if [ -z "$choice" ]; then
-    exit 0
+return 0
   fi
 
   zsh_path="$HOME/.zshrc"

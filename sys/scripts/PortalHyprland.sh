@@ -4,6 +4,13 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+
+# @path: sys/scripts/PortalHyprland.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 sleep 1
 killall xdg-desktop-portal-hyprland
 killall xdg-desktop-portal-wlr

@@ -37,7 +37,7 @@ function M.new(hl)
         general = { gaps_in = 0, gaps_out = 0, border_size = 1 },
       })
     else
-      -- 恢复 sys/layout.lua + sys/decoration.lua 的原始值
+      -- Restore sys/layout.lua + sys/decoration.lua original values
       hl.config({
         animations = { enabled = true },
         decoration = {

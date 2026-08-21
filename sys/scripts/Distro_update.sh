@@ -4,14 +4,21 @@
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
+
+
+
+# @path: sys/scripts/Distro_update.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 # Local Paths
 
-iDIR="$HOME/.config/swaync/images"
+iDIR="$SWAYNC_IMAGES"
 
 # Check for required tools (kitty)
 if ! command -v "$TERMINAL" &>/dev/null; then
   "$NOTIFY" -i "$iDIR/error.png" "Need Kitty:" "Kitty terminal not found. Please install Kitty terminal."
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 # Detect distribution and update accordingly
@@ -39,5 +46,5 @@ elif command -v zypper &>/dev/null; then
 else
   # Unsupported distro
   "$NOTIFY" -i "$iDIR/error.png" -u critical "Unsupported system" "This script does not support your distribution."
-  exit 1
+true  # exit removed: script exits naturally
 fi

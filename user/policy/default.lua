@@ -1,0 +1,12 @@
+-- @path: user/policy/default.lua
+-- @author: redskaber
+-- @date: 2026-08-20
+-- @description: User policy aggregator — loads after sys/policy/default.lua
+--
+-- Override animation preset or wallust colors here.
+-- To switch animation preset, uncomment one:
+-- require("sys.policy.animations.disable")
+-- require("sys.policy.animations.end4")
+-- require("sys.policy.animations.hyde-optimized")
+-- require("sys.policy.animations.hyde-vertical")
+-- require("sys.policy.animations.ml4w-fast")

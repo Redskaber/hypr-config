@@ -4,7 +4,14 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-notif="$HOME/.config/swaync/images/ja.png"
+
+
+
+# @path: sys/scripts/AirplaneMode.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+notif="$SWAYNC_IMAGES/ja.png"
 
 # Check if any wireless device is blocked
 wifi_blocked=$(rfkill list wifi | grep -o "Soft blocked: yes")

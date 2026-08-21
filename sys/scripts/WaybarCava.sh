@@ -4,12 +4,19 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-set -euo pipefail
+
+
+
+# @path: sys/scripts/WaybarCava.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+# set -euo pipefail  # Removed: can crash session on error
 
 # Ensure cava exists
 if ! command -v cava >/dev/null 2>&1; then
   echo "cava not found in PATH" >&2
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 # 0..7 → ▁▂▃▄▅▆▇█
@@ -54,4 +61,4 @@ ascii_max_range = 7
 EOF
 
 # Stream cava output and translate digits 0..7 to bar glyphs
-exec cava -p "$config_file" | sed -u "$dict"
+cava -p "$config_file" | sed -u "$dict"

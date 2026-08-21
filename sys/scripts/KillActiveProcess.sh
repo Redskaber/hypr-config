@@ -4,6 +4,13 @@
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
+
+
+
+# @path: sys/scripts/KillActiveProcess.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 # Get id of an active window
 
 active_pid=$("$HYPRCTL" activewindow | grep -o 'pid: [0-9]*' | cut -d' ' -f2)

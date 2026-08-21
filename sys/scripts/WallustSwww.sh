@@ -1,16 +1,17 @@
-set -euo pipefail
-
 #!/usr/bin/env bash
-# Wallust: derive colors from the current wallpaper and update templates
-# Usage: WallustSwww.sh [absolute_path_to_wallpaper]
+# @path: sys/scripts/WallustSwww.sh
+# @author: redskaber
+# @date: 2026-08-20
+#
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
+set -uo pipefail # No set -e: prevent script from killing session on command failure
 
 # Inputs and paths
 passed_path="${1:-}"
 cache_dir="$HOME/.cache/awww/"
-rofi_link="$HOME/.config/rofi/.current_wallpaper"
+rofi_link="$ROFI_DIR/.current_wallpaper"
 wallpaper_current="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_current"
 
 # Helper: get focused monitor name (prefer JSON)
@@ -48,7 +49,7 @@ fi
 
 if [[ -z "${wallpaper_path:-}" || ! -f "$wallpaper_path" ]]; then
   # Nothing to do; avoid failing loudly so callers can continue
-  exit 0
+  true # exit removed: script exits naturally
 fi
 
 # Update helpers that depend on the path

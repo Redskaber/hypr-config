@@ -4,12 +4,19 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-set -euo pipefail
+
+
+
+# @path: sys/scripts/desktop-overview.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+# set -euo pipefail  # Removed: can crash session on error
 
 # 1) Try Quickshell via IPC (works if QS is running and listening)
 if pgrep -x quickshell >/dev/null 2>&1; then
   if qs ipc -c overview call overview toggle >/dev/null 2>&1; then
-    exit 0
+true  # exit removed: script exits naturally
   fi
 fi
 
@@ -18,7 +25,7 @@ if command -v qs >/dev/null 2>&1; then
   qs -c overview >/dev/null 2>&1 &
   sleep 0.6
   if qs ipc -c overview call overview toggle >/dev/null 2>&1; then
-    exit 0
+true  # exit removed: script exits naturally
   fi
 fi
 
@@ -26,16 +33,16 @@ fi
 if command -v ags >/dev/null 2>&1; then
   pkill "$ROFI" || true
   if ags -t 'overview' >/dev/null 2>&1; then
-    exit 0
+true  # exit removed: script exits naturally
   fi
   # If it failed, try starting AGS daemon then call the template
   ags >/dev/null 2>&1 &
   sleep 0.6
   if ags -t 'overview' >/dev/null 2>&1; then
-    exit 0
+true  # exit removed: script exits naturally
   fi
 fi
 
 # If we get here, neither worked
 "$NOTIFY" "Overview" "Neither Quickshell nor AGS is available" -u low 2>/dev/null || true
-exit 1
+true  # exit removed: script exits naturally

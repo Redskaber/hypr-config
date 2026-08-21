@@ -1,31 +1,35 @@
-SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 #!/usr/bin/env bash
-# sys/scripts/Refresh.sh — Restart bar, notification daemon, and optional user scripts.
-# Called after theme changes (wallust), layout switches, or GameMode exit.
-# Source shared library — provides DI for tool names
+# @path: sys/scripts/Refresh.sh
+# @author: redskaber
+# @date: 2026-08-20
+# @description: Restart bar + reload notification daemon config
+#
+# ARCHITECTURE: Do NOT kill+restart swaync! It's already running (started
+# by sys/startup.lua). Killing swaync causes "core dumped" abort.
+# Only kill+restart waybar (it handles restart gracefully).
+# For swaync, just reload config via swaync-client.
+
+# Source shared library — SSOT paths + DI variables
 source "$(dirname "$0")/lib/common.sh"
 
-
+SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 UserScripts="$HYPR_CONFIG_DIR/user/scripts"
 
-# ── Stop running services ────────────────────────────────────
-for proc in "$BAR" "$ROFI" "$NOTIFICATION"; do
-    pkill "$proc" 2>/dev/null || true
-done
-
-# ── Restart waybar ───────────────────────────────────────────
+# ── Restart waybar (kill + restart) ───────────────────────────
+pkill "$BAR" 2>/dev/null || true
 sleep 0.1
 "$BAR" &
 
-# ── Restart swaync ───────────────────────────────────────────
-sleep 0.3
-"$NOTIFICATION" >/dev/null 2>&1 &
-"$NOTIFICATION"-client --reload-config
+# ── Reload swaync config (do NOT kill+restart!) ──────────────
+# swaync is already running (started by sys/startup.lua).
+# Killing it causes abort/core-dump which can crash the session.
+"${NOTIFICATION}-client" --reload-config 2>/dev/null || true
+
+# ── Kill rofi if open ────────────────────────────────────────
+pkill "$ROFI" 2>/dev/null || true
 
 # ── Optional user scripts ────────────────────────────────────
 sleep 1
 if [ -x "${UserScripts}/RainbowBorders.sh" ]; then
     "${UserScripts}/RainbowBorders.sh" &
 fi
-
-exit 0

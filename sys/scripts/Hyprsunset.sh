@@ -1,4 +1,14 @@
 #!/usr/bin/env bash
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+
+
+
+# @path: sys/scripts/Hyprsunset.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 # DEPRECATED: This script is replaced by the Lua state machine module (sys/statemachine/).
 # Kept for reference only. Do not use — the SM module is called directly via hl.bind().
 # Hyprsunset toggle + Waybar status helper
@@ -10,11 +20,8 @@
 # Customize via env vars:
 #   HYPRSUNSET_TEMP   default 4500 (K)
 #   HYPRSUNSET_ICON_MODE  sunset|blue  (default: sunset)
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
 
-
-set -euo pipefail
+# set -euo pipefail  # Removed: can crash session on error
 
 STATE_FILE="$HOME/.cache/.hyprsunset_state"
 TARGET_TEMP="${HYPRSUNSET_TEMP:-4500}"
@@ -114,6 +121,6 @@ status) cmd_status ;;
 init) cmd_init ;;
 *)
   echo "usage: $0 [toggle|status|init]" >&2
-  exit 2
+true  # exit removed: script exits naturally
   ;;
 esac

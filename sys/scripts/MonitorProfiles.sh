@@ -5,17 +5,24 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+# @path: sys/scripts/MonitorProfiles.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 # Check if rofi is already running
+
 if pidof "$ROFI" >/dev/null; then
   pkill "$ROFI"
 fi
 
 # Variables
-iDIR="$HOME/.config/swaync/images"
+iDIR="$SWAYNC_IMAGES"
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 monitor_dir="$HYPR_CONFIG_DIR/sys/hardware/monitor-profiles"
 target="$HYPR_CONFIG_DIR/sys/hardware/monitors.conf"
-rofi_theme="$HOME/.config/rofi/config-Monitors.rasi"
+rofi_theme="$ROFI_DIR/config-Monitors.rasi"
 msg='❗NOTE:❗ This will overwrite $HOME/.config/hypr/monitors.conf'
 
 # Define the list of files to ignore

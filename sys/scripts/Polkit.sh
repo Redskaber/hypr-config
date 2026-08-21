@@ -5,7 +5,14 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+# @path: sys/scripts/Polkit.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 # List of potential Polkit agent file paths
+
 polkit=(
   "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
   "/usr/libexec/hyprpolkitagent"
@@ -24,7 +31,8 @@ executed=false
 for file in "${polkit[@]}"; do
   if [ -e "$file" ] && [ ! -d "$file" ]; then
     echo "Found: $file — executing..."
-    exec "$file"
+    "$file" &
+true  # exit removed: script exits naturally
     executed=true
     break
   fi

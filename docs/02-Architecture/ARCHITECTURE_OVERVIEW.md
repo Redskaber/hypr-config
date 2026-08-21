@@ -62,7 +62,7 @@ hyprland.lua
 │   ├── hardware/            ← monitors + laptop + workspaces
 │   ├── policy/              ← animations + wallust (Strategy)
 │   ├── statemachine/        ← layout/gamemode/nightlight FSMs
-│   ├── scripts/             ← 60 .sh + 3 .lua helpers
+│   ├── scripts/             ← 62 `.sh` + 3 `.lua` helpers
 │   └── *.lua                ← env/input/decoration/render/keybind/tags/rules
 ├── user/                     ← Layer 3: YOUR overrides (edit here)
 ├── lib/                      ← Shared: sm.lua, deps.lua, types.lua, script_utils.lua
@@ -102,7 +102,7 @@ hyprland.lua
 luacheck ~/.config/hypr --codes
 
 # Runtime simulator (executes full pipeline)
-python3 hypr-sim.py
+hyprland --verify-config
 
 # Real Hyprland (needs nix store access)
 hyprland --verify-config

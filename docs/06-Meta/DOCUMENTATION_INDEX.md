@@ -75,7 +75,7 @@
 | Tool | Command | What it catches |
 | --- | --- | --- |
 | `luacheck` | `luacheck ~/.config/hypr --codes` | Static syntax + undefined globals |
-| `hypr-sim` | `python3 hypr-sim.py` | Runtime errors (require chain, nil calls) + API whitelist |
+| `hyprland --verify-config` | Real Hyprland config loader | `hyprland --verify-config` | Runtime errors (require chain, nil calls) + API whitelist |
 | `hyprctl` | `hyprland --verify-config` | Real Hyprland config loader (needs nix store) |
 
 ## Project Statistics (verified 2026-08-20)

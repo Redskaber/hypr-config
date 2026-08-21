@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
+# Source shared library — provides SCREENSHOT, SLURP, HYPRCTL, JQ, NOTIFY, etc.
+source "$(dirname "$0")/lib/common.sh"
+
 # @path: sys/scripts/ScreenShot.sh
 # @author: redskaber
 # @date: 2026-08-20
 # @description: Screenshot capture (uses common.sh for DI)
-
-# Source shared library — provides SCREENSHOT, SLURP, HYPRCTL, JQ, NOTIFY, etc.
-source "$(dirname "$0")/lib/common.sh"
 
 
 # variables
@@ -13,8 +13,8 @@ time=$(date "+%d-%b_%H-%M-%S")
 dir="$(xdg-user-dir PICTURES)/Screenshots"
 file="Screenshot_${time}_${RANDOM}.png"
 
-iDIR="$HOME/.config/swaync/icons"
-iDoR="$HOME/.config/swaync/images"
+iDIR="$SWAYNC_ICONS"
+iDoR="$SWAYNC_IMAGES"
 sDIR="$HYPR_SCRIPTS_DIR"
 
 active_window_class=$("$HYPRCTL" -j activewindow | "$JQ" -r '(.class)')
@@ -167,4 +167,4 @@ else
   echo -e "Available Options : --now --in5 --in10 --win --area --active --swappy"
 fi
 
-exit 0
+true  # exit removed: script exits naturally

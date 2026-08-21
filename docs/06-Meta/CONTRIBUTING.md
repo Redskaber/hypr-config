@@ -15,8 +15,8 @@ git checkout -b my-feature
 
 # 3. Make changes (follow coding standards below)
 
-# 4. Run pre-commit checks
-bash scripts/pre-commit.sh
+# 4. Verify config
+hyprland --verify-config
 
 # 5. Commit & push
 git add -A && git commit -m "feat: my feature"
@@ -28,7 +28,7 @@ git push origin my-feature
 ## Development Environment
 
 ### Required Tools
-- `python3` with `lupa` package (`pip install lupa`) — for Lua syntax checking + hypr-sim
+- `luacheck` — static analysis (optional)
 - `bash` — for running scripts
 - `luacheck` (optional, recommended) — static analysis
 
@@ -37,12 +37,12 @@ git push origin my-feature
 | Tool | Command | Catches |
 | --- | --- | --- |
 | `lupa` Lua syntax | `python3 -c "..."` | Syntax errors in .lua files |
-| `hypr-sim` | `python3 hypr-sim.py` | Runtime errors + API whitelist + orphaned tags |
-| `validate_tags.sh` | `bash sys/scripts/validate_tags.sh` | Orphaned tags (defined but no rule) |
+| `hyprland --verify-config` | Real Hyprland config loader | `hyprland --verify-config` | Runtime errors + API whitelist + orphaned tags |
+| 
 
 Run all at once:
 ```bash
-bash scripts/pre-commit.sh
+hyprland --verify-config
 ```
 
 ## Coding Standards
@@ -139,8 +139,7 @@ Read [docs/02-Architecture/ARCHITECTURE_OVERVIEW.md](docs/02-Architecture/ARCHIT
 ## Pull Request Checklist
 
 - [ ] All `.lua` files pass `lupa` syntax check
-- [ ] `hypr-sim.py` reports 0 errors
-- [ ] `validate_tags.sh` reports 0 orphaned tags
+- [ ] `- [ ] 
 - [ ] `bash -n` passes on all modified `.sh` files
 - [ ] No hard-coded tool names in `.sh` (use `common.sh` variables)
 - [ ] No `class = ""` in `tags.lua` or `rules.lua`

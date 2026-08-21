@@ -1,16 +1,19 @@
-notif="$HOME/.config/swaync/images/ja.png"
 #!/usr/bin/env bash
+# @path: sys/scripts/GameMode.sh
+# @author: redskaber
+# @date: 2026-08-20
+#
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+notify_icon="$SWAYNC_IMAGES/ja.png"
+
 # DEPRECATED: This script is replaced by the Lua state machine module (sys/statemachine/).
 # Kept for reference only. Do not use — the SM module is called directly via hl.bind().
 # sys/scripts/GameMode.sh — Toggle game mode (state machine: on ↔ off)
 # State is read from animations:enabled (1 = normal, 0 = game mode active).
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
 
-
-SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
-
-GAMEMODE_ACTIVE=$("$HYPRCTL" getoption animations:enabled | awk 'NR==1{print $2}')
+GAMEMODE_ACTIVE=$("$HYPRCTL" -j getoption animations:enabled | jq ".bool")
 
 _gamemode_on() {
   "$HYPRCTL" --batch "\
@@ -23,23 +26,23 @@ _gamemode_on() {
         keyword decoration:rounding 0"
   "$HYPRCTL" keyword "windowrule opacity 1 override 1 override 1 override, ^(.*)$"
   awww kill
-  "$NOTIFY" -e -u low -i "$notif" " Gamemode:" " enabled"
+  "$NOTIFY" -e -u low -i "$notify_icon" " Gamemode:" " enabled"
 }
 
 _gamemode_off() {
-  "$WALLPAPER_DAEMON" --format argb &
+  # awww-daemon already running (started by sys/startup.lua)
   sleep 0.3
-  awww img "$HOME/.config/rofi/.current_wallpaper"
+  awww img "$ROFI_DIR/.current_wallpaper"
   sleep 0.1
-  "${SCRIPTSDIR}/WallustSwww.sh"
+  "${HYPR_SCRIPTS_DIR}/WallustSwww.sh"
   sleep 0.5
   "$HYPRCTL" reload
-  "${SCRIPTSDIR}/Refresh.sh"
-  "$NOTIFY" -e -u normal -i "$notif" " Gamemode:" " disabled"
+  "${HYPR_SCRIPTS_DIR}/Refresh.sh"
+  "$NOTIFY" -e -u normal -i "$notify_icon" " Gamemode:" " disabled"
 }
 
 # State machine: 1 = animations on (normal mode) → enter game mode
-if [ "$GAMEMODE_ACTIVE" = "1" ]; then
+if [ "$GAMEMODE_ACTIVE" == "true" ]; then
   _gamemode_on
 else
   _gamemode_off

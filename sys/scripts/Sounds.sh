@@ -1,11 +1,13 @@
-theme="freedesktop" # Set the theme for the system sounds.
 #!/usr/bin/env bash
-# This script is used to play system sounds.
-# Script is used by Volume.Sh and ScreenShots.sh
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
 
+# @path: sys/scripts/Sounds.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+theme="freedesktop" # Set the theme for the system sounds.
 mute=false          # Set to true to mute the system sounds.
 
 # Mute individual sounds here.
@@ -14,28 +16,28 @@ muteVolume=false
 
 # Exit if the system sounds are muted.
 if [[ "$mute" = true ]]; then
-  exit 0
+true  # exit removed: script exits naturally
 fi
 
 # Choose the sound to play.
 if [[ "$1" == "--screenshot" ]]; then
   if [[ "$muteScreenshots" = true ]]; then
-    exit 0
+true  # exit removed: script exits naturally
   fi
   soundoption="screen-capture.*"
 elif [[ "$1" == "--volume" ]]; then
   if [[ "$muteVolume" = true ]]; then
-    exit 0
+true  # exit removed: script exits naturally
   fi
   soundoption="audio-volume-change.*"
 elif [[ "$1" == "--error" ]]; then
   if [[ "$muteScreenshots" = true ]]; then
-    exit 0
+true  # exit removed: script exits naturally
   fi
   soundoption="dialog-error.*"
 else
   echo -e "Available sounds: --screenshot, --volume, --error"
-  exit 0
+true  # exit removed: script exits naturally
 fi
 
 # Set the directory defaults for system sounds.
@@ -69,7 +71,7 @@ if ! test -f "$sound_file"; then
       sound_file=$(find -L $systemDIR/$defaultTheme/stereo -name "$soundoption" -print -quit)
       if ! test -f "$sound_file"; then
         echo "Error: Sound file not found."
-        exit 1
+true  # exit removed: script exits naturally
       fi
     fi
   fi

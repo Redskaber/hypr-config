@@ -1,11 +1,14 @@
-SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 #!/usr/bin/env bash
+
+# @path: sys/scripts/RefreshNoWaybar.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
+
 # sys/scripts/RefreshNoWaybar.sh — Refresh theme without restarting "$BAR".
 # Used after wallpaper changes (WallpaperAutoChange, Animations) where "$BAR"
 # does not need a full restart.
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
 
 UserScripts="$HYPR_CONFIG_DIR/user/scripts"
 
@@ -17,7 +20,7 @@ pkill "$ROFI" 2>/dev/null || true
 sleep 0.2
 
 # ── Reload swaync ────────────────────────────────────────────
-"$NOTIFICATION"-client --reload-config
+"${NOTIFICATION}-client" --reload-config 2>/dev/null || true
 
 # ── Optional user scripts ────────────────────────────────────
 sleep 1
@@ -25,5 +28,5 @@ if [ -x "${UserScripts}/RainbowBorders.sh" ]; then
     "${UserScripts}/RainbowBorders.sh" &
 fi
 
-exit 0
+true  # exit removed: script exits naturally
 

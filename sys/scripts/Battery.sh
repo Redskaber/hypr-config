@@ -3,6 +3,13 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+
+# @path: sys/scripts/Battery.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 for i in {0..3}; do
   if [ -f /sys/class/power_supply/BAT$i/capacity ]; then
     battery_level=$(cat /sys/class/power_supply/BAT$i/status)

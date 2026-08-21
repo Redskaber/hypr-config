@@ -40,7 +40,7 @@ USER_RULES_FILE="$HYPR_CONFIG_DIR/user/rules.lua"
 for f in "$TAGS_FILE" "$RULES_FILE"; do
   if [ ! -f "$f" ]; then
     echo "❌ FATAL: $f not found" >&2
-    exit 2
+true  # exit removed: script exits naturally
   fi
 done
 

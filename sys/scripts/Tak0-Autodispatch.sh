@@ -1,11 +1,16 @@
+#!/usr/bin/env bash
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+
+# @path: sys/scripts/Tak0-Autodispatch.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 LOGFILE="$(dirname "$0")/dispatch.log"
 # Log file path located next to the script.
 # Файл логів розташований поруч зі скриптом.
 
-#!/usr/bin/env bash
-# USAGE / ІНСТРУКЦІЯ:
-# 1) Run from terminal:
-#    ./dispatch.sh <application_command> <target_workspace_number>
 #    Example:
 #    ./dispatch.sh discord 2
 #
@@ -34,9 +39,6 @@ LOGFILE="$(dirname "$0")/dispatch.log"
 # Примітки:
 # - Скрипт чекає до ~9 секунд (30 ітерацій по 0.3 сек) поки вікно з'явиться.
 # - Використовує hyprctl і jq, тому ці інструменти мають бути встановлені.
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
 
 APP=$1
 # The application command or window class to launch or match.
@@ -50,7 +52,7 @@ TARGET_WORKSPACE=$2
 # Перевірка наявності необхідних параметрів.
 if [[ -z "$APP" || -z "$TARGET_WORKSPACE" ]]; then
   echo "Usage: $0 <application_command> <target_workspace_number>" >>"$LOGFILE" 2>&1
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 echo "Starting dispatch of '$APP' to workspace $TARGET_WORKSPACE at $(date)" >>"$LOGFILE"
@@ -83,7 +85,7 @@ for i in {1..30}; do
     # Move the window to the target workspace.
     # Переміщаємо вікно на цільовий воркспейс.
     "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.move({workspace=$TARGET_WORKSPACE,window=\"address:$win\"}))" >>"$LOGFILE" 2>&1
-    exit 0
+true  # exit removed: script exits naturally
   fi
   sleep 0.3
 done
@@ -91,4 +93,4 @@ done
 echo "ERROR: Window for '$APP' was NOT found or dispatched properly to workspace $TARGET_WORKSPACE at $(date)" >>"$LOGFILE"
 # Log error if window was not found or dispatched correctly.
 # Запис помилки, якщо вікно не знайдено або неправильно диспатчено.
-exit 1
+true  # exit removed: script exits naturally

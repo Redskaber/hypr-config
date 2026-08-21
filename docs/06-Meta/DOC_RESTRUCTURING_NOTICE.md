@@ -48,10 +48,9 @@ docs/
 
 ### Added
 - `docs/06-Meta/REVIEW_DEEP_AUDIT.md` — Task 69 deep audit report
-- `hypr-sim.py` — runtime config simulator (in repo root)
-
+- `
 ### Stats (verified)
-- 18 docs files across 6 categories
+- 21 docs files across 7 categories
 - 52 Lua code blocks in docs, all syntax-validated with `lupa load()`
 - All internal links validated (0 missing targets)
 
@@ -84,7 +83,7 @@ docs/
 luacheck ~/.config/hypr --codes
 
 # 2. Runtime simulator (catches errors luacheck misses)
-python3 hypr-sim.py
+hyprland --verify-config
 
 # 3. Real Hyprland (gold standard)
 hyprland --verify-config

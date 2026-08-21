@@ -5,6 +5,7 @@
 
 local deps = require("lib.deps")
 local utils = require("lib.script_utils")
+local const = require("const")
 
 local M = {}
 
@@ -28,12 +29,9 @@ local function rofi_dmenu(_, items, prompt)
 end
 
 -- Web search (replaces RofiSearch.sh)
--- KEY FIX: uses deps.get for search engine URL (was hardcoded google in sys,
--- user-overridden to bing in user/const.conf — the ONLY script with DIP)
+-- Uses const.search_engine for URL template (SSOT, user-overridable)
 function M.web_search(hl)
-  -- In .lua era: local const = require("sys.const"); const.search_engine
-  -- For now: read from a known location
-  local search_engine = "https://www.google.com/search?q={}"  -- would be const
+  local search_engine = const.search_engine
   local query = rofi_dmenu(hl, {}, "Search:")
   if query and #query > 0 then
     local url = search_engine:gsub("{}", query)
@@ -43,10 +41,10 @@ end
 
 -- Emoji picker (replaces RofiEmoji.sh)
 function M.emoji(hl)
-  local emoji_file = os.getenv("HOME") .. "/.config/rofi/emoji-list"
+  local emoji_file = const.external.rofi_dir .. "/emoji-list"
   local f = io.open(emoji_file, "r")
   if not f then
-    utils.notify(hl, "Emoji", "emoji-list file not found", "warning")
+    utils.notify(hl, "Emoji", "emoji-list file not found at " .. emoji_file, "warning")
     return
   end
   local items = {}
@@ -54,7 +52,6 @@ function M.emoji(hl)
   f:close()
   local selected = rofi_dmenu(hl, items, "Emoji:")
   if selected then
-    -- Extract emoji (first column)
     local emoji = selected:match("^(%S+)")
     if emoji then
       hl.exec_cmd(deps.cmd("wl_copy") .. " '" .. emoji .. "'")
@@ -67,7 +64,6 @@ end
 function M.calculator(hl)
   local expr = rofi_dmenu(hl, {}, "Calculate:")
   if expr and #expr > 0 then
-    -- Use qalc or bc for evaluation
     local f = io.popen("echo '" .. expr .. "' | qalc -s 2>/dev/null || bc -l 2>/dev/null")
     if f then
       local result = f:read("*l") or "Error"
@@ -99,7 +95,7 @@ end
 
 -- Theme selector (replaces RofiThemeSelector.sh + modified variant)
 function M.theme_selector(hl)
-  local themes_dir = os.getenv("HOME") .. "/.config/rofi/themes"
+  local themes_dir = const.external.rofi_dir .. "/themes"
   local f = io.popen("ls " .. themes_dir .. "/*.rasi 2>/dev/null")
   if not f then return end
   local items = {}
@@ -111,7 +107,7 @@ function M.theme_selector(hl)
   local selected = rofi_dmenu(nil, items, "Theme:")
   if selected then
     local target = themes_dir .. "/" .. selected .. ".rasi"
-    hl.exec_cmd("cp " .. target .. " ~/.config/rofi/config.rasi")
+    hl.exec_cmd("cp " .. target .. " " .. const.external.rofi_dir .. "/config.rasi")
     utils.notify(hl, "Theme", "Applied: " .. selected)
   end
 end

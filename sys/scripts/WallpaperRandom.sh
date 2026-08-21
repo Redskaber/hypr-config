@@ -1,11 +1,13 @@
-wallDIR="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/wallpapers}"
 #!/usr/bin/env bash
-# Script for Random Wallpaper ( CTRL ALT W)
-# Override wallpaper dir via env var HYPR_WALLPAPER_DIR (set in user/env.conf)
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
 
+# @path: sys/scripts/WallpaperRandom.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+wallDIR="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/wallpapers}"
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 
 focused_monitor=$("$HYPRCTL" monitors -j | "$JQ" -r '.[] | select(.focused) | .name')
@@ -20,7 +22,7 @@ DURATION=1
 BEZIER=".43,1.19,1,.4"
 SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
-awww query || "$WALLPAPER_DAEMON" --format argb && awww img -o $focused_monitor ${RANDOMPICS} $SWWW_PARAMS
+awww query 2>/dev/null && awww img -o $focused_monitor ${RANDOMPICS} $SWWW_PARAMS
 
 wait $!
 "$SCRIPTSDIR/WallustSwww.sh" &&

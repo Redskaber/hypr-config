@@ -109,7 +109,7 @@ State machine:
 Config knobs (edit in source):
   WIDTH_PERCENT / HEIGHT_PERCENT / Y_PERCENT
 EOF
-    exit 1
+return 1
   fi
 }
 
@@ -571,7 +571,7 @@ main() {
       ;;
     *)
       debug_echo "FATAL: unknown state '$current_state'"
-      exit 1
+return 1
       ;;
   esac
 }

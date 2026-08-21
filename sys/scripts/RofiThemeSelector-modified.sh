@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
-# A modified version of Rofi-Theme-Selector, concentrating only on ~/.local and also, applying only 10 @themes in ~/.config/rofi/config.rasi
-# as opposed to continous adding of //@theme
-
-# This code is released in public domain by Dave Davenport <qball@gmpclient.org>
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
 
-iDIR="$HOME/.config/swaync/images"
+
+
+# @path: sys/scripts/RofiThemeSelector-modified.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+# A modified version of Rofi-Theme-Selector, concentrating only on ~/.local and also, applying only 10 @themes in ~/.config/rofi/config.rasi
+# as opposed to continous adding of //@theme
+
+# This code is released in public domain by Dave Davenport <qball@gmpclient.org>
+
+iDIR="$SWAYNC_IMAGES"
 
 OS="linux"
 
@@ -18,15 +25,15 @@ NOTIFY_SEND=$(command -v notify-send)
 
 if [ -z "${SED}" ]; then
   echo "Did not find 'sed', script cannot continue."
-  exit 1
+true  # exit removed: script exits naturally
 fi
 if [ -z "${MKTEMP}" ]; then
   echo "Did not find 'mktemp', script cannot continue."
-  exit 1
+true  # exit removed: script exits naturally
 fi
 if [ -z "${ROFI}" ]; then
   echo "Did not find "$ROFI", there is no point to continue."
-  exit 1
+true  # exit removed: script exits naturally
 fi
 if [ -z "${NOTIFY_SEND}" ]; then
   echo "Did not find '"$NOTIFY"', notifications won't work."
@@ -49,7 +56,7 @@ declare -a theme_names
 ##
 # Find themes in defined directories
 find_themes() {
-  directories=("$HOME/.local/share/rofi/themes" "$HOME/.config/rofi/themes")
+  directories=("$HOME/.local/share/rofi/themes" "$ROFI_DIR/themes")
 
   for TD in "${directories[@]}"; do
     if [ -d "$TD" ]; then
@@ -78,8 +85,8 @@ add_theme_to_config() {
   # Determine the correct path for the theme
   if [[ -f "$HOME/.local/share/rofi/themes/$theme_name.rasi" ]]; then
     theme_path="$HOME/.local/share/rofi/themes/$theme_name.rasi"
-  elif [[ -f "$HOME/.config/rofi/themes/$theme_name.rasi" ]]; then
-    theme_path="$HOME/.config/rofi/themes/$theme_name.rasi"
+  elif [[ -f "$ROFI_DIR/themes/$theme_name.rasi" ]]; then
+    theme_path="$ROFI_DIR/themes/$theme_name.rasi"
   else
     echo "Theme not found: $theme_name"
     return 1
@@ -187,7 +194,7 @@ find_themes
 ##
 if [ ${#themes[@]} = 0 ]; then
   ${ROFI} -e "No themes found."
-  exit 0
+true  # exit removed: script exits naturally
 fi
 
 ##

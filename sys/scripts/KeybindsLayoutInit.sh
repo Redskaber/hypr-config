@@ -1,6 +1,12 @@
-set -euo pipefail
-
 #!/usr/bin/env bash
+
+# @path: sys/scripts/KeybindsLayoutInit.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+# set -euo pipefail  # Removed: can crash session on error
+
+
 # DEPRECATED: This script is replaced by the Lua state machine module (sys/statemachine/).
 # Kept for reference only. Do not use — the SM module is called directly via hl.bind().
 # sys/scripts/KeybindsLayoutInit.sh — Initialize layout-aware keybinds on startup.
@@ -13,9 +19,6 @@ set -euo pipefail
 #   scrolling — unbound; hyprscrolling plugin handles column navigation
 #   dwindle   — cyclenext/prev + SUPER+O togglesplit
 #   master    — cyclenext/prev (no SUPER+O)
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
 
 LAYOUT=$("$HYPRCTL" -j getoption general:layout | "$JQ" -r '.str')
 

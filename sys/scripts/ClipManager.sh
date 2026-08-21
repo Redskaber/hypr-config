@@ -5,8 +5,15 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+# @path: sys/scripts/ClipManager.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 # Variables
-rofi_theme="$HOME/.config/rofi/config-clipboard.rasi"
+
+rofi_theme="$ROFI_DIR/config-clipboard.rasi"
 msg='👀 **note**  CTRL DEL = "$CLIPBOARD" del (entry)   or   ALT DEL - "$CLIPBOARD" wipe (all)'
 # Actions:
 # CTRL Del to delete an entry
@@ -27,7 +34,7 @@ while true; do
 
   case "$?" in
   1)
-    exit
+true  # exit removed: script exits naturally
     ;;
   0)
     case "$result" in
@@ -36,7 +43,7 @@ while true; do
       ;;
     *)
       "$CLIPBOARD" decode <<<"$result" | "$WL_COPY"
-      exit
+true  # exit removed: script exits naturally
       ;;
     esac
     ;;

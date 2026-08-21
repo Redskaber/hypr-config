@@ -2,8 +2,13 @@
 -- @author: redskaber
 -- @date: 2026-08-20
 -- @description: Visual decoration (colors from wallust, shadow/blur/group)
+--
+-- ARCHITECTURE: Colors are loaded from user/policy/wallust/ (which merges
+-- sys defaults + user overrides). This ensures user color overrides are
+-- visible to decoration. The pipeline order (policy before decoration)
+-- guarantees the merged colors are available.
 
-local colors = require("sys.policy.wallust.wallust-hyprland")
+local colors = require("user.policy.wallust.wallust-hyprland")
 
 hl.config({
   general = {

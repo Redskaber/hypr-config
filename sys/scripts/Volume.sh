@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
+# Source shared library — provides VOLUME_CONTROL, NOTIFY, dt_notify_bypass_dnd, etc.
+source "$(dirname "$0")/lib/common.sh"
+
 # @path: sys/scripts/Volume.sh
 # @author: redskaber
 # @date: 2026-08-20
 # @description: Volume controls for audio and mic (uses common.sh for DI)
 
-# Source shared library — provides VOLUME_CONTROL, NOTIFY, dt_notify_bypass_dnd, etc.
-source "$(dirname "$0")/lib/common.sh"
-
-iDIR="$HOME/.config/swaync/icons"
+iDIR="$SWAYNC_ICONS"
 sDIR="$HYPR_SCRIPTS_DIR"
 
 # Get Volume (uses VOLUME_CONTROL from deps, not hard-coded pamixer)

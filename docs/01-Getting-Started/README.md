@@ -99,7 +99,7 @@ Hyprland
 │   ├── hardware/            # Hardware abstraction (monitors, laptop, workspaces)
 │   ├── policy/              # Strategy pattern: animations/ + wallust/
 │   ├── statemachine/        # Lua-native SMs: layout / gamemode / nightlight
-│   └── scripts/             # 60 .sh runtime scripts (+ 3 .lua helpers)
+│   └── scripts/             # 62 `.sh` runtime scripts (+ 3 `.lua` helpers)
 │
 ├── user/                     # Layer 3 — user overrides (EDIT HERE)
 │   ├── const.lua            # Delta overrides only

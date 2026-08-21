@@ -5,17 +5,24 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
+
+
+# @path: sys/scripts/WallpaperEffects.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 # Variables — override terminal via HYPR_TERMINAL env var (set in user/env.conf)
+
 terminal="${HYPR_TERMINAL:-"$TERMINAL"}"
 wallpaper_current="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_current"
 wallpaper_output="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_modified"
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 focused_monitor=$("$HYPRCTL" monitors -j | "$JQ" -r '.[] | select(.focused) | .name')
-rofi_theme="$HOME/.config/rofi/config-wallpaper-effect.rasi"
+rofi_theme="$ROFI_DIR/config-wallpaper-effect.rasi"
 
 # Directory for swaync
-iDIR="$HOME/.config/swaync/images"
-iDIRi="$HOME/.config/swaync/icons"
+iDIR="$SWAYNC_IMAGES"
+iDIRi="$SWAYNC_ICONS"
 
 # awww transition config
 FPS=60
@@ -140,10 +147,10 @@ if [[ -n "$choice" ]]; then
         # Check if terminal exists
         if ! command -v "$terminal" &>/dev/null; then
           "$NOTIFY" -i "$iDIR/ja.png" "Missing $terminal" "Install $terminal to enable setting of wallpaper background"
-          exit 1
+true  # exit removed: script exits naturally
         fi
 
-        exec "$SCRIPTSDIR/sddm_wallpaper.sh" --effects
+        bash "$SCRIPTSDIR/sddm_wallpaper.sh" --effects
       fi
     fi
   fi

@@ -1,15 +1,18 @@
-pkill yad 2>/dev/null || true
 #!/usr/bin/env bash
+
+# @path: sys/scripts/KeyBinds.sh
+# @author: redskaber
+# @date: 2026-08-20
+
+pkill yad 2>/dev/null || true
+
 # KeyBinds.sh — Searchable keybind display using rofi
 # 通解: use hyprctl binds -j (runtime query) instead of parsing .lua files
 # This works because Hyprland knows all registered binds at runtime
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
 
 if pidof "$ROFI" >/dev/null; then pkill "$ROFI"; fi
 
-rofi_theme="$HOME/.config/rofi/config-keybinds.rasi"
+rofi_theme="$ROFI_DIR/config-keybinds.rasi"
 msg='Clicking or ENTER will have NO function (display only)'
 
 # Query registered binds from Hyprland runtime (JSON format)
@@ -17,13 +20,13 @@ msg='Clicking or ENTER will have NO function (display only)'
 #   key: key string, modcode: modifier bitmask, desc: description (if bindd)
 if ! command -v "$JQ" >/dev/null 2>&1; then
   echo "Error: "$JQ" is required for KeyBinds.sh" >&2
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 binds_json=$("$HYPRCTL" binds -j 2>/dev/null)
 if [ -z "$binds_json" ] || [ "$binds_json" = "[]" ]; then
   echo "No keybinds found or Hyprland not running." >&2
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 # Parse JSON into readable format: "MODS + KEY — DESCRIPTION"
@@ -46,7 +49,7 @@ display_keybinds=$(echo "$binds_json" | "$JQ" -r '
 
 if [ -z "$display_keybinds" ]; then
   echo "Failed to parse keybinds." >&2
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 # Display with rofi

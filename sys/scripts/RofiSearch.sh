@@ -1,5 +1,12 @@
-HYPR_DIR="${HOME}/.config/hypr"
 #!/usr/bin/env bash
+# @path: sys/scripts/RofiSearch.sh
+# @author: redskaber
+# @date: 2026-08-20
+#
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+search_engine="$HYPR_SEARCH_ENGINE"
 # RofiSearch.sh — Web search via rofi prompt
 #
 # Search engine resolution (dependency-inversion / incremental-override pattern):
@@ -9,49 +16,18 @@ HYPR_DIR="${HOME}/.config/hypr"
 #
 # $Search_Engine must contain a URL with '{}' as the query placeholder,
 # e.g. "https://www.google.com/search?q={}"
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-USER_CONST="${HYPR_DIR}/user/const.conf"
-SYS_CONST="${HYPR_DIR}/sys/const.conf"
-FALLBACK_ENGINE="https://www.google.com/search?q={}"
-
-# Extract $Search_Engine from a Hyprland-style conf file.
-# Returns empty string if not found.
-_read_engine() {
-    local file="$1"
-    [[ -f "$file" ]] || return
-    grep -E '^\$Search_Engine\s*=' "$file" \
-        | tail -n1 \
-        | sed -E 's/^\$Search_Engine\s*=\s*//' \
-        | tr -d '"' \
-        | xargs
-}
-
-# Stage 1 — user override
-Search_Engine=$(_read_engine "$USER_CONST")
-
-# Stage 2 — system default
-if [[ -z "$Search_Engine" ]]; then
-    Search_Engine=$(_read_engine "$SYS_CONST")
-fi
-
-# Stage 3 — hard-coded fallback (should never be reached in a correct install)
-if [[ -z "$Search_Engine" ]]; then
-    Search_Engine="$FALLBACK_ENGINE"
-fi
 
 # ── Rofi prompt ───────────────────────────────────────────────
-rofi_theme="${HOME}/.config/rofi/config-search.rasi"
-msg='‼️ **note** ‼️ search via default web browser'
+rofi_theme="$ROFI_DIR/config-search.rasi"
 
 # Kill any existing rofi instance before opening a new one
 pkill -x "$ROFI" 2>/dev/null
 
-query=$(echo "" | "$ROFI" -dmenu -config "$rofi_theme" -mesg "$msg")
+# msg='‼️ **note** ‼️ search via default web browser'
+# query=$(echo "" | "$ROFI" -dmenu -config "$rofi_theme" -mesg "$msg")
+query=$(echo "" | "$ROFI" -dmenu -config "$rofi_theme")
 
 [[ -z "$query" ]] && exit 0
 
-url="${Search_Engine/\{\}/${query}}"
+url="${search_engine/\{\}/${query}}"
 xdg-open "$url"

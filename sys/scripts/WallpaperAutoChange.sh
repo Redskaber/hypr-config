@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+
+
+
+# @path: sys/scripts/WallpaperAutoChange.sh
+# @author: redskaber
+# @date: 2026-08-20
+
 # source https://wiki.archlinux.org/title/Hyprland#Using_a_script_to_change_wallpaper_every_X_minutes
 
 # This script will randomly go through the files of a directory, setting it
 # up as the wallpaper at regular intervals
 #
 # NOTE: this script uses bash (not POSIX shell) for the RANDOM variable
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
 
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 wallust_refresh="$SCRIPTSDIR/RefreshNoWaybar.sh"
@@ -17,7 +24,7 @@ focused_monitor=$("$HYPRCTL" monitors | awk '/^Monitor/{name=$2} /focused: yes/{
 if [[ $# -lt 1 ]] || [[ ! -d $1 ]]; then
   echo "Usage:
 	$0 <dir containing images>"
-  exit 1
+true  # exit removed: script exits naturally
 fi
 
 # Edit below to control the images transition
