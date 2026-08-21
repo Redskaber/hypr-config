@@ -11,9 +11,9 @@ local M = {}
 
 -- Override applications (delta from sys defaults)
 M.apps = {
-	terminal = "kitty", -- was "ghostty"
-	-- file_manager = "thunar",    -- uncomment to override
-	-- editor = "nvim",            -- uncomment to override
+  terminal = "ghostty",   -- was "kitty" in sys/const.lua
+  -- file_manager = "thunar",  -- uncomment to override
+  -- editor = "nvim",            -- uncomment to override
 }
 
 -- Override search engine (delta)

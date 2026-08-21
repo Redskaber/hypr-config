@@ -91,7 +91,7 @@ function M.music(hl)
       ["Stop"] = "stop",
     }
     local action = actions[selected]
-    if action and media.found then
+    if action and media and media.found then
       hl.exec_cmd(media.cmd .. " " .. action)
     end
   end

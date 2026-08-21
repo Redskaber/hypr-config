@@ -110,7 +110,7 @@ function M.export_to_shell(path)
   f:write("# Source this in .sh: source \"${HYPR_DEPS_CACHE:-$HOME/.config/hypr/.deps_cache.sh}\"\n")
   f:write("# Each var is the resolved command name (env_var override applied).\n\n")
 
-  for name, spec in pairs(M.specs) do
+  for name in pairs(M.specs) do
     local dep = M.get(name)
     if dep and dep.cmd and dep.cmd ~= "" then
       -- Convert dep name to UPPER_SNAKE_CASE shell var

@@ -4,6 +4,7 @@
 -- @description: Shared script utilities (NOTIF_ICON/SCRIPTSDIR/focused_monitor)
 
 local const = require("const")
+local deps = require("lib.deps")
 local M = {}
 
 M.NOTIF_ICON = const.notify_icon

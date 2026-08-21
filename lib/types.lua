@@ -50,7 +50,7 @@
 ---@field get fun(name: string): Dep|nil Resolve a dependency by name
 ---@field check_all fun(): boolean, string[] Verify all required deps
 ---@field owned_tools fun(): string[] List tools whose config we manage
----@field cmd fun(name: string): string|nil Get full command string with default args
+---@field cmd fun(name: string): string Get full command string with default args
 ---@field export_to_shell fun(path: string?): boolean, string Generate shell cache
 
 ---@class WindowRuleMatch
@@ -66,7 +66,7 @@
 ---@field focus boolean|nil Currently focused window
 ---@field group boolean|nil Grouped windows
 ---@field modal boolean|nil Modal dialogs
----@field workspace string|nil|int Workspace selector
+---@field workspace string|nil|integer Workspace selector
 ---@field content string|nil Content type: none/photo/video/game
 ---@field xdg_tag string|nil XDG tag regex
 
@@ -165,24 +165,24 @@
 ---@field get fun(): HLNotification|nil
 
 ---@class HLDispatcherWindow
----@field close fun(opts: {window?: string}): nil
----@field kill fun(opts: {window?: string}): nil
----@field float fun(opts: {action?: string, window?: string}): nil
----@field fullscreen fun(opts: {mode?: string, action?: string, window?: string}): nil
----@field pin fun(opts: {action?: string, window?: string}): nil
----@field move fun(opts: {workspace?: string, follow?: boolean, window?: string}): nil
----@field move fun(opts: {x: number|string, y: number|string, relative?: boolean, window?: string}): nil
----@field resize fun(opts: {x: number|string, y: number|string, relative?: boolean, window?: string}): nil
----@field center fun(opts: {window?: string}): nil
----@field cycle_next fun(opts: {next?: boolean, tiled?: boolean, floating?: boolean, window?: string}): nil
----@field tag fun(opts: {tag: string, window?: string}): nil
----@field clear_tags fun(opts: {window?: string}): nil
----@field set_prop fun(opts: {prop: string, value: string, window?: string}): nil
----@field swap fun(opts: {direction?: string, target?: string, next?: boolean, prev?: boolean}): nil
----@field pseudo fun(opts: {action?: string, window?: string}): nil
----@field signal fun(opts: {signal: integer, window?: string}): nil
+---@field close fun(opts?: {window?: string}): nil
+---@field kill fun(opts?: {window?: string}): nil
+---@field float fun(opts?: {action?: string, window?: string}): nil
+---@field fullscreen fun(opts?: {mode?: string, action?: string, window?: string}): nil
+---@field pin fun(opts?: {action?: string, window?: string}): nil
+---@field move fun(opts?: {workspace?: string, follow?: boolean, window?: string}): nil
+---@field move fun(opts?: {x: number|string, y: number|string, relative?: boolean, window?: string}): nil
+---@field resize fun(opts?: {x: number|string, y: number|string, relative?: boolean, window?: string}): nil
+---@field center fun(opts?: {window?: string}): nil
+---@field cycle_next fun(opts?: {next?: boolean, tiled?: boolean, floating?: boolean, window?: string}): nil
+---@field tag fun(opts?: {tag: string, window?: string}): nil
+---@field clear_tags fun(opts?: {window?: string}): nil
+---@field set_prop fun(opts?: {prop: string, value: string, window?: string}): nil
+---@field swap fun(opts?: {direction?: string, target?: string, next?: boolean, prev?: boolean}): nil
+---@field pseudo fun(opts?: {action?: string, window?: string}): nil
+---@field signal fun(opts?: {signal: integer, window?: string}): nil
 ---@field drag fun(): nil
----@field alter_zorder fun(opts: {mode: string, window?: string}): nil
+---@field alter_zorder fun(opts?: {mode: string, window?: string}): nil
 
 ---@class HLDispatcherWorkspace
 ---@field rename fun(opts: {workspace: string, name?: string}): nil
@@ -192,28 +192,28 @@
 ---@field toggle_special fun(special_name: string): nil
 
 ---@class HLDispatcherGroup
----@field toggle fun(opts: {window?: string}): nil
----@field next fun(opts: {window?: string}): nil
----@field prev fun(opts: {window?: string}): nil
----@field lock fun(opts: {action?: string, window?: string}): nil
+---@field toggle fun(opts?: {window?: string}): nil
+---@field next fun(opts?: {window?: string}): nil
+---@field prev fun(opts?: {window?: string}): nil
+---@field lock fun(opts?: {action?: string, window?: string}): nil
 
 ---@class HLDispatcherCursor
----@field move fun(opts: {x: number, y: number}): nil
----@field move_to_corner fun(opts: {corner: integer, window?: string}): nil
+---@field move fun(opts?: {x: number, y: number}): nil
+---@field move_to_corner fun(opts?: {corner: integer, window?: string}): nil
 
 ---@class HLDispatcher
 ---@field window HLDispatcherWindow
 ---@field workspace HLDispatcherWorkspace
 ---@field group HLDispatcherGroup
 ---@field cursor HLDispatcherCursor
----@field focus fun(opts: {direction?: string, monitor?: string, workspace?: string, window?: string, urgent_or_last?: boolean, last?: boolean}): nil
+---@field focus fun(opts?: {direction?: string, monitor?: string, workspace?: string|integer, window?: string, urgent_or_last?: boolean, last?: boolean}): nil
 ---@field exec_cmd fun(cmd: string, rules?: table): nil
 ---@field exec_raw fun(cmd: string): nil
 ---@field exit fun(): nil
 ---@field submap fun(name: string): nil
----@field pass fun(opts: {window?: string}): nil
+---@field pass fun(opts?: {window?: string}): nil
 ---@field layout fun(message: string): nil
----@field dpms fun(opts: {action?: string, monitor?: string}): nil
+---@field dpms fun(opts?: {action?: string, monitor?: string}): nil
 ---@field event fun(string: string): nil
 
 ---@class HLBindFlags
