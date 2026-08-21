@@ -3,11 +3,11 @@
 -- @date: 2026-08-20
 -- @description: Shared script utilities (NOTIF_ICON/SCRIPTSDIR/focused_monitor)
 
-local const = _G.HYPR_CONST
+local const = require("const")
 local M = {}
 
-M.NOTIF_ICON = const.I_notify
-M.SCRIPTSDIR = const.S
+M.NOTIF_ICON = const.notify_icon
+M.SCRIPTSDIR = const.dirs.scripts
 
 -- Get focused monitor (ONLY at startup, not in bind callbacks)
 function M.focused_monitor()

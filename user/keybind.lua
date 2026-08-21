@@ -4,11 +4,11 @@
 -- @description: User keybind overrides (appended after sys/keybind.lua)
 
 -- Uncomment to add custom keybinds:
--- local const = _G.HYPR_CONST
--- hl.bind(const.M .. " + T", hl.dsp.exec_cmd("thunderbird"))
+-- local const = require("const")
+-- hl.bind(const.modifier .. " + T", hl.dsp.exec_cmd("thunderbird"))
 --
 -- -- Lua function dispatcher (impossible in .conf era):
--- hl.bind(const.M .. " + ALT + G", function()
+-- hl.bind(const.modifier .. " + ALT + G", function()
 --   require('sys.statemachine.gamemode').new(hl):fire("toggle")
 -- end)
 --

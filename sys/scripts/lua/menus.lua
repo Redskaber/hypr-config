@@ -31,7 +31,7 @@ end
 -- KEY FIX: uses deps.get for search engine URL (was hardcoded google in sys,
 -- user-overridden to bing in user/const.conf — the ONLY script with DIP)
 function M.web_search(hl)
-  -- In .lua era: local const = require("sys.const"); const.Search_Engine
+  -- In .lua era: local const = require("sys.const"); const.search_engine
   -- For now: read from a known location
   local search_engine = "https://www.google.com/search?q={}"  -- would be const
   local query = rofi_dmenu(hl, {}, "Search:")

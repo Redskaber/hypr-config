@@ -3,7 +3,7 @@
 -- @date: 2026-08-20
 -- @description: exec-once commands (hl.on hyprland.start event hook)
 
-local const = _G.HYPR_CONST
+local const = require("const")
 local deps = require("lib.deps")
 
 hl.on("hyprland.start", function()
@@ -21,13 +21,13 @@ hl.on("hyprland.start", function()
 
   -- Auth agent
   local auth = deps.get("auth_agent")
-  if auth and auth.found then hl.exec_cmd(const.S .. "/Polkit-NixOS.sh") end
+  if auth and auth.found then hl.exec_cmd(const.dirs.scripts .. "/Polkit-NixOS.sh") end
 
   -- Keybind layout init
-  hl.exec_cmd(const.S .. "/KeybindsLayoutInit.sh")
+  hl.exec_cmd(const.dirs.scripts .. "/KeybindsLayoutInit.sh")
 
-  -- Drop-down terminal (uses const.M_terminal — terminal from const, not hardcoded)
-  hl.exec_cmd(const.S .. "/Dropterminal.sh " .. const.M_terminal .. " &")
+  -- Drop-down terminal (uses const.apps.terminal — terminal from const, not hardcoded)
+  hl.exec_cmd(const.dirs.scripts .. "/Dropterminal.sh " .. const.apps.terminal .. " &")
 
   -- Network applet (DI: from deps, not hardcoded "nm-applet")
   local net = deps.get("network_applet")
@@ -61,6 +61,6 @@ hl.on("hyprland.start", function()
   -- Night light init (state machine)
   local nl = deps.get("nightlight")
   if nl and nl.found then
-    hl.exec_cmd(const.S .. "/Hyprsunset.sh init")
+    hl.exec_cmd(const.dirs.scripts .. "/Hyprsunset.sh init")
   end
 end)

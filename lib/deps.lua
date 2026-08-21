@@ -100,7 +100,7 @@ end
 -- =============================================================================
 
 function M.export_to_shell(path)
-  path = path or (_G.HYPR_CONST.Hypr .. "/.deps_cache.sh")
+  path = path or (require("const").config_root .. "/.deps_cache.sh")
   local f = io.open(path, "w")
   if not f then return false, "cannot open " .. path end
 
