@@ -1,3 +1,4 @@
+notif="$HOME/.config/swaync/images/ja.png"
 #!/usr/bin/env bash
 # DEPRECATED: This script is replaced by the Lua state machine module (sys/statemachine/).
 # Kept for reference only. Do not use — the SM module is called directly via hl.bind().
@@ -15,8 +16,7 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-notif="$HOME/.config/swaync/images/ja.png"
-SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
+SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 
 LAYOUT=$("$HYPRCTL" -j getoption general:layout | "$JQ" -r '.str')
 

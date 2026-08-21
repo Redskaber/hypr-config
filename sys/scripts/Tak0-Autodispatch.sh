@@ -1,3 +1,7 @@
+LOGFILE="$(dirname "$0")/dispatch.log"
+# Log file path located next to the script.
+# Файл логів розташований поруч зі скриптом.
+
 #!/usr/bin/env bash
 # USAGE / ІНСТРУКЦІЯ:
 # 1) Run from terminal:
@@ -33,10 +37,6 @@
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
-
-LOGFILE="$(dirname "$0")/dispatch.log"
-# Log file path located next to the script.
-# Файл логів розташований поруч зі скриптом.
 
 APP=$1
 # The application command or window class to launch or match.

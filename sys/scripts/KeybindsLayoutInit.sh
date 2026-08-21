@@ -1,3 +1,5 @@
+set -euo pipefail
+
 #!/usr/bin/env bash
 # DEPRECATED: This script is replaced by the Lua state machine module (sys/statemachine/).
 # Kept for reference only. Do not use — the SM module is called directly via hl.bind().
@@ -14,8 +16,6 @@
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
-
-set -euo pipefail
 
 LAYOUT=$("$HYPRCTL" -j getoption general:layout | "$JQ" -r '.str')
 

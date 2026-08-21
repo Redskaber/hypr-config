@@ -1,3 +1,4 @@
+PROCESS="hypridle"
 #!/usr/bin/env bash
 # Waybar idle_inhibitor: toggle hypridle on/off.
 # Config path must be absolute — hypridle runs in its own process context.
@@ -5,8 +6,7 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-PROCESS="hypridle"
-HYPRIDLE_CONF="$HOME/.config/hypr/sys/hypridle.conf"
+HYPRIDLE_CONF="$HYPR_CONFIG_DIR/sys/hypridle.conf"
 
 if [[ "$1" == "status" ]]; then
   sleep 1

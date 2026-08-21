@@ -1,3 +1,4 @@
+if [[ -r /proc/uptime ]]; then
 #!/usr/bin/env bash
 # Script parses /proc/uptime to get the system uptime
 # and prints it in a human-readable format
@@ -7,7 +8,6 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-if [[ -r /proc/uptime ]]; then
   s=$(</proc/uptime)
   s=${s/.*/}
 else

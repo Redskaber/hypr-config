@@ -1,11 +1,11 @@
+rofi_theme="$HOME/.config/rofi/config-calc.rasi"
+
 #!/usr/bin/env bash
 # /* Calculator (using qalculate) and rofi */
 # /* Submitted by: https://github.com/JosephArmas */
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
-
-rofi_theme="$HOME/.config/rofi/config-calc.rasi"
 
 # Kill Rofi if already running before execution
 if pgrep -x "rofi" >/dev/null; then

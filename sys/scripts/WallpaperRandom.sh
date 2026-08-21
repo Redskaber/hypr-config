@@ -1,3 +1,4 @@
+wallDIR="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/wallpapers}"
 #!/usr/bin/env bash
 # Script for Random Wallpaper ( CTRL ALT W)
 # Override wallpaper dir via env var HYPR_WALLPAPER_DIR (set in user/env.conf)
@@ -5,8 +6,7 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-wallDIR="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/wallpapers}"
-SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
+SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 
 focused_monitor=$("$HYPRCTL" monitors -j | "$JQ" -r '.[] | select(.focused) | .name')
 

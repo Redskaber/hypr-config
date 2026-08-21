@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # DEPRECATED: This script is replaced by the Lua state machine module (sys/statemachine/).
 # Kept for reference only. Do not use — the SM module is called directly via hl.bind().
-set -euo pipefail
-
 # Hyprsunset toggle + Waybar status helper
 # Phase 1: manual toggle only (no scheduling)
 # Icons:
@@ -15,6 +13,8 @@ set -euo pipefail
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
+
+set -euo pipefail
 
 STATE_FILE="$HOME/.cache/.hyprsunset_state"
 TARGET_TEMP="${HYPRSUNSET_TEMP:-4500}"

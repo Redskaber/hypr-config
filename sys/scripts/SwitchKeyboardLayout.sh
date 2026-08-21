@@ -5,7 +5,7 @@ source "$(dirname "$0")/lib/common.sh"
 
 
 layout_file="$HOME/.cache/kb_layout"
-settings_file="$HOME/.config/hypr/sys/input.conf"
+settings_file="$HYPR_CONFIG_DIR/sys/input.conf"
 notif_icon="$HOME/.config/swaync/images/ja.png"
 
 # Refined ignore list with patterns or specific device names

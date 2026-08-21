@@ -4,7 +4,7 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-HYPR_DIR="$HOME/.config/hypr"
+HYPR_DIR="$HYPR_CONFIG_DIR"
 
 # terminal and editor: prefer env vars set via user/env.lua, fall back to defaults
 term="${HYPR_TERMINAL:-"$TERMINAL"}"

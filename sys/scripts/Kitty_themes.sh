@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Kitty Themes Source https://github.com/dexpota/kitty-themes #
 
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+
 # Define directories and variables
 kitty_themes_DiR="$HOME/.config/kitty/kitty-themes" # Kitty Themes Directory
 kitty_config="$HOME/.config/kitty/kitty.conf"
@@ -19,10 +23,6 @@ apply_kitty_theme_to_config() {
     echo "Error: No theme name provided to apply_kitty_theme_to_config." >&2
     return 1
   fi
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
   local theme_file_path_to_apply="$kitty_themes_DiR/$theme_name_to_apply.conf"
   if [ ! -f "$theme_file_path_to_apply" ]; then
     notify_user "$iDIR/error.png" "Error" "Theme file not found: $theme_name_to_apply.conf"

@@ -9,7 +9,7 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
+SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 wallust_refresh="$SCRIPTSDIR/RefreshNoWaybar.sh"
 
 focused_monitor=$("$HYPRCTL" monitors | awk '/^Monitor/{name=$2} /focused: yes/{print name}')

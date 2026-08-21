@@ -1,3 +1,5 @@
+notif="$HOME/.config/swaync/images/ja.png"
+
 #!/usr/bin/env bash
 # For disabling touchpad.
 # Set $Touchpad_Device in sys/hardware/laptop.lua (run: hyprctl devices to find name)
@@ -5,8 +7,6 @@
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
-
-notif="$HOME/.config/swaync/images/ja.png"
 
 export STATUS_FILE="$XDG_RUNTIME_DIR/touchpad.status"
 

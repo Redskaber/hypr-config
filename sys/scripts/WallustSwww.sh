@@ -1,3 +1,5 @@
+set -euo pipefail
+
 #!/usr/bin/env bash
 # Wallust: derive colors from the current wallpaper and update templates
 # Usage: WallustSwww.sh [absolute_path_to_wallpaper]
@@ -5,13 +7,11 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-set -euo pipefail
-
 # Inputs and paths
 passed_path="${1:-}"
 cache_dir="$HOME/.cache/awww/"
 rofi_link="$HOME/.config/rofi/.current_wallpaper"
-wallpaper_current="$HOME/.config/hypr/wallpaper_effects/.wallpaper_current"
+wallpaper_current="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_current"
 
 # Helper: get focused monitor name (prefer JSON)
 get_focused_monitor() {

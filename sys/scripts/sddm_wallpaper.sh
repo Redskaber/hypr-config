@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
 # SDDM Wallpaper and Wallust Colors Setter
 
+# Extract colors from rofi wallust config
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+
 # for the upcoming changes on the simple_sddm_theme
 
 # variables
 terminal="${HYPR_TERMINAL:-"$TERMINAL"}"
 wallDIR="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/wallpapers}"
-SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
-wallpaper_current="$HOME/.config/hypr/wallpaper_effects/.wallpaper_current"
-wallpaper_modified="$HOME/.config/hypr/wallpaper_effects/.wallpaper_modified"
+SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
+wallpaper_current="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_current"
+wallpaper_modified="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_modified"
 # Resolve SDDM themes directory (standard paths and NixOS path)
 sddm_themes_dir="/usr/share/sddm/themes"
 if [ ! -d "$sddm_themes_dir" ] && [ -d "/run/current-system/sw/share/sddm/themes" ]; then
@@ -31,11 +36,6 @@ if [[ "$1" == "--normal" ]]; then
 elif [[ "$1" == "--effects" ]]; then
   mode="effects"
 fi
-
-# Extract colors from rofi wallust config
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
 
 color0=$(grep -oP 'color1:\s*\K#[A-Fa-f0-9]+' "$rofi_wallust")
 color1=$(grep -oP 'color0:\s*\K#[A-Fa-f0-9]+' "$rofi_wallust")

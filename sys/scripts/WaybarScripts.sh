@@ -1,3 +1,4 @@
+term="${HYPR_TERMINAL:-"$TERMINAL"}"
 #!/usr/bin/env bash
 # Waybar module launcher — opens terminal apps or file manager.
 # terminal and file manager: prefer env vars set via user/env.conf, fall back to defaults.
@@ -5,7 +6,6 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-term="${HYPR_TERMINAL:-"$TERMINAL"}"
 files="${HYPR_FILE_MANAGER:-"$FILE_MANAGER"}"
 
 # Execute accordingly based on the passed argument

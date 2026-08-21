@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 # Wallpaper Effects using ImageMagick (SUPER SHIFT W)
 
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+
 # Variables — override terminal via HYPR_TERMINAL env var (set in user/env.conf)
 terminal="${HYPR_TERMINAL:-"$TERMINAL"}"
-wallpaper_current="$HOME/.config/hypr/wallpaper_effects/.wallpaper_current"
-wallpaper_output="$HOME/.config/hypr/wallpaper_effects/.wallpaper_modified"
-SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
+wallpaper_current="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_current"
+wallpaper_output="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_modified"
+SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 focused_monitor=$("$HYPRCTL" monitors -j | "$JQ" -r '.[] | select(.focused) | .name')
 rofi_theme="$HOME/.config/rofi/config-wallpaper-effect.rasi"
 
@@ -51,10 +55,6 @@ no-effects() {
   # Refresh rofi, waybar, wallust palettes
   sleep 2
   "$SCRIPTSDIR/Refresh.sh"
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
   "$NOTIFY" -u low -i "$iDIR/ja.png" "No wallpaper" "effects applied"
   # copying wallpaper for rofi menu
   cp "$wallpaper_current" "$wallpaper_output"

@@ -1,3 +1,4 @@
+HYPR_DIR="${HOME}/.config/hypr"
 #!/usr/bin/env bash
 # RofiSearch.sh — Web search via rofi prompt
 #
@@ -12,7 +13,6 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-HYPR_DIR="${HOME}/.config/hypr"
 USER_CONST="${HYPR_DIR}/user/const.conf"
 SYS_CONST="${HYPR_DIR}/sys/const.conf"
 FALLBACK_ENGINE="https://www.google.com/search?q={}"

@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 # This script for selecting wallpapers (SUPER W)
 
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+
 # WALLPAPERS PATH — override via env var HYPR_WALLPAPER_DIR (set in user/env.conf)
 terminal="${HYPR_TERMINAL:-"$TERMINAL"}"
 wallDIR="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/wallpapers}"
-SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
-wallpaper_current="$HOME/.config/hypr/wallpaper_effects/.wallpaper_current"
+SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
+wallpaper_current="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_current"
 
 # Directory for swaync
 iDIR="$HOME/.config/swaync/images"
@@ -37,10 +41,6 @@ fi
 # Monitor details
 scale_factor=$("$HYPRCTL" monitors -j | "$JQ" -r --arg mon "$focused_monitor" '.[] | select(.name == $mon) | .scale')
 monitor_height=$("$HYPRCTL" monitors -j | "$JQ" -r --arg mon "$focused_monitor" '.[] | select(.name == $mon) | .height')
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
 icon_size=$(echo "scale=1; ($monitor_height * 3) / ($scale_factor * 150)" | bc)
 adjusted_icon_size=$(echo "$icon_size" | awk '{if ($1 < 15) $1 = 20; if ($1 > 25) $1 = 25; print $1}')
 rofi_override="element-icon{size:${adjusted_icon_size}%;}"

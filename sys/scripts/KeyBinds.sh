@@ -1,3 +1,4 @@
+pkill yad 2>/dev/null || true
 #!/usr/bin/env bash
 # KeyBinds.sh — Searchable keybind display using rofi
 # 通解: use hyprctl binds -j (runtime query) instead of parsing .lua files
@@ -6,7 +7,6 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-pkill yad 2>/dev/null || true
 if pidof "$ROFI" >/dev/null; then pkill "$ROFI"; fi
 
 rofi_theme="$HOME/.config/rofi/config-keybinds.rasi"

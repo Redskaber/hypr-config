@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Simple bash script to check and will try to update your system
 
-# Local Paths
-
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
+
+# Local Paths
 
 iDIR="$HOME/.config/swaync/images"
 

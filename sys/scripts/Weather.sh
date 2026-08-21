@@ -1,11 +1,11 @@
+city=""
+
 #!/usr/bin/env bash
 # weather info from wttr. https://github.com/chubin/wttr.in
 # Remember to add city
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
-
-city=""
 
 # if city is blank, use https://ipapi.co/json to get location from IP
 if [ -z "$city" ]; then

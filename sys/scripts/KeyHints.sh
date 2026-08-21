@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+
 # GDK BACKEND. Change to either wayland or x11 if having issues
 BACKEND=wayland
 
@@ -7,10 +11,6 @@ BACKEND=wayland
 if pidof "$ROFI" >/dev/null; then
   pkill "$ROFI"
 fi
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
 if pidof yad >/dev/null; then
   pkill yad
 fi

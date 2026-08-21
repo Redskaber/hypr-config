@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
 ##################################################################
 #                                                                #
 #                                                                #
@@ -14,7 +18,7 @@
 # This is for changing kb_layouts. Set kb_layouts in
 
 MAP_FILE="$HOME/.cache/kb_layout_per_window"
-CFG_FILE="$HOME/.config/hypr/sys/input.conf"
+CFG_FILE="$HYPR_CONFIG_DIR/sys/input.conf"
 ICON="$HOME/.config/swaync/images/ja.png"
 SCRIPT_NAME="$(basename "$0")"
 

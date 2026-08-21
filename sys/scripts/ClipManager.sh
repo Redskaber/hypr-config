@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Clipboard Manager. This script uses cliphist, rofi, and wl-copy.
 
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+
 # Variables
 rofi_theme="$HOME/.config/rofi/config-clipboard.rasi"
 msg='👀 **note**  CTRL DEL = "$CLIPBOARD" del (entry)   or   ALT DEL - "$CLIPBOARD" wipe (all)'
@@ -12,10 +16,6 @@ msg='👀 **note**  CTRL DEL = "$CLIPBOARD" del (entry)   or   ALT DEL - "$CLIPB
 if pidof "$ROFI" >/dev/null; then
   pkill "$ROFI"
 fi
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
 while true; do
   result=$(
     "$ROFI" -i -dmenu \

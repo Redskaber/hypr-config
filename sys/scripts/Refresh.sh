@@ -1,3 +1,4 @@
+SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 #!/usr/bin/env bash
 # sys/scripts/Refresh.sh — Restart bar, notification daemon, and optional user scripts.
 # Called after theme changes (wallust), layout switches, or GameMode exit.
@@ -5,8 +6,7 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
-UserScripts="$HOME/.config/hypr/user/scripts"
+UserScripts="$HYPR_CONFIG_DIR/user/scripts"
 
 # ── Stop running services ────────────────────────────────────
 for proc in "$BAR" "$ROFI" "$NOTIFICATION"; do

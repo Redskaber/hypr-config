@@ -1,3 +1,4 @@
+# HYPR_CONFIG_DIR already set by common.sh
 #!/usr/bin/env bash
 # sys/scripts/UserConfigsSwitcher.sh — Legacy migration helper
 # Manages UserConfigs ↔ UserConfigsBak swap for users migrating from the old
@@ -8,7 +9,6 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-HYPR_CONFIG_DIR="$HOME/.config/hypr"
 USER_CONFIGS="$HYPR_CONFIG_DIR/UserConfigs"
 USER_CONFIGS_BAK="$HYPR_CONFIG_DIR/UserConfigsBak"
 

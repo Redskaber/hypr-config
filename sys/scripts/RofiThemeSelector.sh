@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Rofi Themes - Script to preview and apply themes by live-reloading the config.
 
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+
 # --- Configuration ---
 ROFI_THEMES_DIR_CONFIG="$HOME/.config/rofi/themes"
 ROFI_THEMES_DIR_LOCAL="$HOME/.local/share/rofi/themes"
@@ -57,10 +61,6 @@ apply_rofi_theme_to_config() {
       sed -i '0,/^\s*\/\/@theme/s///' "$ROFI_CONFIG_FILE"
     done
   fi
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
   return 0
 }
 

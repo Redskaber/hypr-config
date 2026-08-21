@@ -1,13 +1,13 @@
+SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 #!/usr/bin/env bash
-# sys/scripts/RefreshNoWaybar.sh — Refresh theme without restarting waybar.
-# Used after wallpaper changes (WallpaperAutoChange, Animations) where waybar
+# sys/scripts/RefreshNoWaybar.sh — Refresh theme without restarting "$BAR".
+# Used after wallpaper changes (WallpaperAutoChange, Animations) where "$BAR"
 # does not need a full restart.
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
 
-SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
-UserScripts="$HOME/.config/hypr/user/scripts"
+UserScripts="$HYPR_CONFIG_DIR/user/scripts"
 
 # ── Kill rofi if open ────────────────────────────────────────
 pkill "$ROFI" 2>/dev/null || true

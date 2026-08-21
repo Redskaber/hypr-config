@@ -9,7 +9,7 @@ IFS=$'\n\t'
 # Define directories
 waybar_layouts="$HOME/.config/waybar/configs"
 waybar_config="$HOME/.config/waybar/config"
-SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
+SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 rofi_config="$HOME/.config/rofi/config-"$BAR"-layout.rasi"
 msg=' 🎌 NOTE: Some "$BAR" LAYOUT NOT fully compatible with some STYLES'
 

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # For applying Pre-configured Monitor Profiles
 
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+
 # Check if rofi is already running
 if pidof "$ROFI" >/dev/null; then
   pkill "$ROFI"
@@ -8,9 +12,9 @@ fi
 
 # Variables
 iDIR="$HOME/.config/swaync/images"
-SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
-monitor_dir="$HOME/.config/hypr/sys/hardware/monitor-profiles"
-target="$HOME/.config/hypr/sys/hardware/monitors.conf"
+SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
+monitor_dir="$HYPR_CONFIG_DIR/sys/hardware/monitor-profiles"
+target="$HYPR_CONFIG_DIR/sys/hardware/monitors.conf"
 rofi_theme="$HOME/.config/rofi/config-Monitors.rasi"
 msg='❗NOTE:❗ This will overwrite $HOME/.config/hypr/monitors.conf'
 
@@ -29,10 +33,6 @@ done
 
 # Rofi Menu
 chosen_file=$(echo "$mon_profiles_list" | "$ROFI" -i -dmenu -config $rofi_theme -mesg "$msg")
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
 if [[ -n "$chosen_file" ]]; then
   full_path="$monitor_dir/$chosen_file.conf"
   cp "$full_path" "$target"

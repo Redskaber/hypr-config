@@ -2,19 +2,19 @@
 # For Dark and Light switching
 # Note: Scripts are looking for keywords Light or Dark except for wallpapers as the are in a separate directories
 
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+
 # Paths
 wallpaper_base_path="$HOME/Pictures/wallpapers/Dynamic-Wallpapers"
 dark_wallpapers="$wallpaper_base_path/Dark"
 light_wallpapers="$wallpaper_base_path/Light"
 swaync_style="$HOME/.config/swaync/style.css"
 ags_style="$HOME/.config/ags/user/style.css"
-SCRIPTSDIR="$HOME/.config/hypr/sys/scripts"
+SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 notif="$HOME/.config/swaync/images/bell.png"
 wallust_rofi="$HOME/.config/wallust/templates/colors-"$ROFI".rasi"
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
 kitty_conf="$HOME/.config/kitty/kitty.conf"
 
 wallust_config="$HOME/.config/wallust/wallust.toml"

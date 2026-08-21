@@ -1,3 +1,4 @@
+function random_hex() {
 #!/usr/bin/env bash
 # sys/scripts/RainbowBorders.sh — Animated rainbow active border
 # This is the system-provided implementation.
@@ -9,7 +10,6 @@
 source "$(dirname "$0")/lib/common.sh"
 
 
-function random_hex() {
   random_hex=("0xff$(openssl rand -hex 3)")
   echo $random_hex
 }
