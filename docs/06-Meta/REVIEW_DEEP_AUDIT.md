@@ -2,6 +2,16 @@
 
 > Continuation of Task 68. Addresses "是否只是浮于表面" + "通解 > 特解" + "nix 真实测试必须".
 
+> 📌 **Note on historical `_G.HYPR_CONST` references below**: This audit was
+> performed when the codebase used the `_G.HYPR_CONST` global mutation pattern
+> (3-layer merge by last-write-wins on a shared global table). **Task 85** later
+> replaced this pattern: `bootstrap/default.lua` now builds a merged `const`
+> table via `deep_merge()` and registers it via `package.loaded["const"] = const`,
+> so downstream modules use `local const = require("const")` instead of
+> `local const = _G.HYPR_CONST`. In particular, **BUG-7 below was reverted** —
+> `require("const")` is now the *correct* access pattern. The historical text
+> below is preserved verbatim for audit accuracy.
+
 ## Summary
 
 | Metric | Task 68 (surface) | Task 69 (deep) | Delta |

@@ -22,9 +22,9 @@ Every Hyprland directive is a function call on the `hl.*` API:
 
 | SSOT | Location | Referenced by |
 | --- | --- | --- |
-| Constants | `_G.HYPR_CONST` (3-layer merged) | All sys/ + user/ modules |
+| Constants | `const` module (injected via `package.loaded` by `bootstrap/default.lua`) | All sys/ + user/ modules |
 | Tags | `sys/tags.lua` (26 tags) | `sys/rules.lua` via `match = { tag = "X" }` |
-| External deps | `lib/deps.lua` (25 specs) | `sys/keybind.lua`, `sys/startup.lua` |
+| External deps | `lib/deps.lua` (35 specs) | `sys/keybind.lua`, `sys/startup.lua` |
 | State machines | `lib/sm.lua` (base class) | `sys/statemachine/*.lua` (3 instances) |
 
 ### 2. Single Responsibility Principle (SRP)
@@ -62,19 +62,19 @@ modifying sys/.
 hl.bind("SUPER + Return", hl.dsp.exec_cmd("kitty"))
 
 -- GOOD: depends on const abstraction (DIP compliant)
-local const = _G.HYPR_CONST
-hl.bind(const.M .. " + Return", hl.dsp.exec_cmd(const.M_terminal))
+local const = require("const")
+hl.bind(const.modifier .. " + Return", hl.dsp.exec_cmd(const.apps.terminal))
 --                                          ↑ abstraction, not concrete "kitty"
 ```
 
-Same for external tools — `lib/deps.lua` declares 25 tools (hyprctl, terminal,
+Same for external tools — `lib/deps.lua` declares 35 tools (hyprctl, terminal,
 launcher, bar, ...), and `sys/keybind.lua` resolves them via `deps.get("name").cmd`:
 
 ```lua
 -- sys/keybind.lua
 local deps = require("lib.deps")
 local launcher_cmd = deps.get("launcher").cmd or "rofi"   -- DI: resolved at load
-hl.bind(const.M .. " + D", hl.dsp.exec_cmd(launcher_cmd))
+hl.bind(const.modifier .. " + D", hl.dsp.exec_cmd(launcher_cmd))
 ```
 
 ### 5. Dependency Injection (DI)
@@ -89,7 +89,7 @@ M.specs.terminal = { cmd = "kitty", fallback = "alacritty", env_var = "HYPR_TERM
 local terminal_cmd = deps.get("terminal").cmd   -- "kitty" or $HYPR_TERMINAL
 ```
 
-**Zero hard-coded tool names** in keybind/startup — all 25 tools come from deps.
+**Zero hard-coded tool names** in keybind/startup — all 35 tools come from deps.
 
 ### 6. Incremental Override Pattern
 
@@ -181,13 +181,26 @@ See [TAG_SYSTEM.md](../03-Core-Systems/TAG_SYSTEM.md) for full spec.
 ```lua
 -- sys/startup.lua
 hl.on("hyprland.start", function()
-  hl.exec_cmd("waybar")
-  hl.exec_cmd("swaync")
-  -- ... (14 daemons launched on start event)
+  hl.exec_cmd(deps.cmd("wallpaper_daemon"))
+  hl.exec_cmd(const.dirs.scripts .. "/Polkit-NixOS.sh")
+  hl.exec_cmd(const.dirs.scripts .. "/KeybindsLayoutInit.sh")
+  hl.exec_cmd(const.dirs.scripts .. "/Dropterminal.sh " .. const.apps.terminal)
+  hl.exec_cmd(deps.get("network_applet").cmd .. " --indicator")
+  hl.exec_cmd(deps.get("notification").cmd)
+  hl.exec_cmd(deps.get("bar").cmd)
+  hl.exec_cmd("qs -c overview")
+  -- ... (12 daemons launched on start event, all resolved via deps)
+end)
+
+-- Round 107: added shutdown handler for daemon cleanup
+hl.on("hyprland.shutdown", function()
+  hl.exec_cmd("pkill " .. deps.get("bar").cmd)
+  hl.exec_cmd("pkill " .. deps.get("notification").cmd)
+  -- ... (kill daemons that don't auto-exit)
 end)
 ```
 
-Currently 2 event hooks (both in startup). Future: `hl.on("window.title", fn)`
+Currently 2 event hooks (start + shutdown in startup). Future: `hl.on("window.title", fn)`
 for dynamic title matching (per wiki recommendation for compound conditions).
 
 ## Software Design Patterns Catalog
@@ -222,7 +235,8 @@ for dynamic title matching (per wiki recommendation for compound conditions).
 │  const / default                                │
 ├─────────────────────────────────────────────────┤
 │  Layer 0: lib/                                   │
-│  Shared libraries (sm, deps, types, utils)      │
+│  Shared libraries (sm, deps, types, utils,        │
+│   active_policy, colors, input_config, cursor)   │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -241,11 +255,11 @@ hl.on("hyprland.start", function()
   hl.exec_cmd(deps.cmd("wallpaper_daemon"))   -- DI: tool from deps
   hl.exec_cmd(deps.get("bar").cmd)             -- DI: waybar
   hl.exec_cmd(deps.get("notification").cmd)    -- DI: swaync
-  -- ... 14 total, all resolved via deps
+  -- ... 12 total, all resolved via deps
 end)
 ```
 
-**Key**: absolute paths via `_G.HYPR_CONST.S` for scripts, `deps.cmd()` for
+**Key**: absolute paths via `const.dirs.scripts` for scripts, `deps.cmd()` for
 external tools. Zero hard-coded `"waybar"` or `"/usr/bin/..."` strings.
 
 ## Validation Strategy

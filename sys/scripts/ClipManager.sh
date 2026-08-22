@@ -2,6 +2,7 @@
 # @path: sys/scripts/ClipManager.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Clipboard history manager via cliphist + rofi + wl-copy (rofi interactive, no Lua API)
 #
 # Clipboard Manager. This script uses cliphist, rofi, and wl-copy.
 

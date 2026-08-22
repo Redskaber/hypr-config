@@ -24,6 +24,27 @@ local paths = require("bootstrap.const")
 
 local M = {}
 
+-- bootstrap::paths base use
+M.home_dir = paths.home_dir
+M.cache_dir = paths.cache_dir
+M.wallpaper_dir = paths.wallpaper_dir
+
+M.xdg_config = paths.xdg_config
+M.config_hypr = paths.config_hypr
+
+M.bootstrap = paths.bootstrap
+M.sys = paths.sys
+M.user = paths.user
+
+-- M.wallust_effects = paths.wallust_effects
+-- M.lock_background = paths.lock_background
+
+M.notify_icon = paths.notify_icon
+M.search_engine = paths.search_engine
+
+-- ── Main modifier key ──────────────────────────────────────────────────────
+M.modifier = "SUPER"
+
 -- ── Application commands (resolved via deps.lua at use site) ──────────────
 M.apps = {
 	terminal = "kitty",
@@ -31,10 +52,7 @@ M.apps = {
 	editor = os.getenv("EDITOR") or "nano",
 }
 
--- ── Main modifier key ──────────────────────────────────────────────────────
-M.modifier = "SUPER"
-
--- ── Internal directory paths (derived from config_root, never hard-coded) ───
+-- ── Internal directory paths (derived from config_hypr, never hard-coded) ───
 M.dirs = {
 	scripts = paths.sys .. "/scripts",
 	hardware = paths.sys .. "/hardware",
@@ -63,15 +81,15 @@ M.external = {
 	rofi = "rofi",
 	gdk_backend = "wayland",
 
-	-- dirs
-	swaync_dir = os.getenv("HOME") .. "/.config/swaync",
+	-- dirs (Round 109: XDG_CONFIG_HOME-aware)
+	swaync_dir = paths.xdg_config .. "/swaync",
 	swaync_icons = nil, -- derived below
 	swaync_images = nil, -- derived below
-	rofi_dir = os.getenv("HOME") .. "/.config/rofi",
-	waybar_dir = os.getenv("HOME") .. "/.config/waybar",
-	wallust_dir = os.getenv("HOME") .. "/.config/wallust",
-	kitty_dir = os.getenv("HOME") .. "/.config/kitty",
-	qt_dir = os.getenv("HOME") .. "/.config/qt",
+	rofi_dir = paths.xdg_config .. "/rofi",
+	waybar_dir = paths.xdg_config .. "/waybar",
+	wallust_dir = paths.xdg_config .. "/wallust",
+	kitty_dir = paths.xdg_config .. "/kitty",
+	qt_dir = paths.xdg_config .. "/qt",
 }
 
 -- Derive sub-paths (from swaync_dir)
@@ -84,18 +102,6 @@ M.helpers = {
 	settings = "Help_Settings",
 }
 
--- ── Search engine URL template ({} is replaced by query) ───────────────────
-M.search_engine = "https://www.google.com/search?q={}"
-
--- ── Wallpaper directory (user home, not config dir) ────────────────────────
-M.wallpaper_dir = os.getenv("HOME") .. "/Pictures/wallpapers"
-
--- ── Notification icon ──────────────────────────────────────────────────────
-M.notify_icon = paths.icon
-
--- ── Config root (for scripts that need the base path) ──────────────────────
-M.config_root = paths.config_root
-
 -- ════════════════════════════════════════════════════════════════════════════
 -- Shell Export: generate .deps_cache.sh from this SSOT
 -- ════════════════════════════════════════════════════════════════════════════
@@ -105,7 +111,7 @@ M.config_root = paths.config_root
 
 function M.export_to_shell()
 	local const = require("const") -- get merged const (with user overrides)
-	local f = io.open(const.config_root .. "/.deps_cache.sh", "w")
+	local f = io.open(const.config_hypr .. "/.deps_cache.sh", "w")
 	if not f then
 		return false
 	end
@@ -116,17 +122,18 @@ function M.export_to_shell()
 	f:write("# This is the SINGLE SOURCE OF TRUTH for all paths + DI variables.\n\n")
 
 	-- Config paths
-	f:write(string.format("export HYPR_CONFIG_DIR=%q\n", const.config_root))
+	f:write(string.format("export HYPR_CONFIG_DIR=%q\n", const.config_hypr))
 	f:write(string.format("export HYPR_SCRIPTS_DIR=%q\n", const.dirs.scripts))
 	f:write(string.format("export HYPR_HARDWARE_DIR=%q\n", const.dirs.hardware))
 	f:write(string.format("export HYPR_POLICY_DIR=%q\n", const.dirs.policy))
-	f:write(string.format("export HYPR_SYS_DIR=%q\n", const.config_root .. "/sys"))
-	f:write(string.format("export HYPR_USER_DIR=%q\n", const.config_root .. "/user"))
+	f:write(string.format("export HYPR_SYS_DIR=%q\n", const.sys))
+	f:write(string.format("export HYPR_USER_DIR=%q\n", const.user))
 	f:write(string.format("export HYPR_SEARCH_ENGINE=%q\n", const.search_engine))
 	f:write(string.format("export HYPR_WALLUST_DIR=%q\n", const.dirs.wallust_effects))
 	f:write(string.format("export HYPR_NOTIFY_ICON=%q\n", const.notify_icon))
 	f:write(string.format("export HYPR_LOCK_BG=%q\n", const.dirs.lock_background))
 	f:write(string.format("export HYPR_WALLPAPER_DIR=%q\n", const.wallpaper_dir))
+	f:write(string.format("export HYPR_CACHE_DIR=%q\n", const.cache_dir))
 	f:write("\n")
 
 	-- External tool config paths

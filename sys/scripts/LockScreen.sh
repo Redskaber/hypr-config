@@ -2,6 +2,7 @@
 # @path: sys/scripts/LockScreen.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Refresh weather cache then lock session via loginctl
 #
 # For Hyprlock
 

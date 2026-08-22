@@ -11,13 +11,16 @@
 
 ```lua
 -- sys/keybind.lua (already bound by default)
-local const = _G.HYPR_CONST
-hl.bind(const.M .. " + Return", hl.dsp.exec_cmd(const.M_terminal))
+local const = require("const")
+hl.bind(const.modifier .. " + Return", hl.dsp.exec_cmd(const.apps.terminal))
 ```
 
 To change the terminal, edit `user/const.lua`:
 ```lua
-_G.HYPR_CONST.M_terminal = "alacritty"
+-- user/const.lua
+local M = {}
+M.apps = { terminal = "alacritty" }   -- overrides sys default "kitty"
+return M
 ```
 
 ### Open App Launcher
@@ -84,14 +87,14 @@ hl.window_rule({ opacity = "0.90 0.80", match = { tag = "terminal" } })
 
 ```lua
 -- user/keybind.lua
-local const = _G.HYPR_CONST
-hl.bind(const.M .. " + SHIFT + 1", hl.dsp.window.move({ workspace = "1" }))
+local const = require("const")
+hl.bind(const.modifier .. " + SHIFT + 1", hl.dsp.window.move({ workspace = "1" }))
 ```
 
 ### Toggle Special Workspace (scratchpad)
 
 ```lua
-hl.bind(const.M .. " + S", hl.dsp.workspace.toggle_special("scratchpad"))
+hl.bind(const.modifier .. " + S", hl.dsp.workspace.toggle_special("scratchpad"))
 ```
 
 ---
@@ -122,7 +125,9 @@ hl.bind(const.M .. " + S", hl.dsp.workspace.toggle_special("scratchpad"))
 
 ```lua
 -- user/const.lua
-_G.HYPR_CONST.M = "ALT"   -- was "SUPER" (default)
+local M = {}
+M.modifier = "ALT"   -- overrides sys default "SUPER"
+return M
 ```
 
 ### Change Keyboard Layout
@@ -197,10 +202,10 @@ See [../05-Reference/GPU_VERIFICATION_CHECKLIST.md](../05-Reference/GPU_VERIFICA
 
 ```lua
 -- user/keybind.lua
-local const = _G.HYPR_CONST
+local const = require("const")
 
 -- Simple bind (exec command)
-hl.bind(const.M .. " + T", hl.dsp.exec_cmd("thunderbird"))
+hl.bind(const.modifier .. " + T", hl.dsp.exec_cmd("thunderbird"))
 
 -- With flags (locked = fires on lock screen)
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
@@ -209,7 +214,7 @@ hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = tru
 hl.bind("XF86Monbrightnessup", hl.dsp.exec_cmd("brightnessctl set +5%"), { repeating = true })
 
 -- Lua function (impossible in .conf era)
-hl.bind(const.M .. " + ALT + G", function()
+hl.bind(const.modifier .. " + ALT + G", function()
   require('sys.statemachine.gamemode').new(hl):fire("toggle")
 end)
 ```

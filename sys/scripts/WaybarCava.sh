@@ -1,21 +1,19 @@
 #!/usr/bin/env bash
+# @path: sys/scripts/WaybarCava.sh
+# @author: redskaber
+# @date: 2026-08-20
+# @description: Single-instance cava audio visualizer for waybar (raw output → sed glyph translation, no Lua API)
+#
 # WaybarCava.sh — safer single-instance handling, cleanup, and robustness
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
-
-
-
-
-# @path: sys/scripts/WaybarCava.sh
-# @author: redskaber
-# @date: 2026-08-20
-
 # set -euo pipefail  # Removed: can crash session on error
 
 # Ensure cava exists
-if ! command -v cava >/dev/null 2>&1; then
-  echo "cava not found in PATH" >&2
+# Round 108: use $CAVA (DI) instead of hardcoded cava
+if ! command -v "$CAVA" >/dev/null 2>&1; then
+  echo "$CAVA not found in PATH" >&2
   exit 1
 fi
 
@@ -61,4 +59,4 @@ ascii_max_range = 7
 EOF
 
 # Stream cava output and translate digits 0..7 to bar glyphs
-cava -p "$config_file" | sed -u "$dict"
+"$CAVA" -p "$config_file" | sed -u "$dict"

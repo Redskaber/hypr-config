@@ -12,7 +12,7 @@
 | Entry point | `~/.config/hypr/hyprland.conf` | `~/.config/hypr/hyprland.lua` |
 | Syntax | DSL (`key = value`) | Lua (`hl.config({key = value})`) |
 | Reload | `hyprctl reload` | auto-reload on file save |
-| Variables | `$var = value` | `_G.HYPR_CONST.var = value` |
+| Variables | `$var = value` | `const` module (injected via `package.loaded` by `bootstrap/default.lua`) |
 | Binds | `bind = MOD, KEY, dispatcher, args` | `hl.bind("MOD + KEY", hl.dsp.X({...}))` |
 | Window rules | `windowrule = match:class X, effect Y` | `hl.window_rule({ match={...}, effect=Y })` |
 | Exec on start | `exec-once = cmd` | `hl.on("hyprland.start", function() hl.exec_cmd("cmd") end)` |
@@ -30,13 +30,17 @@ $M = SUPER
 
 ```lua
 -- .lua
-_G.HYPR_CONST = _G.HYPR_CONST or {}
-_G.HYPR_CONST.M_terminal = "kitty"
-_G.HYPR_CONST.M = "SUPER"
+-- user/const.lua (deltas only — deep-merged on top of sys/const.lua by bootstrap/default.lua)
+local M = {}
+M.apps = { terminal = "kitty" }   -- overrides sys default
+M.modifier = "SUPER"
+return M
 ```
 
-> Note: In `.lua`, the `$var` is replaced by `_G.HYPR_CONST.var` (global table).
-> No `deep_merge()` — last-write-wins on the same table.
+> Note: In `.lua`, the `$var` is replaced by a key on the merged `const` module
+> (accessed via `local const = require("const")`). `bootstrap/default.lua` does a
+> `deep_merge()` of sys + user tables, then injects the result via
+> `package.loaded["const"] = const`.
 
 ### Configuration
 
@@ -69,9 +73,9 @@ bindl = , XF86AudioPlay, exec, playerctl play-pause
 
 ```lua
 -- .lua
-local const = _G.HYPR_CONST
-hl.bind(const.M .. " + Return", hl.dsp.exec_cmd(const.M_terminal))
-hl.bind(const.M .. " + Q", hl.dsp.window.close())
+local const = require("const")
+hl.bind(const.modifier .. " + Return", hl.dsp.exec_cmd(const.apps.terminal))
+hl.bind(const.modifier .. " + Q", hl.dsp.window.close())
 -- Locked flag (fires on lock screen):
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 ```

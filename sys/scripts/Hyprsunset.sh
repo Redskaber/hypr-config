@@ -2,6 +2,7 @@
 # @path: sys/scripts/Hyprsunset.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: hyprsunset night-light toggle + waybar status JSON (DEPRECATED — replaced by Lua SM)
 #
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
@@ -20,7 +21,7 @@ source "$(dirname "$0")/lib/common.sh"
 
 # set -euo pipefail  # Removed: can crash session on error
 
-STATE_FILE="$HOME/.cache/.hyprsunset_state"
+STATE_FILE="$HYPR_CACHE_DIR/.hyprsunset_state"
 TARGET_TEMP="${HYPRSUNSET_TEMP:-4500}"
 ICON_MODE="${HYPRSUNSET_ICON_MODE:-sunset}"
 

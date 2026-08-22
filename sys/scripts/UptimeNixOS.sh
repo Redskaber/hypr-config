@@ -1,23 +1,24 @@
 #!/usr/bin/env bash
-# Source shared library — SSOT paths + DI variables
-source "$(dirname "$0")/lib/common.sh"
-
 # @path: sys/scripts/UptimeNixOS.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Print human-readable system uptime parsed from /proc/uptime (NixOS workaround for `uptime -p`)
+
+# Source shared library — SSOT paths + DI variables
+source "$(dirname "$0")/lib/common.sh"
 
 if [[ -r /proc/uptime ]]; then
 
-# Script parses /proc/uptime to get the system uptime
-# and prints it in a human-readable format
-# This is a workaround for system where `uptime` command is taken from coreutils
-# where `uptime -p` is not supported
+  # Script parses /proc/uptime to get the system uptime
+  # and prints it in a human-readable format
+  # This is a workaround for system where `uptime` command is taken from coreutils
+  # where `uptime -p` is not supported
 
   s=$(</proc/uptime)
   s=${s/.*/}
 else
   echo "Error UptimeNixOS.sh: Uptime could not be determined." >&2
-  exit 1  # error path — /proc/uptime not readable
+  exit 1 # error path — /proc/uptime not readable
 fi
 
 d="$((s / 60 / 60 / 24)) days"

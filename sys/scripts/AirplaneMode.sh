@@ -2,6 +2,7 @@
 # @path: sys/scripts/AirplaneMode.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Toggle airplane mode (block/unblock wifi) via rfkill + notify-send
 #
 # Airplane Mode. Turning on or off all wifi using rfkill.
 

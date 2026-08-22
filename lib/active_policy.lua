@@ -21,7 +21,7 @@ local const = require("const")
 local M = {}
 
 -- Path to the state file (under config root, dot-prefixed)
-M.state_file = const.config_root .. "/.active_animation"
+M.state_file = const.config_hypr .. "/.active_animation"
 M.default_preset = "default"
 
 -- Read the active preset name from the state file.

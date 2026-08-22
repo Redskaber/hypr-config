@@ -1,21 +1,40 @@
 # Script Audit & Capability Boundary
 
-> Round 104 — comprehensive audit of all 61 `.sh` scripts in `sys/scripts/`.
+> Round 115 — comprehensive audit of all 59 `.sh` scripts in `sys/scripts/`.
 > Defines the **capability boundary** between Hyprland's Lua API (`hl.*`) and
 > shell scripts (`*.sh`), and documents the systemic fixes applied.
+>
+> **Round 115 changes**: Synced README.md stats (were stale: 4 libs/25 deps →
+> 8 libs/35 deps), updated README structure block to list all 8 lib/ modules.
+> Deep Hyprland log inspection confirms 0 config warnings/errors. Dead code
+> audit confirms 0 unused variables/functions.
 
 ## TL;DR
 
 | Metric | Value |
 |---|---|
-| Total `.sh` scripts | 61 (+1 utility: `validate_tags.sh`) |
+| Total `.sh` scripts | 59 (+1 utility: `validate_tags.sh`) |
 | Lua-able scripts (could be pure Lua) | 4 (`KillActiveProcess`, `LockScreen`, `Wlogout`, `desktop-overview`) |
-| Scripts that MUST stay in sh | 57 |
-| `bash -n` pass rate | 61/61 (100%) |
-| `true # exit removed` no-ops | 0 (was 40, all fixed in Round 104) |
+| Scripts that MUST stay in sh | 55 |
+| `bash -n` pass rate | 59/59 (100%) |
+| `luac -p` pass rate | 55/55 (100%) |
+| `true # exit removed` no-ops | 0 (fixed in Round 104) |
 | Hardcoded tool commands (non-comment) | 0 |
 | Hardcoded daemon kills (swaync/awww-daemon/hypridle/hyprlock) | 0 |
-| Real Hyprland 0.56.2 verify | ✅ CONFIG_LOADED_OK |
+| Real Hyprland 0.56.2 verify | ✅ CONFIG_LOADED_OK (0 config warnings) |
+| Dead `_G.HYPR_CONST` doc refs | 0 (89 → 0, fixed in Round 105) |
+| Orphaned Lua code | 0 (314 lines deleted in Round 105) |
+| Sh→Lua migrations in Round 107 | 1 (cursor zoom) |
+| Hardcoded tools eliminated in Round 108 | 6 |
+| Hardcoded `$HOME/.cache` eliminated in Round 109 | 7 scripts + 2 state machines |
+| External deps in `lib/deps.lua` | 35 |
+| `common.sh` helpers | 23 |
+| Runtime bugs fixed (Round 110-111) | 6 (TouchPad + Sounds.sh) |
+| XDG-aware paths (Round 109-112) | config + cache + external + data + ags + rofi-themes |
+| Process management bugs fixed (Round 113) | 3 (PortalHyprland + Polkit + Polkit-NixOS) |
+| Header completeness (Round 114) | 100% (`@path` + `@author` + `@date` + `@description` on all 59 scripts) |
+| Dead code audit (Round 115) | 0 unused variables, 0 unused functions |
+| README/docs sync (Round 115) | All stats current (8 libs, 35 deps, 59 sh, 55 lua) |
 
 ## Capability Boundary — What Can Be Lua vs What Must Be sh
 

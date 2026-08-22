@@ -2,6 +2,7 @@
 # @path: sys/scripts/DarkLight.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Toggle dark/light theme across wallpaper/swaync/kitty/qt/gtk/ags/rofi (sed-based config editor)
 #
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
@@ -10,11 +11,14 @@ source "$(dirname "$0")/lib/common.sh"
 # Note: Scripts are looking for keywords Light or Dark except for wallpapers as the are in a separate directories
 
 # Paths
-wallpaper_base_path="$HOME/Pictures/wallpapers/Dynamic-Wallpapers"
+# SCRIPT-21 fix: respect $HYPR_WALLPAPER_DIR env var (set in user/env.conf)
+#   instead of hardcoding $HOME/Pictures/wallpapers. Same pattern as
+#   WallpaperSelect.sh:13 and WallpaperRandom.sh.
+wallpaper_base_path="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/wallpapers}/Dynamic-Wallpapers"
 dark_wallpapers="$wallpaper_base_path/Dark"
 light_wallpapers="$wallpaper_base_path/Light"
 swaync_style="$SWAYNC_DIR/style.css"
-ags_style="$HOME/.config/ags/user/style.css"
+ags_style="${XDG_CONFIG_HOME:-$HOME/.config}/ags/user/style.css"
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 notif="$SWAYNC_IMAGES/bell.png"
 wallust_rofi="$WALLUST_DIR/templates/colors-"$ROFI".rasi"
@@ -25,19 +29,31 @@ pallete_dark="dark16"
 pallete_light="light16"
 
 # initial signal — tell running processes to prepare for theme change
+# SCRIPT-37 note: SIGUSR1 is sent to swaync ($NOTIFICATION). swaync does NOT
+# document a SIGUSR1 handler for live CSS reload — the actual swaync style
+# reload is performed later (in the second killall loop near the bottom) via
+# `swaync-client --reload-config` (invoked from Refresh.sh, see Round 104
+# dt_swaync_reload helper). The SIGUSR1 here is harmless if swaync ignores it,
+# but if it ever causes issues we should drop $NOTIFICATION from this loop.
 for pid in "$BAR" "$ROFI" "$NOTIFICATION" ags swaybg; do
   killall -SIGUSR1 "$pid" 2>/dev/null || true
 done
 
-# Initialize awww if needed
-awww query 2>/dev/null
+# Initialize wallpaper client if needed
+# Round 110: use $WALLPAPER_CLIENT (DI) instead of hardcoded awww
+"$WALLPAPER_CLIENT" query 2>/dev/null
 
-# Set awww options
-awww="awww img"
+# Set wallpaper options
+# SCRIPT-38 fix: use an array instead of a space-separated string so the
+# wallpaper_client img command isn't word-split incorrectly.
+# Round 110: use $WALLPAPER_CLIENT (DI) instead of hardcoded awww
+awww_cmd=("$WALLPAPER_CLIENT" img)
 effect="--transition-bezier .43,1.19,1,.4 --transition-fps 60 --transition-type grow --transition-pos 0.925,0.977 --transition-duration 2"
 
 # Determine current theme mode
-if [ "$(cat $HOME/.cache/.theme_mode)" = "Light" ]; then
+# SCRIPT-39 fix: quote "$HOME" — was unquoted in `cat $HOME/...` (would break
+# if HOME ever contained spaces, unlikely but defensive).
+if [ "$(cat "$HYPR_CACHE_DIR/.theme_mode")" = "Light" ]; then
   next_mode="Dark"
   # Logic for Dark mode
   wallpaper_path="$dark_wallpapers"
@@ -49,7 +65,7 @@ fi
 
 # Function to update theme mode for the next cycle
 update_theme_mode() {
-  echo "$next_mode" >"$HOME/.cache/.theme_mode"
+  echo "$next_mode" >"$HYPR_CACHE_DIR/.theme_mode"
 }
 
 # Function to notify user
@@ -129,7 +145,9 @@ else
 fi
 
 # Update wallpaper using awww command
-$awww "${next_wallpaper}" $effect
+# SCRIPT-38 fix: use "${awww_cmd[@]}" array expansion (was `$awww` which
+# word-splits — happened to work because awww+img is two intended tokens).
+"${awww_cmd[@]}" "${next_wallpaper}" $effect
 
 # Set Kvantum Manager theme & QT5/QT6 settings
 if [ "$next_mode" = "Dark" ]; then
@@ -147,10 +165,12 @@ sed -i "s|^color_scheme_path=.*$|color_scheme_path=$qt6ct_color_scheme|" "$QT_DI
 kvantummanager --set "$kvantum_theme"
 
 # set the rofi color for background
+# SCRIPT-40 fix: quote "$wallust_rofi" — was unquoted in sed (path with
+# spaces would have been split into multiple sed args).
 if [ "$next_mode" = "Dark" ]; then
-  sed -i '/^background:/s/.*/background: rgba(0,0,0,0.7);/' $wallust_rofi
+  sed -i '/^background:/s/.*/background: rgba(0,0,0,0.7);/' "$wallust_rofi"
 else
-  sed -i '/^background:/s/.*/background: rgba(255,255,255,0.9);/' $wallust_rofi
+  sed -i '/^background:/s/.*/background: rgba(255,255,255,0.9);/' "$wallust_rofi"
 fi
 
 # GTK themes and icons switching

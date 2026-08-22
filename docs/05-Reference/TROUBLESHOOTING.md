@@ -103,14 +103,19 @@ hyprctl eval 'return package.path'
 **Common causes**:
 - File doesn't exist (check spelling)
 - File is in wrong directory (Lua's `package.path` doesn't include it)
-- Using `require("const")` instead of `_G.HYPR_CONST` (const is not a module!)
+- Calling `require("const")` before `bootstrap/default.lua` has run (the merged `const` module is injected via `package.loaded["const"] = const` during Stage 0 — see [`bootstrap/default.lua`](../../bootstrap/default.lua))
 
 **Fix**:
 ```lua
--- BAD: require("const")  ← fails, "const" is not a module
--- GOOD:
-local const = _G.HYPR_CONST
+-- GOOD: const is a real (injected) module — access via require()
+local const = require("const")
+print(const.apps.terminal)        -- "kitty" (or user override)
+print(const.dirs.scripts)         -- ~/.config/hypr/sys/scripts
 ```
+
+> ⚠️ If `require("const")` fails with "module not found", ensure you entered via
+> `hyprland.lua` → `require("bootstrap.default")`. The orchestrator injects the
+> merged `const` table during Stage 0 (before any sys/user module reads it).
 
 ### Issue 2: Unknown `hl.*` API
 

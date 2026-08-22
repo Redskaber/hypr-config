@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
-# Source shared library — SSOT paths + DI variables
-source "$(dirname "$0")/lib/common.sh"
-
 # @path: sys/scripts/RainbowBorders.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Set random rainbow colors for active window border via hyprctl + openssl
+
+# Source shared library — SSOT paths + DI variables
+source "$(dirname "$0")/lib/common.sh"
 
 function random_hex() {
 
-# sys/scripts/RainbowBorders.sh — Animated rainbow active border
-# This is the system-provided implementation.
-# To enable: add to user/startup.conf:
-#   exec-once = $S/RainbowBorders.sh
-# To use a custom version: place it at user/scripts/RainbowBorders.sh
-# (Refresh.sh will prefer user/scripts/ over sys/scripts/).
+  # sys/scripts/RainbowBorders.sh — Animated rainbow active border
+  # This is the system-provided implementation.
+  # To enable: add to user/startup.conf:
+  #   exec-once = $S/RainbowBorders.sh
+  # To use a custom version: place it at user/scripts/RainbowBorders.sh
+  # (Refresh.sh will prefer user/scripts/ over sys/scripts/).
 
   random_hex=("0xff$(openssl rand -hex 3)")
   echo $random_hex

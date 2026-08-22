@@ -1,15 +1,17 @@
 -- @path: sys/statemachine/nightlight.lua
 -- @author: redskaber
--- @date: 2026-08-20
--- @version: 1.1
+-- @date: 2026-08-22
+-- @version: 1.2 (Round 109 — use const.cache_dir instead of hardcoded $HOME/.cache)
 -- @description: NightLight state machine (off↔on toggle, DI via deps.cmd)
 
 local SM = require("lib.sm")
 local deps = require("lib.deps")
+local const = require("const")
 local M = {}
 
 -- State persistence file
-local STATE_FILE = os.getenv("HOME") .. "/.cache/.hypr_nightlight_state"
+-- Round 109: use const.cache_dir (XDG-aware) instead of hardcoded $HOME/.cache
+local STATE_FILE = const.cache_dir .. "/.hypr_nightlight_state"
 local TARGET_TEMP = 4500
 
 function M.new(hl)

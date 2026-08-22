@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Source shared library — SSOT paths + DI variables
-source "$(dirname "$0")/lib/common.sh"
-
 # @path: sys/scripts/RefreshNoWaybar.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Refresh wallust templates + swaync config without restarting waybar
+
+# Source shared library — SSOT paths + DI variables
+source "$(dirname "$0")/lib/common.sh"
 
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 
@@ -27,8 +28,7 @@ sleep 0.2
 # (non-existent). RainbowBorders.sh lives in $HYPR_SCRIPTS_DIR.
 sleep 1
 if [ -x "${SCRIPTSDIR}/RainbowBorders.sh" ]; then
-    "${SCRIPTSDIR}/RainbowBorders.sh" &
+  "${SCRIPTSDIR}/RainbowBorders.sh" &
 fi
 
-exit 0  # end of script — successful refresh
-
+exit 0 # end of script — successful refresh

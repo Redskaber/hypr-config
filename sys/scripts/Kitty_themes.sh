@@ -1,22 +1,26 @@
 #!/usr/bin/env bash
+# @path: sys/scripts/Kitty_themes.sh
+# @author: redskaber
+# @date: 2026-08-20
+# @description: Interactive kitty theme picker via rofi with live preview + SIGUSR1 reload
+#
 # Kitty Themes Source https://github.com/dexpota/kitty-themes #
 
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
-
-
-
-
-# @path: sys/scripts/Kitty_themes.sh
-# @author: redskaber
-# @date: 2026-08-20
 
 # Define directories and variables
 
 kitty_themes_DiR="$KITTY_DIR/kitty-themes" # Kitty Themes Directory
 kitty_config="$KITTY_DIR/kitty.conf"
 iDIR="$SWAYNC_IMAGES" # For notifications
-rofi_theme_for_this_script="$ROFI_DIR/config-"$TERMINAL"-theme.rasi"
+# SCRIPT-49 fix: rofi theme filename used to embed $TERMINAL
+# (config-"$TERMINAL"-theme.rasi), which made the script brittle — if the
+# user changed const.apps.terminal, the rofi theme would silently break
+# (file not found → script exits). Use a fixed, terminal-agnostic name.
+# Users upgrading from the old name should rename/symlink their existing
+# config-kitty-theme.rasi to config-kitty-themes.rasi.
+rofi_theme_for_this_script="$ROFI_DIR/config-kitty-themes.rasi"
 
 # --- Helper Functions ---
 notify_user() {
@@ -73,6 +77,10 @@ if [ ! -f "$rofi_theme_for_this_script" ]; then
 fi
 
 original_kitty_config_content_backup=$(cat "$kitty_config")
+# SCRIPT-47 note: command substitution `$(cat ...)` strips trailing newlines,
+# so the backup may not byte-exactly match the original. Restores below use
+# `printf '%s'` (no added newline) to avoid introducing a spurious extra
+# newline that wasn't in the source.
 
 mapfile -t available_theme_names < <(find "$kitty_themes_DiR" -maxdepth 1 -name "*.conf" -type f -printf "%f\n" | sed 's/\.conf$//' | sort)
 
@@ -82,7 +90,14 @@ if [ ${#available_theme_names[@]} -eq 0 ]; then
 fi
 
 current_selection_index=0
-current_active_theme_name=$(awk -F'include ./kitty-themes/|\\.conf' '/^[[:space:]]*include \.\/kitty-themes\/.*\.conf/{print $2; exit}' "$kitty_config")
+# SCRIPT-48 fix: replaced fragile awk -F regex (which relied on the FS being
+# `include ./kitty-themes/` or `.conf` and could break on odd spacing) with
+# a more robust grep -E + sed pipeline. Anchors on `include` keyword with
+# explicit `[[:space:]]+` separator, allows arbitrary whitespace at line
+# start, and extracts the theme name between the path prefix and `.conf`.
+current_active_theme_name=$(grep -E '^[[:space:]]*include[[:space:]]+\./kitty-themes/[^[:space:]]+\.conf' "$kitty_config" 2>/dev/null |
+  head -n1 |
+  sed -E 's|^[[:space:]]*include[[:space:]]+\./kitty-themes/||; s|\.conf[[:space:]]*$||')
 
 if [ -n "$current_active_theme_name" ]; then
   for i in "${!available_theme_names[@]}"; do
@@ -97,7 +112,7 @@ while true; do
   theme_to_preview_now="${available_theme_names[$current_selection_index]}"
 
   if ! apply_kitty_theme_to_config "$theme_to_preview_now"; then
-    echo "$original_kitty_config_content_backup" >"$kitty_config"
+    printf '%s' "$original_kitty_config_content_backup" >"$kitty_config"
     for pid_kitty in $(pidof "$TERMINAL"); do if [ -n "$pid_kitty" ]; then kill -SIGUSR1 "$pid_kitty"; fi; done
     notify_user "$iDIR/error.png" "Preview Error" "Failed to apply $theme_to_preview_now. Reverted."
     exit 1
@@ -123,12 +138,13 @@ while true; do
   if [ $rofi_exit_code -eq 0 ]; then
     if [[ "$chosen_index_from_rofi" =~ ^[0-9]+$ ]] && [ "$chosen_index_from_rofi" -lt "${#available_theme_names[@]}" ]; then
       current_selection_index="$chosen_index_from_rofi"
-    else
-      :
     fi
+    # SCRIPT-46 fix: removed empty `else :` no-op branch — no action needed
+    # when the chosen index is invalid/out-of-range; current_selection_index
+    # stays unchanged and the next loop iteration previews the same theme.
   elif [ $rofi_exit_code -eq 1 ]; then
     notify_user "$iDIR/note.png" "Kitty Theme" "Selection cancelled. Reverting to original theme."
-    echo "$original_kitty_config_content_backup" >"$kitty_config"
+    printf '%s' "$original_kitty_config_content_backup" >"$kitty_config"
     for pid_kitty in $(pidof "$TERMINAL"); do if [ -n "$pid_kitty" ]; then kill -SIGUSR1 "$pid_kitty"; fi; done
     break
   elif [ $rofi_exit_code -eq 10 ]; then # This is the exit code for -kb-custom-1
@@ -136,7 +152,7 @@ while true; do
     break
   else
     notify_user "$iDIR/error.png" "Rofi Error" "Unexpected Rofi exit ($rofi_exit_code). Reverting."
-    echo "$original_kitty_config_content_backup" >"$kitty_config"
+    printf '%s' "$original_kitty_config_content_backup" >"$kitty_config"
     for pid_kitty in $(pidof "$TERMINAL"); do if [ -n "$pid_kitty" ]; then kill -SIGUSR1 "$pid_kitty"; fi; done
     break
   fi

@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
-# Script for waybar layout or configs
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-
-
-
 # @path: sys/scripts/WaybarLayout.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Switch waybar layout config via rofi menu + symlink swap (interactive, no Lua API)
+#
+# Script for waybar layout or configs
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 IFS=$'\n\t'
 
@@ -59,7 +56,7 @@ main() {
   # Exit if nothing chosen
   [[ -z "$choice" ]] && {
     echo "No option selected. Exiting."
-return 0
+    return 0
   }
 
   # Strip marker before applying

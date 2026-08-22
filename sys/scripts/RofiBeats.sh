@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
-# RofiBeats - unified, dynamic UI (add, remove, manage, play)
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-
-
-
 # @path: sys/scripts/RofiBeats.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Rofi-driven music player manager (local + online stations) via mpv + rofi (interactive, no Lua API)
+#
+# RofiBeats - unified, dynamic UI (add, remove, manage, play)
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 mDIR="$HOME/Music/"
 iDIR="$SWAYNC_ICONS"
@@ -26,14 +23,15 @@ notification() {
 }
 
 # Check if mpv is currently playing
-music_playing() { pgrep -x "mpv" >/dev/null; }
+# Round 108: use $MEDIA_PLAYER (DI) instead of hardcoded mpv
+music_playing() { pgrep -x "${MEDIA_PLAYER##*/}" >/dev/null; }
 
 # Stop all mpv processes except mpvpaper
 # Round 104 fix: was `ps aux | grep 'unique-wallpaper-process'` which matches
 # nothing (no process is named that). Use pgrep -x mpvpaper to find video
 # wallpaper mpv instances (mpvpaper spawns mpv with --mpv-profile=mpvpaper).
 stop_music() {
-  mpv_pids=$(pgrep -x mpv 2>/dev/null)
+  mpv_pids=$(pgrep -x "${MEDIA_PLAYER##*/}" 2>/dev/null)
   if [ -n "$mpv_pids" ]; then
     # mpvpaper runs mpv as a child; its pids are discoverable via pgrep -x mpvpaper
     # then we walk each mpvpaper pid's children via pgrep -P
@@ -46,7 +44,10 @@ stop_music() {
       # Skip mpv processes that are children of mpvpaper (don't kill video wallpaper)
       skip=false
       for child in $mpvpaper_children; do
-        if [ "$pid" = "$child" ]; then skip=true; break; fi
+        if [ "$pid" = "$child" ]; then
+          skip=true
+          break
+        fi
       done
       if [ "$skip" = "false" ]; then
         kill -9 "$pid" 2>/dev/null || true
@@ -76,7 +77,7 @@ play_local_music() {
     if [ "${filenames[$i]}" = "$choice" ]; then
       music_playing && stop_music
       notification "Now Playing:" "$choice"
-      mpv --no-video --playlist-start="$i" --loop-playlist "${local_music[@]}"
+      "$MEDIA_PLAYER" --no-video --playlist-start="$i" --loop-playlist "${local_music[@]}"
       break
     fi
   done
@@ -86,14 +87,14 @@ play_local_music() {
 shuffle_local_music() {
   music_playing && stop_music
   notification "Shuffle Play local music"
-  mpv --no-video --shuffle --loop-playlist "$mDIR"
+  "$MEDIA_PLAYER" --no-video --shuffle --loop-playlist "$mDIR"
 }
 
 # Play selected online music
 play_online_music() {
   if [ ! -s "$music_list" ]; then
     "$NOTIFY" -u low -i "$iDIR/music.png" "No online music found" "Add some with Manage Music"
-return 0
+    return 0
   fi
   choice=$(awk -F'|' '{print $1}' "$music_list" | sort | "$ROFI" -i -dmenu -config "$rofi_theme" \
     -theme-str 'entry { placeholder: "🌐 Choose Online Station"; }')
@@ -101,11 +102,11 @@ return 0
   link=$(awk -F'|' -v name="$choice" '$1 == name {print $2; exit}' "$music_list")
   [[ -z "$link" ]] && {
     "$NOTIFY" -u low -i "$iDIR/music.png" "URL not found for" "$choice"
-return 1
+    return 1
   }
   music_playing && stop_music
   notification "Now Playing:" "$choice"
-  mpv --no-video --shuffle "$link"
+  "$MEDIA_PLAYER" --no-video --shuffle "$link"
 }
 
 # Manage online music list (add, remove, view)

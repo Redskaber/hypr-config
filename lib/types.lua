@@ -8,32 +8,59 @@
 -- =============================================================================
 -- Section 1: Project types (constants, deps, SM, rules)
 -- =============================================================================
+-- Round 105 fix: Const class now describes the ACTUAL const module structure
+-- (sys/const.lua + bootstrap/default.lua merge), not the legacy _G.HYPR_CONST.
+
+---@class ConstApps
+---@field terminal string Terminal command (e.g. "kitty")
+---@field file_manager string File manager command (e.g. "nemo")
+---@field editor string Editor command (e.g. "nano" or $EDITOR)
+
+---@class ConstDirs
+---@field scripts string sys/scripts/ directory
+---@field hardware string sys/hardware/ directory
+---@field policy string sys/policy/ directory
+---@field wallust string sys/policy/wallust/ directory
+---@field animations string sys/policy/animations/ directory
+---@field user_scripts string user/scripts/ directory
+---@field user_hardware string user/hardware/ directory
+---@field user_policy string user/policy/ directory
+---@field user_wallust string user/policy/wallust/ directory
+---@field user_animations string user/policy/animations/ directory
+---@field wallust_effects string wallust_effects/ directory
+---@field lock_background string Lock screen wallpaper path
+
+---@class ConstExternal
+---@field rofi string Rofi command
+---@field swaync_dir string swaync config directory
+---@field swaync_icons string swaync icons directory
+---@field swaync_images string swaync images directory
+---@field rofi_dir string rofi config directory
+---@field waybar_dir string waybar config directory
+---@field wallust_dir string wallust config directory
+---@field kitty_dir string kitty config directory
+---@field qt_dir string Qt config directory
+
+---@class ConstHelpers
+---@field cheat string Helper tag: cheat sheet
+---@field settings string Helper tag: settings menu
 
 ---@class Const
----@field Hypr string Root config path
+---@field config_hypr string Root config path (e.g. ~/.config/hypr)
+---@field bootstrap string Bootstrap directory
 ---@field sys string System directory
 ---@field user string User directory
----@field bootstrap string Bootstrap directory
+---@field wallust_effects string Wallust effects directory
 ---@field lock_background string Lock screen wallpaper path
----@field M string Modifier key (e.g. "SUPER")
----@field M_terminal string Terminal command
----@field M_file_manager string File manager command
----@field M_editor string Editor command
----@field S string Scripts directory
----@field H string Hardware directory
----@field P string Policy directory
----@field P_w string Wallust policy directory
----@field P_a string Animations policy directory
----@field U string User directory (alias)
----@field U_s string User scripts directory
----@field U_h string User hardware directory
----@field U_p string User policy directory
----@field H_Cheat string Helper tag: cheat sheet
----@field H_Settings string Helper tag: settings menu
----@field W string Wallpaper directory
----@field W_l string|nil Wallpaper list
----@field I_notify string Notification icon path
----@field Search_Engine string Search engine URL
+---@field icon string Notification icon path
+---@field apps ConstApps Application commands
+---@field modifier string Main modifier key (e.g. "SUPER")
+---@field dirs ConstDirs Internal directory paths
+---@field external ConstExternal External tool config paths
+---@field helpers ConstHelpers Helper tag names
+---@field search_engine string Search engine URL template
+---@field wallpaper_dir string Wallpaper directory (user home)
+---@field notify_icon string Notification icon path
 
 ---@class Dep
 ---@field name string Dependency name
@@ -51,7 +78,22 @@
 ---@field check_all fun(): boolean, string[] Verify all required deps
 ---@field owned_tools fun(): string[] List tools whose config we manage
 ---@field cmd fun(name: string): string Get full command string with default args
----@field export_to_shell fun(path: string?): boolean, string Generate shell cache
+
+---@class Colors
+---@field background string Background color (#hex)
+---@field foreground string Foreground color (#hex)
+---@field color0 string through color15 — 16 ANSI colors
+
+---@class ColorsResolver
+---@field resolve fun(): Colors Get merged wallust colors (sys + user)
+---@field get fun(name: string): string Get specific color by name (fallback "#444444")
+
+---@class Cursor
+---@field DEFAULT_ZOOM number Default zoom factor (1.0)
+---@field get_zoom fun(): number Get current cursor zoom factor (≥ 1.0)
+---@field set_zoom fun(zoom: number): nil Set cursor zoom factor (clamped to ≥ 1.0)
+---@field zoom_in fun(factor?: number): nil Zoom in by factor (default 2.0)
+---@field zoom_out fun(factor?: number): nil Zoom out by factor (default 2.0)
 
 ---@class WindowRuleMatch
 ---@field class string|nil Regex to match window class

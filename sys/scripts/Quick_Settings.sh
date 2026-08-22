@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
-# Rofi menu for Hyprland Quick Settings (SUPER SHIFT E)
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-
-
-
 # @path: sys/scripts/Quick_Settings.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Rofi menu to edit user/system configs and launch utility scripts (interactive, no Lua API)
+#
+# Rofi menu for Hyprland Quick Settings (SUPER SHIFT E)
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 HYPR_DIR="$HYPR_CONFIG_DIR"
 
@@ -73,63 +70,63 @@ main() {
   choice=$(menu | "$ROFI" -i -dmenu -config $rofi_theme -mesg "$msg")
 
   case "$choice" in
-  "Edit User Constants")              file="$user_conf/const.lua" ;;
-  "Edit User ENV variables")          file="$user_conf/env.conf" ;;
-  "Edit User Keybinds")               file="$user_conf/keybind.conf" ;;
-  "Edit User Layout")                 file="$user_conf/layout.conf" ;;
-  "Edit User Decorations")            file="$user_conf/decoration.conf" ;;
+  "Edit User Constants") file="$user_conf/const.lua" ;;
+  "Edit User ENV variables") file="$user_conf/env.conf" ;;
+  "Edit User Keybinds") file="$user_conf/keybind.conf" ;;
+  "Edit User Layout") file="$user_conf/layout.conf" ;;
+  "Edit User Decorations") file="$user_conf/decoration.conf" ;;
   "Edit User Startup Apps (overlay)") file="$user_conf/startup.conf" ;;
   "Edit User Window Rules (overlay)") file="$user_conf/rules.conf" ;;
-  "Edit User Input Settings")         file="$user_conf/input.conf" ;;
-  "Edit User Misc Settings")          file="$user_conf/misc.conf" ;;
-  "Edit User Animations")             file="$sys_conf/policy/animations/default.conf" ;;
-  "Edit User Laptop Settings")        file="$sys_conf/hardware/laptop.conf" ;;
-  "Edit System Default Keybinds")     file="$sys_conf/keybind.conf" ;;
+  "Edit User Input Settings") file="$user_conf/input.conf" ;;
+  "Edit User Misc Settings") file="$user_conf/misc.conf" ;;
+  "Edit User Animations") file="$sys_conf/policy/animations/default.conf" ;;
+  "Edit User Laptop Settings") file="$sys_conf/hardware/laptop.conf" ;;
+  "Edit System Default Keybinds") file="$sys_conf/keybind.conf" ;;
   "Edit System Default Startup Apps") file="$sys_conf/startup.conf" ;;
   "Edit System Default Window Rules") file="$sys_conf/rules.conf" ;;
-  "Edit System Default Settings")     file="$sys_conf/misc.conf" ;;
+  "Edit System Default Settings") file="$sys_conf/misc.conf" ;;
   "Choose Kitty Terminal Theme") $scriptsDir/Kitty_themes.sh ;;
   "Configure Monitors (nwg-displays)")
     if ! command -v nwg-displays &>/dev/null; then
       "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install nwg-displays first"
-return 1
+      return 1
     fi
     nwg-displays
     ;;
   "Configure Workspace Rules (nwg-displays)")
     if ! command -v nwg-displays &>/dev/null; then
       "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install nwg-displays first"
-return 1
+      return 1
     fi
     nwg-displays
     ;;
   "GTK Settings (nwg-look)")
     if ! command -v nwg-look &>/dev/null; then
       "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install nwg-look first"
-return 1
+      return 1
     fi
     nwg-look
     ;;
   "QT Apps Settings (qt6ct)")
     if ! command -v qt6ct &>/dev/null; then
       "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install qt6ct first"
-return 1
+      return 1
     fi
     qt6ct
     ;;
   "QT Apps Settings (qt5ct)")
     if ! command -v qt5ct &>/dev/null; then
       "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Install qt5ct first"
-return 1
+      return 1
     fi
     qt5ct
     ;;
   "Choose Hyprland Animations") $scriptsDir/Animations.sh ;;
-  "Choose Monitor Profiles")    $scriptsDir/MonitorProfiles.sh ;;
-  "Choose Rofi Themes")         $scriptsDir/RofiThemeSelector.sh ;;
-  "Search for Keybinds")        $scriptsDir/KeyBinds.sh ;;
-  "Toggle Game Mode")           $scriptsDir/GameMode.sh ;;
-  "Switch Dark-Light Theme")    $scriptsDir/DarkLight.sh ;;
+  "Choose Monitor Profiles") $scriptsDir/MonitorProfiles.sh ;;
+  "Choose Rofi Themes") $scriptsDir/RofiThemeSelector.sh ;;
+  "Search for Keybinds") $scriptsDir/KeyBinds.sh ;;
+  "Toggle Game Mode") $scriptsDir/GameMode.sh ;;
+  "Switch Dark-Light Theme") $scriptsDir/DarkLight.sh ;;
   *) return ;;
   esac
 

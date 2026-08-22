@@ -2,6 +2,7 @@
 # @path: sys/scripts/RofiSearch.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Web search via rofi prompt → open URL in default browser (interactive, no Lua API)
 #
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
@@ -30,4 +31,5 @@ query=$(echo "" | "$ROFI" -dmenu -config "$rofi_theme")
 [[ -z "$query" ]] && exit 0
 
 url="${search_engine/\{\}/${query}}"
-xdg-open "$url"
+# Round 108: use $FILE_OPENER (DI) instead of hardcoded xdg-open
+"$FILE_OPENER" "$url"

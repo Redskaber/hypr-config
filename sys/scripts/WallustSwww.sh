@@ -2,6 +2,7 @@
 # @path: sys/scripts/WallustSwww.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Resolve current wallpaper path + run wallust to regenerate color templates
 #
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
@@ -10,18 +11,13 @@ set -uo pipefail # No set -e: prevent script from killing session on command fai
 
 # Inputs and paths
 passed_path="${1:-}"
-cache_dir="$HOME/.cache/awww/"
+cache_dir="$HYPR_CACHE_DIR/awww/"
 rofi_link="$ROFI_DIR/.current_wallpaper"
 wallpaper_current="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_current"
 
-# Helper: get focused monitor name (prefer JSON)
-get_focused_monitor() {
-  if command -v "$JQ" >/dev/null 2>&1; then
-    "$HYPRCTL" monitors -j | "$JQ" -r '.[] | select(.focused) | .name'
-  else
-    "$HYPRCTL" monitors | awk '/^Monitor/{name=$2} /focused: yes/{print name}'
-  fi
-}
+# (SCRIPT-19 fix: removed local get_focused_monitor() — it reimplemented
+#  dt_get_focused_monitor() from lib/common.sh. Now uses the shared helper
+#  which has an awk fallback for systems without jq.)
 
 # Determine wallpaper_path
 wallpaper_path=""
@@ -29,7 +25,7 @@ if [[ -n "$passed_path" && -f "$passed_path" ]]; then
   wallpaper_path="$passed_path"
 else
   # Try to read from awww cache for the focused monitor, with a short retry loop
-  current_monitor="$(get_focused_monitor)"
+  current_monitor="$(dt_get_focused_monitor)"
   cache_file="$cache_dir$current_monitor"
 
   # Wait briefly for awww to write its cache after an image change
@@ -43,7 +39,16 @@ else
   if [[ -f "$cache_file" ]]; then
     # The first non-filter line is the original wallpaper path
     # wallpaper_path="$(grep -v 'Lanczos3' "$cache_file" | head -n 1)"
-    wallpaper_path=$(awww query | grep $current_monitor | awk '{print $9}')
+    # SCRIPT-20 fix: quote $current_monitor in grep (was unquoted — a monitor
+    # name with regex metacharacters or spaces could match the wrong line).
+    # Prefer jq if "$WALLPAPER_CLIENT" query returns JSON; fall back to awk positional parse.
+    if wallpaper_path=$("$WALLPAPER_CLIENT" query 2>/dev/null | "$JQ" -r --arg mon "$current_monitor" \
+      '.[] | select(.monitor == $mon or .output == $mon or .name == $mon) | (.wallpaper // .image // .path) // empty' 2>/dev/null) &&
+      [ -n "$wallpaper_path" ]; then
+      : # jq succeeded
+    else
+      wallpaper_path=$("$WALLPAPER_CLIENT" query 2>/dev/null | grep "\"$current_monitor\"" | awk '{print $9}')
+    fi
   fi
 fi
 

@@ -43,7 +43,11 @@ source "$(dirname "$0")/lib/common.sh"
 
 DEBUG=false
 SPECIAL_WS="special:scratchpad"
-ADDR_FILE="/tmp/dropdown_terminal_addr"
+ADDR_FILE="${XDG_RUNTIME_DIR:-/tmp}/dropdown_terminal_addr"
+
+# SCRIPT-28 fix: moved DROPDOWN_TAG constant here from Section 5 (where it was
+# declared mid-actions). Configuration constants belong in Section 1.
+DROPDOWN_TAG="dropdown"
 
 # State enum (bash has no enum, use string constants for readability)
 STATE_ABSENT="ABSENT"   # no dropdown terminal (ADDR_FILE missing or process dead)
@@ -97,7 +101,7 @@ Examples:
   $0 "$TERMINAL"
   $0 -d "$TERMINAL"                      (with debug output)
   $0 '"$TERMINAL" -e zsh'
-  $0 '"$TERMINAL" --working-directory /home/user'
+  $0 '"$TERMINAL" --working-directory "$HOME"'
 
 State machine:
   ABSENT  + run -> CREATE -> VISIBLE
@@ -119,7 +123,6 @@ EOF
 state_read_addr() { [ -s "$ADDR_FILE" ] && cut -d' ' -f1 "$ADDR_FILE"; }
 state_read_pid() { [ -s "$ADDR_FILE" ] && cut -d' ' -f2 "$ADDR_FILE"; }
 state_read_monitor() { [ -s "$ADDR_FILE" ] && cut -d' ' -f3 "$ADDR_FILE"; }
-state_read_class() { [ -s "$ADDR_FILE" ] && cut -d' ' -f4 "$ADDR_FILE"; }
 
 state_clear() {
   rm -f "$ADDR_FILE"
@@ -164,65 +167,70 @@ query_window_geometry() {
 # active workspace visibly switches, defeating the "hide" illusion.
 action_move_to_workspace_silent() {
   local addr="$1" ws="$2"
-  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.move({workspace=\"$ws\",follow=false,window=\"address:$addr\"}))" >/dev/null 2>&1
+  dt_hl_dispatch "hl.dsp.window.move({workspace=\"$ws\",follow=false,window=\"address:$addr\"})"
 }
 
 # Move window to a workspace AND follow focus (legacy movetoworkspace).
 # Used by strategy_show to bring the dropdown onto the active workspace visibly.
 action_move_to_workspace_follow() {
   local addr="$1" ws="$2"
-  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.move({workspace=\"$ws\",follow=true,window=\"address:$addr\"}))" >/dev/null 2>&1
+  dt_hl_dispatch "hl.dsp.window.move({workspace=\"$ws\",follow=true,window=\"address:$addr\"})"
 }
 
 # Move window to absolute pixel coords
 action_move_pixel() {
   local addr="$1" x="$2" y="$3"
-  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.move({x=$x,y=$y,relative=false,window=\"address:$addr\"}))" >/dev/null 2>&1
+  dt_hl_dispatch "hl.dsp.window.move({x=$x,y=$y,relative=false,window=\"address:$addr\"})"
 }
 
 # Resize window to absolute pixel size
 action_resize() {
   local addr="$1" w="$2" h="$3"
-  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.resize({x=$w,y=$h,window=\"address:$addr\"}))" >/dev/null 2>&1
+  dt_hl_dispatch "hl.dsp.window.resize({x=$w,y=$h,window=\"address:$addr\"})"
 }
 
 # Pin a window (show on all workspaces) — uses EXPLICIT action, never toggle
 action_pin_enable() {
   local addr="$1"
-  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.pin({action=\"enable\",window=\"address:$addr\"}))" >/dev/null 2>&1
+  dt_hl_dispatch "hl.dsp.window.pin({action=\"enable\",window=\"address:$addr\"})"
 }
 
 # Unpin a window — uses EXPLICIT action, never toggle
 action_pin_disable() {
   local addr="$1"
-  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.pin({action=\"disable\",window=\"address:$addr\"}))" >/dev/null 2>&1
+  dt_hl_dispatch "hl.dsp.window.pin({action=\"disable\",window=\"address:$addr\"})"
 }
 
 # Tag a window (per wiki "Minimize windows using special workspaces" pattern).
 # Used so we can address the hidden dropdown by tag instead of address,
 # which is more robust against address reuse across Hyprland restarts.
-DROPDOWN_TAG="dropdown"
 action_tag_dropdown() {
   local addr="$1"
-  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.tag({tag=\"$DROPDOWN_TAG\",window=\"address:$addr\"}))" >/dev/null 2>&1
+  dt_hl_dispatch "hl.dsp.window.tag({tag=\"$DROPDOWN_TAG\",window=\"address:$addr\"})"
 }
 
 # Clear the dropdown tag from a window
-action_clear_tag_dropdown() {
-  local addr="$1"
-  "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.clear_tags({window=\"address:$addr\"}))" >/dev/null 2>&1
-}
+# (SCRIPT-12 fix: removed dead action_clear_tag_dropdown() — defined but never called.
+#  The dropdown tag is naturally transient; clearing is unnecessary in current state machine.)
 
 # Focus a window
 action_focus() {
   local addr="$1"
-  "$HYPRCTL" eval "hl.dispatch(hl.dsp.focus({window=\"address:$addr\"}))" >/dev/null 2>&1
+  dt_hl_dispatch "hl.dsp.focus({window=\"address:$addr\"})"
 }
 
 # Execute a command with window rules (float + size + workspace)
+# SCRIPT-27 fix: $1 (TERMINAL_CMD) is interpolated into a Lua string literal.
+# In practice $1 comes from the user's own const.apps.terminal (trusted), but
+# as defence-in-depth we escape backslashes and double quotes before
+# interpolation so a value like 'kitty -e zsh' or '"weird" name' cannot break
+# out of the Lua string and inject code.
 action_exec_in_special() {
   # $1=cmd  $2=w  $3=h
-  "$HYPRCTL" eval "hl.dispatch(hl.dsp.exec_cmd(\"$1\", {float=true, size={$2,$3}, workspace=\"$SPECIAL_WS silent\"}))" >/dev/null 2>&1
+  local cmd="$1" w="$2" h="$3"
+  local safe_cmd="${cmd//\\\\/\\\\\\\\}"
+  safe_cmd="${safe_cmd//\"/\\\"}"
+  dt_hl_dispatch "hl.dsp.exec_cmd(\"$safe_cmd\", {float=true, size={$w,$h}, workspace=\"$SPECIAL_WS silent\"})"
 }
 
 # ============================================================
@@ -254,16 +262,25 @@ calculate_dropdown_geometry() {
   fi
 
   # Logical size = physical / scale
+  # Round 105 fix: fallback math (when bc missing) was broken 10x-100x:
+  #   `sed 's/\.//' | sed 's/^0*//'` on "1.0" → "10" → "10" (after strip) →
+  #   1920 * 100 / 10 = 19200 (expected 1920). On "1.5" → "15" → 1920*100/15=12800.
+  #   Now: convert scale to integer percentage (1.0 → 100, 1.5 → 150, 2.0 → 200).
   local logical_w logical_h
   if command -v bc >/dev/null 2>&1; then
     logical_w=$(echo "scale=0; $mon_w / $mon_scale" | bc | cut -d'.' -f1)
     logical_h=$(echo "scale=0; $mon_h / $mon_scale" | bc | cut -d'.' -f1)
   else
-    local scale_int
-    scale_int=$(echo "$mon_scale" | sed 's/\.//' | sed 's/^0*//')
-    [ -z "$scale_int" ] && scale_int=100
-    logical_w=$(((mon_w * 100) / scale_int))
-    logical_h=$(((mon_h * 100) / scale_int))
+    # Convert scale (e.g. "1.0", "1.5", "2.0") to integer percent (100, 150, 200).
+    # Multiply by 100, strip decimal point: "1.5" → "150", "1.0" → "100", "2" → "200".
+    local scale_pct
+    scale_pct=$(awk -v s="$mon_scale" 'BEGIN {
+      gsub(/[^0-9.]/, "", s);
+      printf "%d", s * 100
+    }' 2>/dev/null)
+    [ -z "$scale_pct" ] || [ "$scale_pct" = "0" ] && scale_pct=100
+    logical_w=$(((mon_w * 100) / scale_pct))
+    logical_h=$(((mon_h * 100) / scale_pct))
   fi
   [[ "$logical_w" =~ ^-?[0-9]+$ ]] || logical_w=$mon_w
   [[ "$logical_h" =~ ^-?[0-9]+$ ]] || logical_h=$mon_h
@@ -280,10 +297,9 @@ calculate_dropdown_geometry() {
   echo "$final_x $final_y $w $h $mon_name"
 }
 
-# Echoes the id of the currently active workspace
-get_current_workspace_id() {
-  "$HYPRCTL" activeworkspace -j | "$JQ" -r '.id' 2>/dev/null
-}
+# (SCRIPT-14 fix: removed local get_current_workspace_id() — it duplicated
+#  dt_get_active_workspace_id() from lib/common.sh. Call sites inlined the
+#  shared helper directly for DRY compliance.)
 
 # ============================================================
 # Section 7: Animation Pipeline
@@ -398,7 +414,9 @@ strategy_create() {
 
   # 1. Snapshot before-set (all existing addr + pid)
   local before_file before_addrs before_pids
-  before_file=$(mktemp /tmp/dt_before.XXXXXX)
+  before_file=$(mktemp "${XDG_RUNTIME_DIR:-/tmp}/dt_before.XXXXXX")
+  # SCRIPT-13 fix: cleanup trap ensures temp file is removed on any exit path.
+  trap 'rm -f "$before_file"' EXIT INT TERM
   "$HYPRCTL" clients -j | "$JQ" -r '.[] | "\(.address) \(.pid)"' | sort >"$before_file"
   before_addrs=$(cut -d' ' -f1 "$before_file" | sort -u)
   before_pids=$(cut -d' ' -f2 "$before_file" | sort -u)
@@ -446,7 +464,7 @@ strategy_create() {
   #    pinned window stays visible across workspaces, so we pin last).
   sleep 0.2
   local current_ws
-  current_ws=$(get_current_workspace_id)
+  current_ws=$(dt_get_active_workspace_id)
   action_move_to_workspace_follow "$new_addr" "$current_ws"
   action_tag_dropdown "$new_addr"
   action_pin_enable "$new_addr"
@@ -493,7 +511,7 @@ strategy_show() {
   #    Per wiki minimize pattern, the window is addressed by tag, but since
   #    we have the addr verified in state, we use addr directly.
   local current_ws
-  current_ws=$(get_current_workspace_id)
+  current_ws=$(dt_get_active_workspace_id)
   action_move_to_workspace_follow "$addr" "$current_ws"
   action_pin_enable "$addr"
 

@@ -44,7 +44,7 @@ Hyprland
 ## ✨ Key Features
 
 ### 🏗️ Professional Architecture
-- **Layered pipeline** (bootstrap → sys → user) with last-write-wins merge on `_G.HYPR_CONST`
+- **Layered pipeline** (bootstrap → sys → user) with `deep_merge()` overlaying user deltas on sys defaults into a single `const` module (injected via `package.loaded`)
 - **Three-layer constant system** — path infra / system defaults / user deltas
 - **Incremental override pattern** — every `sys/X.lua` has a paired `user/X.lua`
 - **Dependency inversion** via `lib/deps.lua` (25 external tools declared, 0 hard-coded)
@@ -80,7 +80,7 @@ Hyprland
 ├── hyprlock.conf → sys/hyprlock.conf   # symlink (daemon needs .conf)
 │
 ├── bootstrap/                # Layer 1 — path infrastructure (immutable)
-│   ├── const.lua            # _G.HYPR_CONST.Hypr / .sys / .user / .lock_background
+│   ├── const.lua            # const.config_hypr / .sys / .user / .lock_background
 │   └── default.lua          # Pipeline orchestrator: const layers + sys/default
 │
 ├── sys/                      # Layer 2 — system defaults (read-only, vendor)
@@ -99,25 +99,30 @@ Hyprland
 │   ├── hardware/            # Hardware abstraction (monitors, laptop, workspaces)
 │   ├── policy/              # Strategy pattern: animations/ + wallust/
 │   ├── statemachine/        # Lua-native SMs: layout / gamemode / nightlight
-│   └── scripts/             # 62 `.sh` runtime scripts (+ 3 `.lua` helpers)
+│   └── scripts/             # 59 `.sh` runtime scripts (+ lib/common.sh + lib/emoji-data.txt)
 │
 ├── user/                     # Layer 3 — user overrides (EDIT HERE)
 │   ├── const.lua            # Delta overrides only
 │   ├── env.lua  input.lua  layout.lua  decoration.lua  render.lua  misc.lua
 │   ├── startup.lua  keybind.lua  tags.lua  rules.lua
 │
-├── lib/                      # Shared libraries
+├── lib/                      # Shared libraries (8 modules)
 │   ├── sm.lua               # State machine base class (pcall + invariant + log)
-│   ├── deps.lua             # 25-tool external dependency manifest (SSOT + DI)
+│   ├── deps.lua             # 35-tool external dependency manifest (SSOT + DI)
 │   ├── types.lua            # LuaLS type definitions (hl.* API surface)
-│   └── script_utils.lua     # Helpers shared by shell scripts
+│   ├── script_utils.lua     # Helpers shared by shell scripts
+│   ├── active_policy.lua    # Runtime-switchable animation preset resolver
+│   ├── colors.lua           # Wallust color resolver (breaks sys→user layer cycle)
+│   ├── input_config.lua     # Lua-aware kb_layout parser for sh scripts
+│   └── cursor.lua           # Cursor zoom utility (pure Lua, replaces sh pipeline)
 │
 ├── wallpaper_effects/        # wallust output (gitignored)
 └── docs/                     # Documentation (6 categories, see below)
 ```
 
 **Key principle**: `sys/` is read-only. `user/X.lua` contains only the **deltas** you want to override.
-Later requires win (last-write-wins on `_G.HYPR_CONST`).
+`deep_merge()` in `bootstrap/default.lua` overlays user deltas on sys defaults
+(so users override specific keys without redefining the whole table).
 
 ---
 
@@ -142,28 +147,35 @@ Documentation is organized into 6 categories under [`docs/`](docs/):
 
 ### 1. Three-Layer Constant System
 
-Constants live in `_G.HYPR_CONST` — a single global table populated by three layered files.
-Each layer writes to the same table; **last-write-wins** gives user overrides priority.
+Constants live in the `const` module (injected via `package.loaded` by `bootstrap/default.lua`),
+populated by three layered files and merged with `deep_merge()`.
 
 ```lua
 -- bootstrap/const.lua  (Layer 1 — paths, immutable)
-_G.HYPR_CONST = _G.HYPR_CONST or {}
-_G.HYPR_CONST.Hypr  = "~/.config/hypr"
-_G.HYPR_CONST.sys   = "~/.config/hypr/sys"
-_G.HYPR_CONST.user  = "~/.config/hypr/user"
+local M = {}
+M.config_hypr = os.getenv("XDG_CONFIG_HOME") and (os.getenv("XDG_CONFIG_HOME") .. "/hypr")
+             or (os.getenv("HOME") .. "/.config/hypr")
+M.sys   = M.config_hypr .. "/sys"
+M.user  = M.config_hypr .. "/user"
+return M
 
 -- sys/const.lua  (Layer 2 — system defaults, read-only)
-_G.HYPR_CONST.M          = "SUPER"
-_G.HYPR_CONST.M_terminal = "kitty"
-_G.HYPR_CONST.S          = "~/.config/hypr/sys/scripts"
+local M = {}
+M.modifier = "SUPER"
+M.apps     = { terminal = "kitty", file_manager = "nemo" }
+M.dirs     = { scripts = paths.sys .. "/scripts", ... }
+return M
 
 -- user/const.lua  (Layer 3 — YOUR overrides, deltas only)
-_G.HYPR_CONST = _G.HYPR_CONST or {}
-_G.HYPR_CONST.M_terminal = "ghostty"   -- ← wins (loaded last)
+local M = {}
+M.apps = { terminal = "ghostty" }   -- ← overrides sys.apps.terminal (deep-merged)
+return M
 ```
 
-> ⚠️ There is no `deep_merge()` or `return { ... }` table form. Constants are plain
-> `_G.HYPR_CONST.key = value` assignments — last-write-wins on the shared global table.
+> ℹ️ Layer 3 contains **only the deltas** you want to override. `bootstrap/default.lua`
+> runs `deep_merge(sys_const, user_const)` recursively, then registers the merged
+> result as the `"const"` module via `package.loaded["const"] = const`. Downstream
+> modules access it via `local const = require("const")`.
 
 **Learn more**: [docs/02-Architecture/THREE_LAYER_CONSTANTS.md](docs/02-Architecture/THREE_LAYER_CONSTANTS.md)
 
@@ -246,8 +258,9 @@ end)
 
 ```lua
 -- user/const.lua
-_G.HYPR_CONST = _G.HYPR_CONST or {}
-_G.HYPR_CONST.M_terminal = "ghostty"   -- kitty, alacritty, foot, wezterm, ghostty…
+local M = {}
+M.apps = { terminal = "ghostty" }   -- kitty, alacritty, foot, wezterm, ghostty…
+return M
 ```
 
 Hyprland auto-reloads on save — no `hyprctl reload` needed.
@@ -256,15 +269,15 @@ Hyprland auto-reloads on save — no `hyprctl reload` needed.
 
 ```lua
 -- user/keybind.lua
-local const = _G.HYPR_CONST
+local const = require("const")
 
-hl.bind(const.M .. " + T", hl.dsp.exec_cmd("ghostty"))
+hl.bind(const.modifier .. " + T", hl.dsp.exec_cmd("ghostty"))
 
 -- Locked flag (fires on lock screen too)
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 
 -- Lua function dispatcher (impossible in .conf era)
-hl.bind(const.M .. " + ALT + G", function()
+hl.bind(const.modifier .. " + ALT + G", function()
   require('sys.statemachine.gamemode').new(hl):fire("toggle")
 end)
 ```
@@ -287,11 +300,11 @@ hl.window_rule({ size = { 1200, 800 }, match = { tag = "myapp" } })
 
 ```lua
 -- user/const.lua
-_G.HYPR_CONST = _G.HYPR_CONST or {}
-_G.HYPR_CONST.M_terminal     = "ghostty"
-_G.HYPR_CONST.M_file_manager = "thunar"
-_G.HYPR_CONST.W              = "~/Pictures/my-wallpapers"
-_G.HYPR_CONST.Search_Engine  = "https://google.com/search?q={}"   -- used by RofiSearch.sh
+local M = {}
+M.apps          = { terminal = "ghostty", file_manager = "thunar" }
+M.wallpaper_dir  = os.getenv("HOME") .. "/Pictures/my-wallpapers"
+M.search_engine  = "https://google.com/search?q={}"   -- used by RofiSearch.sh
+return M
 ```
 
 **More common tasks**: [docs/01-Getting-Started/COMMON_TASKS.md](docs/01-Getting-Started/COMMON_TASKS.md)
@@ -303,8 +316,8 @@ _G.HYPR_CONST.Search_Engine  = "https://google.com/search?q={}"   -- used by Rof
 ```
 hyprland.lua
   └── bootstrap/default.lua
-        ├── Stage 0: bootstrap/const.lua   (path infra)
-        ├── Stage 0: sys/const.lua         (system defaults)
+        ├── Stage 0: bootstrap/const.lua   (path infra + cache_dir, XDG-aware)
+        ├── Stage 0: sys/const.lua         (system defaults + export_to_shell)
         ├── Stage 0: user/const.lua        (user deltas — wins)
         └── Stage 1: sys/default.lua       (pipeline entry)
               ├── sys/hardware/default → laptop + monitors + workspaces
@@ -313,16 +326,19 @@ hyprland.lua
               ├── sys/misc         → user/misc.lua
               ├── sys/input        → user/input.lua
               ├── sys/layout       → user/layout.lua
-              ├── sys/decoration   → user/decoration.lua
+              ├── sys/decoration   → user/decoration.lua   (uses lib/colors.lua)
               ├── sys/render       → user/render.lua
-              ├── sys/startup     → user/startup.lua
-              ├── sys/keybind     → user/keybind.lua
+              ├── sys/startup      → user/startup.lua      (hl.on start + shutdown)
+              ├── sys/keybind      → user/keybind.lua       (132 binds + lib/cursor.lua)
               ├── sys/tags        → user/tags.lua
               └── sys/rules       → user/rules.lua
 ```
 
-**require order = override priority**: later files win on `_G.HYPR_CONST` and on
-`hl.config({...})` top-level keys.
+**require order = override priority**: later files win on `const` keys (merged via
+`deep_merge()` in `bootstrap/default.lua`) and on `hl.config({...})` top-level keys.
+
+**SSOT export**: `bootstrap/default.lua` calls `sys/const.lua:export_to_shell()` which
+generates `.deps_cache.sh` (shell-sourceable) — see [Lua ↔ Shell Coordination](#-lua--shell-coordination-ssot-bridge) below.
 
 **Learn more**: [docs/02-Architecture/PIPELINE_ARCHITECTURE.md](docs/02-Architecture/PIPELINE_ARCHITECTURE.md)
 
@@ -377,7 +393,7 @@ or `SUPER + H` for the cheat sheet.
 
 ## 📜 Scripts
 
-60 `.sh` scripts live in `sys/scripts/` (+ 3 `.lua` helpers in `sys/scripts/lua/`).
+59 `.sh` scripts live in `sys/scripts/` (+ `lib/common.sh` SSOT library + `lib/emoji-data.txt`).
 User-specific scripts go in `user/scripts/` (created on demand).
 
 | Script | Trigger | Purpose |
@@ -387,18 +403,58 @@ User-specific scripts go in `user/scripts/` (created on demand).
 | `GameMode.sh` | `SUPER+SHIFT+G` fallback | Toggle game mode (fallback for Lua SM) |
 | `Hyprsunset.sh` | `SUPER+N` fallback | Toggle night light (fallback for Lua SM, persists state) |
 | `WallpaperSelect.sh` | `SUPER+W` | Pick wallpaper + apply wallust colors |
-| `Animations.sh` | `SUPER+SHIFT+A` | Switch animation preset |
-| `RofiSearch.sh` | `SUPER+S` | Web search via `$Search_Engine` |
+| `Animations.sh` | `SUPER+SHIFT+A` | Switch animation preset (state-file architecture) |
+| `RofiSearch.sh` | `SUPER+S` | Web search via `$HYPR_SEARCH_ENGINE` |
 | `DarkLight.sh` | Quick Settings | Toggle dark/light theme |
-| `Refresh.sh` | `SUPER+ALT+R` | Restart waybar + swaync |
-| `LockScreen.sh` | `CTRL+ALT+L` | Lock screen (hyprlock) |
+| `Refresh.sh` | `SUPER+ALT+R` | Restart waybar + reload swaync config |
 | `Quick_Settings.sh` | `SUPER+SHIFT+E` | Open user config files in editor |
 | `KeybindsLayoutInit.sh` | startup | Initialize layout-aware binds |
 | `KeyHints.sh` | `SUPER+H` | Show keybind cheat sheet |
 | `KeyBinds.sh` | `SUPER+SHIFT+K` | Searchable keybind list |
+| `ScreenShot.sh` | `SUPER+Print` etc. | Screenshot capture (grim + slurp + wl-copy) |
+| `Volume.sh` | `XF86Audio*` | Volume control (pamixer + notify-send) |
+| `MediaCtrl.sh` | `XF86AudioPlay/Next/Prev` | Media playback (playerctl) |
+| `ClipManager.sh` | `SUPER+ALT+V` | Clipboard history (cliphist + rofi) |
+| `RofiEmoji.sh` | `SUPER+ALT+E` | Emoji picker (reads lib/emoji-data.txt) |
+| `RofiCalc.sh` | `SUPER+ALT+C` | Calculator (qalc + wl-copy) |
+| `WallustSwww.sh` | wallpaper change | Regenerate wallust colors + set wallpaper |
 
 > ℹ️ The Lua state machine modules in `sys/statemachine/*.lua` are the **primary** implementations.
 > The matching `.sh` scripts survive as `pcall`-protected fallbacks.
+
+### Lua ↔ Shell Coordination (SSOT Bridge)
+
+The Lua config and sh scripts share a **Single Source of Truth (SSOT)** via `.deps_cache.sh`:
+
+```
+sys/const.lua (Lua SSOT)
+  │
+  ├── M.export_to_shell()  ← auto-generates on startup
+  │     │
+  │     ▼
+  │   .deps_cache.sh (shell-sourceable)
+  │     ├── export HYPR_CONFIG_DIR="..."
+  │     ├── export HYPR_CACHE_DIR="..."      ← XDG-aware
+  │     ├── export TERMINAL="kitty"          ← from lib/deps.lua
+  │     ├── export WALLPAPER_CLIENT="awww"   ← Round 110
+  │     └── ... (35 tools + all paths)
+  │
+  └── require("const")  ← Lua modules use this
+
+sh scripts
+  ├── source lib/common.sh
+  │     ├── . .deps_cache.sh  (SSOT from Lua)
+  │     └── helper functions (dt_notify, dt_hl_dispatch, etc.)
+  └── use $HYPRCTL, $NOTIFY, $HYPR_CACHE_DIR, etc.
+```
+
+**Key components**:
+- `lib/common.sh` (23 helpers): `dt_notify`, `dt_hl_dispatch` (sh→Lua bridge), `dt_sddm_prompt`, etc.
+- `lib/deps.lua` (35 tools): SSOT for all external tool commands
+- `lib/input_config.lua`: Lua-aware parser (sh calls Lua for kb_layout parsing)
+- `lib/cursor.lua`: Pure Lua cursor zoom (replaces sh pipeline, 0 forks)
+
+**Learn more**: [docs/02-Architecture/PIPELINE_ARCHITECTURE.md § Lua ↔ Shell Coordination](docs/02-Architecture/PIPELINE_ARCHITECTURE.md)
 
 ---
 
@@ -421,7 +477,7 @@ See [docs/02-Architecture/DESIGN_PRINCIPLES.md](docs/02-Architecture/DESIGN_PRIN
 External tools are declared once in [`lib/deps.lua`](lib/deps.lua) (SSOT + dependency injection).
 All scripts and config files reference them via `deps.get("name").cmd` — **zero hard-coded tool names**.
 
-**Required** (25 specs in `lib/deps.lua`, top-level ones):
+**Required** (35 specs in `lib/deps.lua`, top-level ones):
 `hyprland` `hyprlock` `hypridle` `hyprctl`
 `awww` (wallpaper daemon) `waybar` (bar) `swaync` (notifications)
 `rofi` (launcher) `wallust` (color generator) `cliphist` + `wl-clipboard`
@@ -495,15 +551,17 @@ for the full doc map.
 
 | Metric | Value |
 | --- | --- |
-| Configuration files | 49 `.lua` (0 `.conf` in `sys/`/`user/`/`lib/`/`bootstrap/`) |
+| Configuration files | 55 `.lua` (0 `.conf` in `sys/`/`user/`/`lib/`/`bootstrap/`) |
 | Daemon configs | 2 `.conf` (`hypridle.conf`, `hyprlock.conf` — daemons don't support Lua) |
-| Runtime scripts | 60 `.sh` + 3 `.lua` helpers |
-| Shared libraries | 4 (`lib/sm.lua`, `lib/deps.lua`, `lib/types.lua`, `lib/script_utils.lua`) |
+| Runtime scripts | 59 `.sh` (+ 1 utility `validate_tags.sh`) |
+| Shared libraries | 8 (`lib/`: `sm.lua`, `deps.lua`, `types.lua`, `script_utils.lua`, `active_policy.lua`, `colors.lua`, `input_config.lua`, `cursor.lua`) |
 | Keybinds | 132 `hl.bind` calls in `sys/keybind.lua` |
 | Window tags | 26 (20 category + 6 behavior/helper) in `sys/tags.lua` |
 | State machines | 3 (`layout`, `gamemode`, `nightlight`) in `sys/statemachine/` |
-| External deps declared | 25 (in `lib/deps.lua`) |
-| Documentation | 18 `.md` files across 6 doc categories |
+| External deps declared | 35 (in `lib/deps.lua`) |
+| `common.sh` helpers | 23 (including `dt_hl_dispatch` + `dt_hyprctl_json` for sh→Lua bridge) |
+| Documentation | 22 `.md` files across 6 doc categories |
+| Real Hyprland 0.56.2 verify | ✅ CONFIG_LOADED_OK |
 
 ---
 

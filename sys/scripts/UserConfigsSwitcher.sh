@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# Source shared library — SSOT paths + DI variables
-source "$(dirname "$0")/lib/common.sh"
-
-
-
 # @path: sys/scripts/UserConfigsSwitcher.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Legacy migration helper — swap UserConfigs ↔ UserConfigsBak directories
+
+# Source shared library — SSOT paths + DI variables
+source "$(dirname "$0")/lib/common.sh"
 
 # HYPR_CONFIG_DIR already set by common.sh
 

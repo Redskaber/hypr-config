@@ -16,7 +16,8 @@ wallpaper_current="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_current"
 
 # Directory for swaync
 iDIR="$SWAYNC_IMAGES"
-iDIRi="$SWAYNC_ICONS"
+# SCRIPT-26 fix: removed dead `iDIRi="$SWAYNC_ICONS"` assignment — variable
+# was never read anywhere in this script.
 
 # awww transition config
 FPS=60
@@ -28,7 +29,7 @@ SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration
 # Check if package bc exists
 if ! command -v bc &>/dev/null; then
   "$NOTIFY" -i "$iDIR/error.png" "bc missing" "Install package bc first"
-  return 1
+  exit 1
 fi
 
 # Variables
@@ -38,7 +39,7 @@ focused_monitor=$("$HYPRCTL" monitors -j | "$JQ" -r '.[] | select(.focused) | .n
 # Ensure focused_monitor is detected
 if [[ -z "$focused_monitor" ]]; then
   "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Could not detect focused monitor"
-  return 1
+  exit 1
 fi
 
 # Monitor details
@@ -50,7 +51,7 @@ rofi_override="element-icon{size:${adjusted_icon_size}%;}"
 
 # Kill existing wallpaper daemons for video
 kill_wallpaper_for_video() {
-  awww kill 2>/dev/null
+  "$WALLPAPER_CLIENT" kill 2>/dev/null
   pkill mpvpaper 2>/dev/null
   pkill swaybg 2>/dev/null
   pkill hyprpaper 2>/dev/null
@@ -71,11 +72,20 @@ mapfile -d '' PICS < <(find -L "${wallDIR}" -type f \( \
   -iname "*.bmp" -o -iname "*.tiff" -o -iname "*.webp" -o \
   -iname "*.mp4" -o -iname "*.mkv" -o -iname "*.mov" -o -iname "*.webm" \) -print0)
 
+# Round 105 fix: guard against div-by-zero when wallDIR is empty
+if [ ${#PICS[@]} -eq 0 ]; then
+  "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "No wallpapers found in $wallDIR"
+  exit 1
+fi
+
 RANDOM_PIC="${PICS[$((RANDOM % ${#PICS[@]}))]}"
 RANDOM_PIC_NAME=". random"
 
 # Rofi command
-rofi_command="rofi -i -show -dmenu -config $rofi_theme -theme-str $rofi_override"
+# SCRIPT-24 fix: convert string-built command to array so paths with spaces
+# (e.g. $rofi_theme containing "/home/user/my rofi/...") survive word-splitting.
+# Array expansion "${rofi_command[@]}" preserves each argument as a single token.
+rofi_command=(rofi -i -show -dmenu -config "$rofi_theme" -theme-str "$rofi_override")
 
 # Sorting Wallpapers
 menu() {
@@ -86,16 +96,16 @@ menu() {
   for pic_path in "${sorted_options[@]}"; do
     pic_name=$(basename "$pic_path")
     if [[ "$pic_name" =~ \.gif$ ]]; then
-      cache_gif_image="$HOME/.cache/gif_preview/${pic_name}.png"
+      cache_gif_image="$HYPR_CACHE_DIR/gif_preview/${pic_name}.png"
       if [[ ! -f "$cache_gif_image" ]]; then
-        mkdir -p "$HOME/.cache/gif_preview"
-        magick "$pic_path[0]" -resize 1920x1080 "$cache_gif_image"
+        mkdir -p "$HYPR_CACHE_DIR/gif_preview"
+        "$IMAGE_MAGICK" "$pic_path[0]" -resize 1920x1080 "$cache_gif_image"
       fi
       printf "%s\x00icon\x1f%s\n" "$pic_name" "$cache_gif_image"
     elif [[ "$pic_name" =~ \.(mp4|mkv|mov|webm|MP4|MKV|MOV|WEBM)$ ]]; then
-      cache_preview_image="$HOME/.cache/video_preview/${pic_name}.png"
+      cache_preview_image="$HYPR_CACHE_DIR/video_preview/${pic_name}.png"
       if [[ ! -f "$cache_preview_image" ]]; then
-        mkdir -p "$HOME/.cache/video_preview"
+        mkdir -p "$HYPR_CACHE_DIR/video_preview"
         ffmpeg -v error -y -i "$pic_path" -ss 00:00:01.000 -vframes 1 "$cache_preview_image"
       fi
       printf "%s\x00icon\x1f%s\n" "$pic_name" "$cache_preview_image"
@@ -106,48 +116,10 @@ menu() {
 }
 
 # Offer SDDM Simple Wallpaper Option (only for non-video wallpapers)
+# SCRIPT-18 fix: replaced ~40-line duplicated SDDM prompt body with call to
+# shared helper (dt_sddm_prompt) in lib/common.sh.
 set_sddm_wallpaper() {
-  sleep 1
-
-  # Resolve SDDM themes directory (standard and NixOS path)
-  local sddm_themes_dir=""
-  if [ -d "/usr/share/sddm/themes" ]; then
-    sddm_themes_dir="/usr/share/sddm/themes"
-  elif [ -d "/run/current-system/sw/share/sddm/themes" ]; then
-    sddm_themes_dir="/run/current-system/sw/share/sddm/themes"
-  fi
-
-  [ -z "$sddm_themes_dir" ] && return 0
-
-  local sddm_simple="$sddm_themes_dir/simple_sddm_2"
-
-  # Only prompt if theme exists and its Backgrounds directory is writable
-  if [ -d "$sddm_simple" ] && [ -w "$sddm_simple/Backgrounds" ]; then
-
-    # Check if yad is running to avoid multiple notifications
-    if pidof yad >/dev/null; then
-      killall yad
-    fi
-
-    if yad --info --text="Set current wallpaper as SDDM background?\n\nNOTE: This only applies to SIMPLE SDDM v2 Theme" \
-      --text-align=left \
-      --title="SDDM Background" \
-      --timeout=5 \
-      --timeout-indicator=right \
-      --button="yes:0" \
-      --button="no:1"; then
-
-      # Check if terminal exists
-      if ! command -v "$terminal" &>/dev/null; then
-        "$NOTIFY" -i "$iDIR/error.png" "Missing $terminal" "Install $terminal to enable setting of wallpaper background"
-        return 1
-      fi
-
-      # Run in subshell — do NOT use exec (replaces process, can crash session)
-      bash "$SCRIPTSDIR/sddm_wallpaper.sh" --normal &
-
-    fi
-  fi
+  dt_sddm_prompt "$terminal" "$SCRIPTSDIR"
 }
 
 modify_startup_config() {
@@ -168,8 +140,8 @@ apply_image_wallpaper() {
   # Do NOT restart awww-daemon! It's already running (started by sys/startup.lua).
   # Restarting it causes: "There is an awww-daemon instance already running on this socket!"
   # → panic → abort → core dumped → can crash Hyprland session.
-  # Just use awww img to set the wallpaper image.
-  awww img --format argb -o "$focused_monitor" "$image_path" $SWWW_PARAMS
+  # Just use "$WALLPAPER_CLIENT" img to set the wallpaper image.
+  "$WALLPAPER_CLIENT" img --format argb -o "$focused_monitor" "$image_path" $SWWW_PARAMS
 
   # Run additional scripts (pass the image path to avoid cache race conditions)
   "$SCRIPTSDIR/WallustSwww.sh" "$image_path"
@@ -196,7 +168,7 @@ apply_video_wallpaper() {
 
 # Main function
 main() {
-  choice=$(menu | $rofi_command)
+  choice=$(menu | "${rofi_command[@]}")
   choice=$(echo "$choice" | xargs)
   RANDOM_PIC_NAME=$(echo "$RANDOM_PIC_NAME" | xargs)
 

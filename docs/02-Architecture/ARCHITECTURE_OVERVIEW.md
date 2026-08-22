@@ -36,13 +36,13 @@ hyprland.lua
               └── sys/rules        ← user/rules
 ```
 
-**require order = override priority** (later wins on `_G.HYPR_CONST` and `hl.config()` keys).
+**require order = override priority** (later wins on `const` keys merged via `deep_merge()` in `bootstrap/default.lua`, and on `hl.config()` top-level keys).
 
 ## Key Concepts (1-liners)
 
 | Concept | One-liner | Deep dive |
 | --- | --- | --- |
-| **3-layer constants** | `_G.HYPR_CONST` populated by bootstrap/sys/user; last-write-wins | [THREE_LAYER_CONSTANTS.md](THREE_LAYER_CONSTANTS.md) |
+| **3-layer constants** | `const` module injected via `package.loaded["const"] = const`; `deep_merge()` overlays user deltas on sys defaults | [THREE_LAYER_CONSTANTS.md](THREE_LAYER_CONSTANTS.md) |
 | **Pipeline** | `require()` chain = compilation phases | [PIPELINE_ARCHITECTURE.md](PIPELINE_ARCHITECTURE.md) |
 | **Tags** | 26 tags classify windows; rules apply effects by tag | [../03-Core-Systems/TAG_SYSTEM.md](../03-Core-Systems/TAG_SYSTEM.md) |
 | **State machines** | 3 FSMs (layout/gamemode/nightlight) on `lib/sm.lua` base | [../03-Core-Systems/STATE_MACHINES.md](../03-Core-Systems/STATE_MACHINES.md) |
@@ -62,10 +62,10 @@ hyprland.lua
 │   ├── hardware/            ← monitors + laptop + workspaces
 │   ├── policy/              ← animations + wallust (Strategy)
 │   ├── statemachine/        ← layout/gamemode/nightlight FSMs
-│   ├── scripts/             ← 62 `.sh` + 3 `.lua` helpers
+│   ├── scripts/             ← 59 `.sh` (+ lib/common.sh + lib/emoji-data.txt)
 │   └── *.lua                ← env/input/decoration/render/keybind/tags/rules
 ├── user/                     ← Layer 3: YOUR overrides (edit here)
-├── lib/                      ← Shared: sm.lua, deps.lua, types.lua, script_utils.lua
+├── lib/                      ← Shared: sm.lua, deps.lua, types.lua, script_utils.lua, active_policy.lua, colors.lua, input_config.lua, cursor.lua
 └── docs/                     ← This documentation
 ```
 
@@ -74,14 +74,17 @@ hyprland.lua
 | Metric | Value |
 | --- | --- |
 | Lua config files | 55 |
-| Shell scripts | 61 (+ 1 utility `validate_tags.sh` + 3 lua helpers in `sys/scripts/lua/`) |
-| Shared libraries | 5 (`lib/`: `sm.lua`, `deps.lua`, `types.lua`, `script_utils.lua`, `active_policy.lua`) |
+| Shell scripts | 59 (+ 1 utility `validate_tags.sh`) |
+| Shared libraries | 8 (`lib/`: `sm.lua`, `deps.lua`, `types.lua`, `script_utils.lua`, `active_policy.lua`, `colors.lua`, `input_config.lua`, `cursor.lua`) |
 | Keybinds | 132 (`hl.bind` calls in `sys/keybind.lua`) |
 | Window tags | 26 (20 category + 6 behavior/helper) |
 | State machines | 3 |
-| External deps declared | 26 (in `lib/deps.lua`) |
-| Documentation files | 19 (across 6 categories) |
+| External deps declared | 35 (in `lib/deps.lua`, +wallpaper_client in Round 110) |
+| Documentation files | 22 (across 6 categories) |
 | Lua-able scripts | 4 (inlined in `keybind.lua` with sh fallback — see [SCRIPT_AUDIT.md](../05-Reference/SCRIPT_AUDIT.md)) |
+| `common.sh` helpers | 23 (including `dt_hl_dispatch` + `dt_hyprctl_json` for sh→Lua bridge) |
+| Sh→Lua migrations | 1 (cursor zoom, Round 107) |
+| Hardcoded tools eliminated | 6 (Round 108) + 5 `awww` (Round 110) |
 
 ## Where to Go Next
 

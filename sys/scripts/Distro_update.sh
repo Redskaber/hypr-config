@@ -2,6 +2,7 @@
 # @path: sys/scripts/Distro_update.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Run distro-aware system update (paru/yay/dnf/apt/zypper) in terminal + notify-send
 #
 # Simple bash script to check and will try to update your system
 

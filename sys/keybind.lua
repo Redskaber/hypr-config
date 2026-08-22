@@ -29,8 +29,11 @@ local bar_cmd = deps.get("bar").cmd or "waybar"
 -- Users can configure layout-specific keybinds
 
 -- ── STANDARD — launchers & apps ────────────────────────────────────
+-- Round 108: use deps.get("file_opener") (DI) instead of hardcoded xdg-open
+local file_opener = deps.get("file_opener")
+local file_opener_cmd = (file_opener and file_opener.cmd) or "xdg-open"
 hl.bind(const.modifier .. " + D", hl.dsp.exec_cmd("pkill " .. launcher_cmd .. " || true && " .. launcher_cmd .. " -show drun -modi drun filebrowser run window"))
-hl.bind(const.modifier .. " + B", hl.dsp.exec_cmd("xdg-open \"https://\""))
+hl.bind(const.modifier .. " + B", hl.dsp.exec_cmd(file_opener_cmd .. " \"https://\""))
 hl.bind(const.modifier .. " + Return", hl.dsp.exec_cmd(terminal_cmd))
 hl.bind(const.modifier .. " + E", hl.dsp.exec_cmd(file_manager_cmd))
 hl.bind(const.modifier .. " + A", hl.dsp.exec_cmd(const.dirs.scripts .. "/desktop-overview.sh"))
@@ -95,9 +98,13 @@ hl.bind(const.modifier .. " + SPACE", hl.dsp.window.float({action="toggle"}))
 hl.bind(const.modifier .. " + ALT + SPACE", hl.dsp.exec_cmd("hyprctl dispatch workspaceopt allfloat"))
 hl.bind(const.modifier .. " + SHIFT + Return", hl.dsp.exec_cmd(const.dirs.scripts .. "/Dropterminal.sh " .. const.apps.terminal))
 
-
-hl.bind(const.modifier .. " + ALT + mouse_down", hl.dsp.exec_cmd("hyprctl keyword cursor:zoom_factor $(hyprctl getoption cursor:zoom_factor -j | jq -r '.float // .set // 1.0' | awk '{if($1<1)$1=1; print $1*2}')"))
-hl.bind(const.modifier .. " + ALT + mouse_up", hl.dsp.exec_cmd("hyprctl keyword cursor:zoom_factor $(hyprctl getoption cursor:zoom_factor -j | jq -r '.float // .set // 1.0' | awk '{if($1<1)$1=1; print $1/2}')"))
+-- Cursor zoom (Round 107: migrated from sh pipeline to pure Lua via lib/cursor.lua)
+-- Was: hyprctl keyword cursor:zoom_factor $(hyprctl getoption ... | jq | awk ...)
+-- Now: hl.get_config("cursor.zoom_factor") + hl.config({cursor={zoom_factor=v}})
+-- Benefits: no process fork, no jq/awk dependency, uses Lua SSOT
+local cursor = require("lib.cursor")
+hl.bind(const.modifier .. " + ALT + mouse_down", function() cursor.zoom_in(2.0) end)
+hl.bind(const.modifier .. " + ALT + mouse_up", function() cursor.zoom_out(2.0) end)
 
 -- Resize (works in all layouts)
 hl.bind(const.modifier .. " + SHIFT + left", hl.dsp.window.resize({x=-50, y=0, relative=true}), { repeating = true })

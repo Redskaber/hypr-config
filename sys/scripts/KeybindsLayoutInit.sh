@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Source shared library — SSOT paths + DI variables
-source "$(dirname "$0")/lib/common.sh"
-
 # @path: sys/scripts/KeybindsLayoutInit.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Initialize layout-aware J/K/O keybinds at Hyprland startup (DEPRECATED — replaced by Lua SM)
+#
+# Source shared library — SSOT paths + DI variables
+source "$(dirname "$0")/lib/common.sh"
 
 # set -euo pipefail  # Removed: can crash session on error
-
 
 # DEPRECATED: This script is replaced by the Lua state machine module (sys/statemachine/).
 # Kept for reference only. Do not use — the SM module is called directly via hl.bind().
@@ -31,15 +31,15 @@ LAYOUT=$("$HYPRCTL" -j getoption general:layout | "$JQ" -r '.str')
 
 case "$LAYOUT" in
 "scrolling")
-    # hyprscrolling owns J/K — leave unbound
-    ;;
+  # hyprscrolling owns J/K — leave unbound
+  ;;
 "dwindle")
-    "$HYPRCTL" keyword bind SUPER,J,cyclenext
-    "$HYPRCTL" keyword bind SUPER,K,cyclenext,prev
-    "$HYPRCTL" keyword bind SUPER,O,togglesplit
-    ;;
-"master"|*)
-    "$HYPRCTL" keyword bind SUPER,J,cyclenext
-    "$HYPRCTL" keyword bind SUPER,K,cyclenext,prev
-    ;;
+  "$HYPRCTL" keyword bind SUPER,J,cyclenext
+  "$HYPRCTL" keyword bind SUPER,K,cyclenext,prev
+  "$HYPRCTL" keyword bind SUPER,O,togglesplit
+  ;;
+"master" | *)
+  "$HYPRCTL" keyword bind SUPER,J,cyclenext
+  "$HYPRCTL" keyword bind SUPER,K,cyclenext,prev
+  ;;
 esac

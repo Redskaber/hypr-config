@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
 # @path: sys/scripts/Tak0-Autodispatch.sh
 # @author: redskaber
 # @date: 2026-08-20
+
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 LOGFILE="$(dirname "$0")/dispatch.log"
 # Log file path located next to the script.
@@ -52,7 +51,7 @@ TARGET_WORKSPACE=$2
 # Перевірка наявності необхідних параметрів.
 if [[ -z "$APP" || -z "$TARGET_WORKSPACE" ]]; then
   echo "Usage: $0 <application_command> <target_workspace_number>" >>"$LOGFILE" 2>&1
-  exit 1  # error path — missing required arguments
+  exit 1 # error path — missing required arguments
 fi
 
 echo "Starting dispatch of '$APP' to workspace $TARGET_WORKSPACE at $(date)" >>"$LOGFILE"
@@ -85,7 +84,7 @@ for i in {1..30}; do
     # Move the window to the target workspace.
     # Переміщуємо вікно на цільовий воркспейс.
     "$HYPRCTL" eval "hl.dispatch(hl.dsp.window.move({workspace=$TARGET_WORKSPACE,window=\"address:$win\"}))" >>"$LOGFILE" 2>&1
-    exit 0  # success — window dispatched, stop iterating (avoid 29 redundant moves)
+    exit 0 # success — window dispatched, stop iterating (avoid 29 redundant moves)
   fi
   sleep 0.3
 done
@@ -93,4 +92,4 @@ done
 echo "ERROR: Window for '$APP' was NOT found or dispatched properly to workspace $TARGET_WORKSPACE at $(date)" >>"$LOGFILE"
 # Log error if window was not found or dispatched correctly.
 # Запис помилки, якщо вікно не знайдено або неправильно диспатчено.
-exit 0  # end of script — window not found, loop exhausted (not a hard error)
+exit 0 # end of script — window not found, loop exhausted (not a hard error)

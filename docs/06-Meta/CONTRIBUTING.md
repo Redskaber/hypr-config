@@ -63,8 +63,8 @@ hyprland --verify-config
    hl.bind("SUPER + Return", hl.dsp.exec_cmd("kitty"))
 
    -- GOOD
-   local const = _G.HYPR_CONST
-   hl.bind(const.M .. " + Return", hl.dsp.exec_cmd(const.M_terminal))
+   local const = require("const")
+   hl.bind(const.modifier .. " + Return", hl.dsp.exec_cmd(const.apps.terminal))
    ```
 
 3. **`hl.*` API** — verify every API call against the [Hyprland wiki](https://wiki.hypr.land/):
@@ -120,7 +120,7 @@ hyprland --verify-config
 
 Read [docs/02-Architecture/ARCHITECTURE_OVERVIEW.md](docs/02-Architecture/ARCHITECTURE.md) for:
 - Layered pipeline (bootstrap → sys → user)
-- Three-layer constants (`_G.HYPR_CONST`)
+- Three-layer constants (`const` module, injected via `package.loaded`)
 - Tag-driven window management (26 tags)
 - State machines (layout/gamemode/nightlight)
 - Dependency injection (`lib/deps.lua` + `common.sh`)

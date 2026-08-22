@@ -2,6 +2,7 @@
 # @path: sys/scripts/Hypridle.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: hypridle daemon status/toggle helper for waybar (pgrep + pkill/exec)
 
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"

@@ -70,12 +70,15 @@ $EDITOR ~/.config/hypr/user/const.lua
 Minimal edit — override only what differs from sys defaults:
 
 ```lua
--- user/const.lua
-_G.HYPR_CONST = _G.HYPR_CONST or {}
+-- user/const.lua (deltas only — deep-merged on top of sys/const.lua by bootstrap/default.lua)
+local M = {}
 
-_G.HYPR_CONST.M_terminal = "kitty"        -- your terminal (default: kitty)
-_G.HYPR_CONST.M_file_manager = "thunar"  -- your file manager (default: nemo)
-_G.HYPR_CONST.W = "~/Pictures/wallpapers" -- your wallpaper dir
+M.apps = {
+  terminal = "kitty",            -- your terminal (default: kitty)
+  file_manager = "thunar",       -- your file manager (default: nemo)
+}
+M.wallpaper_dir = os.getenv("HOME") .. "/Pictures/wallpapers"   -- your wallpaper dir
+return M
 ```
 
 ### Step 3: Verify the config
@@ -138,7 +141,9 @@ Press `SUPER + H` for the full cheat sheet at any time.
 
 ```lua
 -- user/const.lua
-_G.HYPR_CONST.M_terminal = "alacritty"   -- or "foot", "wezterm", "ghostty"
+local M = {}
+M.apps = { terminal = "alacritty" }   -- or "foot", "wezterm", "ghostty"
+return M
 ```
 
 Hyprland auto-reloads on save — no reload command needed.
@@ -147,7 +152,9 @@ Hyprland auto-reloads on save — no reload command needed.
 
 ```lua
 -- user/const.lua
-_G.HYPR_CONST.W = "~/Pictures/my-wallpapers"
+local M = {}
+M.wallpaper_dir = os.getenv("HOME") .. "/Pictures/my-wallpapers"
+return M
 ```
 
 Then press `SUPER + W` to pick a wallpaper (wallust auto-generates colors).
@@ -156,8 +163,8 @@ Then press `SUPER + W` to pick a wallpaper (wallust auto-generates colors).
 
 ```lua
 -- user/keybind.lua
-local const = _G.HYPR_CONST
-hl.bind(const.M .. " + T", hl.dsp.exec_cmd("thunderbird"))
+local const = require("const")
+hl.bind(const.modifier .. " + T", hl.dsp.exec_cmd("thunderbird"))
 ```
 
 ### Switch animation preset

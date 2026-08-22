@@ -23,7 +23,7 @@
 -- to UPPER_SNAKE_CASE shell variables. Here is the complete mapping:
 --
 -- ── Config paths (from bootstrap/const.lua + sys/const.lua M.dirs) ──────────
---   const.config_root       → HYPR_CONFIG_DIR      ($HOME/.config/hypr)
+--   const.config_hypr       → HYPR_CONFIG_DIR      ($HOME/.config/hypr)
 --   const.dirs.scripts      → HYPR_SCRIPTS_DIR     ($HYPR_CONFIG_DIR/sys/scripts)
 --   const.dirs.hardware     → HYPR_HARDWARE_DIR    ($HYPR_CONFIG_DIR/sys/hardware)
 --   const.dirs.policy       → HYPR_POLICY_DIR      ($HYPR_CONFIG_DIR/sys/policy)
@@ -92,8 +92,8 @@ local M = {}
 -- ── Application overrides ──────────────────────────────────────────────────
 M.apps = {
 	terminal = "kitty", -- was "ghostty" in sys/const.lua
-	-- file_manager = "thunar",
-	-- editor = "nvim",
+	file_manager = "nemo", -- "thunar"
+	editor = "nvim",
 }
 
 -- ── External tool config directory overrides ──────────────────────────────

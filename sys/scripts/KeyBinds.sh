@@ -2,11 +2,13 @@
 # @path: sys/scripts/KeyBinds.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Display registered Hyprland keybinds via hyprctl binds -j + jq + rofi (interactive, no Lua API)
 #
 # Source shared library — SSOT paths + DI variables
 source "$(dirname "$0")/lib/common.sh"
 
-pkill yad 2>/dev/null || true
+# Round 108: use $DIALOG (DI) instead of hardcoded yad
+pkill "$DIALOG" 2>/dev/null || true
 
 # KeyBinds.sh — Searchable keybind display using rofi
 # 通解: use hyprctl binds -j (runtime query) instead of parsing .lua files

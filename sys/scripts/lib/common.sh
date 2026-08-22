@@ -57,6 +57,8 @@ else
   : "${SCREENSHOT:=grim}"
   : "${SLURP:=slurp}"
   : "${WALLPAPER_DAEMON:=awww-daemon}"
+  # Round 110: wallpaper client (companion to wallpaper_daemon)
+  : "${WALLPAPER_CLIENT:=awww}"
   : "${COLOR_GEN:=wallust}"
   : "${LOCK:=hyprlock}"
   : "${IDLE_DAEMON:=hypridle}"
@@ -89,6 +91,8 @@ else
   : "${HYPR_NOTIFY_ICON:=$HYPR_CONFIG_DIR/icon.png}"
   : "${HYPR_LOCK_BG:=$HYPR_WALLUST_DIR/.wallpaper_current}"
   : "${HYPR_WALLPAPER_DIR:=$HOME/Pictures/wallpapers}"
+  # Round 109: cache dir (XDG_CACHE_HOME or ~/.cache) for state persistence files
+  : "${HYPR_CACHE_DIR:=${XDG_CACHE_HOME:-$HOME/.cache}}"
 
   # External tool config paths (from sys/const.lua M.external)
   : "${SWAYNC_DIR:=$HOME/.config/swaync}"
@@ -102,13 +106,13 @@ else
 
   export HYPRCTL NOTIFY ROFI BAR NOTIFICATION JQ TERMINAL FILE_MANAGER LAUNCHER \
          BRIGHTNESS_CONTROL VOLUME_CONTROL MEDIA_CONTROL CLIPBOARD WL_PASTE WL_COPY \
-         SCREENSHOT SLURP WALLPAPER_DAEMON COLOR_GEN LOCK IDLE_DAEMON NIGHTLIGHT \
+         SCREENSHOT SLURP WALLPAPER_DAEMON WALLPAPER_CLIENT COLOR_GEN LOCK IDLE_DAEMON NIGHTLIGHT \
          LOGOUT_MENU EDITOR \
          FILE_OPENER SCREENSHOT_EDITOR CALCULATOR MEDIA_PLAYER VIDEO_WALLPAPER \
          IMAGE_MAGICK DIALOG CAVA \
          HYPR_CONFIG_DIR HYPR_SCRIPTS_DIR HYPR_HARDWARE_DIR HYPR_POLICY_DIR \
          HYPR_USER_DIR HYPR_WALLUST_DIR HYPR_NOTIFY_ICON HYPR_LOCK_BG \
-         HYPR_WALLPAPER_DIR HYPR_SEARCH_ENGINE \
+         HYPR_WALLPAPER_DIR HYPR_SEARCH_ENGINE HYPR_CACHE_DIR \
          SWAYNC_DIR SWAYNC_ICONS SWAYNC_IMAGES ROFI_DIR WAYBAR_DIR \
          WALLUST_DIR KITTY_DIR QT_DIR
 fi
@@ -139,9 +143,39 @@ dt_notify_bypass_dnd() {
 dt_swaync_toggle() { "${NOTIFICATION}-client" -t -sw 2>/dev/null; }
 dt_swaync_reload() { "${NOTIFICATION}-client" --reload-config 2>/dev/null; }
 
+# --- SDDM helpers ---
+# SCRIPT-18 fix: extracted the duplicated ~40-line SDDM prompt block that was
+# copy-pasted between WallpaperEffects.sh and WallpaperSelect.sh. Behavioural
+# canonicalisation: button labels `yes/no`, mode `--normal`, notification via
+# dt_notify (critical urgency) when terminal is missing. Runs the wallpaper
+# setter in the background so the caller does not block.
+# Args: $1 = terminal command, $2 = scripts dir.
+dt_sddm_prompt() {
+  local terminal="$1"
+  local scripts_dir="$2"
+  sleep 1
+  local sddm_themes_dir=""
+  [ -d "/usr/share/sddm/themes" ] && sddm_themes_dir="/usr/share/sddm/themes"
+  [ -z "$sddm_themes_dir" ] && [ -d "/run/current-system/sw/share/sddm/themes" ] && sddm_themes_dir="/run/current-system/sw/share/sddm/themes"
+  [ -z "$sddm_themes_dir" ] && return 0
+  local sddm_simple="$sddm_themes_dir/simple_sddm_2"
+  [ -d "$sddm_simple" ] && [ -w "$sddm_simple/Backgrounds" ] || return 0
+  pidof yad >/dev/null 2>&1 && killall yad 2>/dev/null || true
+  if yad --info --text="Set current wallpaper as SDDM background?\n\nNOTE: This only applies to SIMPLE SDDM v2 Theme" \
+    --text-align=left --title="SDDM Background" --timeout=5 --timeout-indicator=right \
+    --button="yes:0" --button="no:1"; then
+    command -v "$terminal" >/dev/null 2>&1 || { dt_notify "Missing $terminal" "Install $terminal to enable setting of wallpaper background" critical; return 1; }
+    bash "$scripts_dir/sddm_wallpaper.sh" --normal &
+  fi
+}
+
 # --- Hyprctl helpers ---
+# SCRIPT-19 fix: merged the better version from WallustSwww.sh (had an awk
+# fallback when jq is unavailable / hyprctl -j fails). The previous helper
+# silently returned empty when jq was missing — breaking every caller.
 dt_get_focused_monitor() {
-  "$HYPRCTL" -j monitors 2>/dev/null | "$JQ" -r '.[] | select(.focused == true) | .name'
+  "$HYPRCTL" -j monitors 2>/dev/null | "$JQ" -r '.[] | select(.focused == true) | .name' 2>/dev/null \
+    || "$HYPRCTL" monitors 2>/dev/null | awk '/Focused:/ {for(i=1;i<=NF;i++) if($i=="monitor:") print $(i+1)}'
 }
 dt_get_active_workspace_id() {
   "$HYPRCTL" activeworkspace -j 2>/dev/null | "$JQ" -r '.id'
@@ -183,3 +217,24 @@ dt_screenshot_area() {
 # --- Misc ---
 dt_log() { echo "[$(basename "$0" .sh)] $*" >&2; }
 dt_debug() { [ "${DT_DEBUG:-0}" = "1" ] && dt_log "DEBUG: $*"; }
+
+# --- Hyprland Lua bridge helpers ---
+# Round 107: wrapper for the `hyprctl eval "hl.dispatch(...)"` pattern used by
+# sh scripts to call the Lua dispatcher API (the only way to invoke hl.dsp.*
+# from sh). Centralizes error suppression + makes future logging/debugging easy.
+#
+# Usage: dt_hl_dispatch 'hl.dsp.window.move({workspace="1",follow=false})'
+#   $1 = the full hl.dsp.X({...}) expression (without the wrapping hl.dispatch)
+dt_hl_dispatch() {
+  "$HYPRCTL" eval "hl.dispatch($1)" >/dev/null 2>&1
+}
+
+# Query Hyprland state via hyprctl -j (JSON output) + jq filter.
+# Usage: dt_hyprctl_json "activewindow" ".class // empty"
+#   $1 = hyprctl subcommand (e.g. "activewindow", "monitors", "clients")
+#   $2 = jq filter (optional, defaults to "." for raw JSON)
+dt_hyprctl_json() {
+  local subcmd="$1"
+  local filter="${2:-.}"
+  "$HYPRCTL" -j "$subcmd" 2>/dev/null | "$JQ" -r "$filter" 2>/dev/null
+}

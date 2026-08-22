@@ -1,29 +1,27 @@
 -- @path: bootstrap/const.lua
 -- @author: redskaber
--- @date: 2026-08-20
--- @version: 3.0
+-- @date: 2026-08-22
+-- @version: 3.1 (Round 109 — added cache_dir for state persistence SSOT)
 -- @description: Layer 1: path infrastructure constants (immutable, XDG-aware)
---
--- REFACTOR (Task 85): Pure module — no _G.HYPR_CONST legacy.
---   Consumers use: local paths = require("bootstrap.const")
---   paths.config_root, paths.sys, paths.user, etc.
 
 local M = {}
 
--- Resolve config root: XDG_CONFIG_HOME/hypr or ~/.config/hypr
-M.config_root = os.getenv("XDG_CONFIG_HOME") and (os.getenv("XDG_CONFIG_HOME") .. "/hypr") or
-                (os.getenv("HOME") .. "/.config/hypr")
+M.home_dir = os.getenv("HOME")
+M.cache_dir = os.getenv("XDG_CACHE_HOME") or (M.home_dir .. "/.cache")
+M.wallpaper_dir = M.home_dir .. "/Pictures/wallpapers"
 
--- Layer directories (derived from config_root, never hard-coded)
-M.bootstrap = M.config_root .. "/bootstrap"
-M.sys       = M.config_root .. "/sys"
-M.user      = M.config_root .. "/user"
+M.xdg_config = os.getenv("XDG_CONFIG_HOME") or (M.home_dir .. "/.config")
+M.config_hypr = M.xdg_config .. "/hypr"
+
+M.bootstrap = M.config_hypr .. "/bootstrap"
+M.sys = M.config_hypr .. "/sys"
+M.user = M.config_hypr .. "/user"
 
 -- Runtime paths
-M.wallust_effects = M.config_root .. "/wallust_effects"
-M.lock_background  = M.wallust_effects .. "/.wallpaper_current"
+M.wallust_effects = M.config_hypr .. "/wallust_effects"
+M.lock_background = M.wallust_effects .. "/.wallpaper_current"
 
--- Default icon
-M.icon = M.config_root .. "/icon.png"
+M.notify_icon = M.config_hypr .. "/icon.png"
+M.search_engine = "https://www.google.com/search?q={}"
 
 return M

@@ -1,14 +1,16 @@
 -- @path: sys/statemachine/gamemode.lua
 -- @author: redskaber
--- @date: 2026-08-20
--- @version: 1.1
+-- @date: 2026-08-22
+-- @version: 1.2 (Round 109 — use const.cache_dir instead of hardcoded $HOME/.cache)
 -- @description: GameMode state machine (NORMAL↔GAMING toggle, with state persistence)
 
 local SM = require("lib.sm")
+local const = require("const")
 local M = {}
 
 -- State persistence file (T79: persist across Hyprland restarts)
-local STATE_FILE = os.getenv("HOME") .. "/.cache/.hypr_gamemode_state"
+-- Round 109: use const.cache_dir (XDG-aware) instead of hardcoded $HOME/.cache
+local STATE_FILE = const.cache_dir .. "/.hypr_gamemode_state"
 
 function M.new(hl)
   -- Read persisted state on startup (default to NORMAL if no file)

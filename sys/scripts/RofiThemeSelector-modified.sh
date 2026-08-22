@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-
-
 # @path: sys/scripts/RofiThemeSelector-modified.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Preview/apply rofi themes with @theme-line cap (modified variant) via interactive rofi (no Lua API)
+#
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 # A modified version of Rofi-Theme-Selector, concentrating only on ~/.local and also, applying only 10 @themes in ~/.config/rofi/config.rasi
 # as opposed to continous adding of //@theme
@@ -56,7 +54,7 @@ declare -a theme_names
 ##
 # Find themes in defined directories
 find_themes() {
-  directories=("$HOME/.local/share/rofi/themes" "$ROFI_DIR/themes")
+  directories=("${XDG_DATA_HOME:-$HOME/.local/share}/rofi/themes" "$ROFI_DIR/themes")
 
   for TD in "${directories[@]}"; do
     if [ -d "$TD" ]; then
@@ -83,8 +81,8 @@ add_theme_to_config() {
   local theme_path
 
   # Determine the correct path for the theme
-  if [[ -f "$HOME/.local/share/rofi/themes/$theme_name.rasi" ]]; then
-    theme_path="$HOME/.local/share/rofi/themes/$theme_name.rasi"
+  if [[ -f "${XDG_DATA_HOME:-$HOME/.local/share}/rofi/themes/$theme_name.rasi" ]]; then
+    theme_path="${XDG_DATA_HOME:-$HOME/.local/share}/rofi/themes/$theme_name.rasi"
   elif [[ -f "$ROFI_DIR/themes/$theme_name.rasi" ]]; then
     theme_path="$ROFI_DIR/themes/$theme_name.rasi"
   else

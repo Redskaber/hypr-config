@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
+# @path: sys/scripts/ZshChangeTheme.sh
+# @author: redskaber
+# @date: 2026-08-20
+# @description: Switch oh-my-zsh theme via rofi menu + sed on ~/.zshrc (interactive, no Lua API)
+#
 # Script for Oh my ZSH theme ( CTRL SHIFT O)
 
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
-
-
-
-
-# @path: sys/scripts/ZshChangeTheme.sh
-# @author: redskaber
-# @date: 2026-08-20
 
 # preview of theme can be view here: https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
 # after choosing theme, TTY need to be closed and re-open
@@ -44,7 +42,7 @@ main() {
 
   # if nothing selected, script won't change anything
   if [ -z "$choice" ]; then
-return 0
+    return 0
   fi
 
   zsh_path="$HOME/.zshrc"

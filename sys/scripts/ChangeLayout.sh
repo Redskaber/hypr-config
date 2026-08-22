@@ -2,6 +2,7 @@
 # @path: sys/scripts/ChangeLayout.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Cycle Hyprland layout (scrolling→dwindle→master) via hyprctl (DEPRECATED — replaced by Lua SM)
 #
 # Source shared library — SSOT paths + DI variables
 source "$(dirname "$0")/lib/common.sh"

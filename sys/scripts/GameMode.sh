@@ -2,6 +2,7 @@
 # @path: sys/scripts/GameMode.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Toggle game mode (disable animations/blur/gaps for performance) via hyprctl (DEPRECATED — replaced by Lua SM)
 #
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
@@ -25,14 +26,14 @@ _gamemode_on() {
         keyword general:border_size 1;\
         keyword decoration:rounding 0"
   "$HYPRCTL" keyword "windowrule opacity 1 override 1 override 1 override, ^(.*)$"
-  awww kill
+  "$WALLPAPER_CLIENT" kill
   "$NOTIFY" -e -u low -i "$notify_icon" " Gamemode:" " enabled"
 }
 
 _gamemode_off() {
   # awww-daemon already running (started by sys/startup.lua)
   sleep 0.3
-  awww img "$ROFI_DIR/.current_wallpaper"
+  "$WALLPAPER_CLIENT" img "$ROFI_DIR/.current_wallpaper"
   sleep 0.1
   "${HYPR_SCRIPTS_DIR}/WallustSwww.sh"
   sleep 0.5

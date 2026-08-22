@@ -2,6 +2,7 @@
 # @path: sys/scripts/KeyHints.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Show static quick-cheat-sheet keybinds via yad dialog (GUI list, no Lua API)
 
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
@@ -9,16 +10,17 @@ source "$(dirname "$0")/lib/common.sh"
 # GDK BACKEND. Change to either wayland or x11 if having issues
 BACKEND="$GDK_BACKEND"
 
-# Check if rofi or yad is running and kill them if they are
+# Check if rofi or dialog (yad) is running and kill them if they are
 if pidof "$ROFI" >/dev/null; then
   pkill "$ROFI"
 fi
-if pidof yad >/dev/null; then
-  pkill yad
+# Round 108: use $DIALOG (DI) instead of hardcoded yad
+if pidof "$DIALOG" >/dev/null; then
+  pkill "$DIALOG"
 fi
 
-# Launch yad with calculated width and height
-GDK_BACKEND=$BACKEND yad \
+# Launch dialog with calculated width and height
+GDK_BACKEND=$BACKEND "$DIALOG" \
   --center \
   --title="Quick Cheat Sheet" \
   --no-buttons \

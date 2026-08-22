@@ -1,23 +1,20 @@
 #!/usr/bin/env bash
+# @path: sys/scripts/RofiThemeSelector.sh
+# @author: redskaber
+# @date: 2026-08-20
+# @description: Preview/apply rofi themes via interactive rofi with live reload + symlink swap (no Lua API)
+#
 # Rofi Themes - Script to preview and apply themes by live-reloading the config.
 
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
-
-
-
-# @path: sys/scripts/RofiThemeSelector.sh
-# @author: redskaber
-# @date: 2026-08-20
-
 # --- Configuration ---
-
 ROFI_THEMES_DIR_CONFIG="$ROFI_DIR/themes"
-ROFI_THEMES_DIR_LOCAL="$HOME/.local/share/rofi/themes"
+ROFI_THEMES_DIR_LOCAL="${XDG_DATA_HOME:-$HOME/.local/share}/rofi/themes"
 ROFI_CONFIG_FILE="$ROFI_DIR/config.rasi"
 ROFI_THEME_FOR_THIS_SCRIPT="$ROFI_DIR/config-"$ROFI"-theme.rasi" # A separate "$ROFI" theme for the picker itself
-IDIR="$SWAYNC_IMAGES"                                     # For notifications
+IDIR="$SWAYNC_IMAGES"                                            # For notifications
 
 # --- Helper Functions ---
 

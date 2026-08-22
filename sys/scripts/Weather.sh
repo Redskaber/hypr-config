@@ -1,17 +1,20 @@
 #!/usr/bin/env bash
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
 # @path: sys/scripts/Weather.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Fetch/cache weather from wttr.in + emit waybar JSON (curl + sed + cache, no Lua API)
+
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 city=""
 
 # if city is blank, use https://ipapi.co/json to get location from IP
 if [ -z "$city" ]; then
-  city=$(curl -fsS https://ipapi.co/json | grep city | cut -f4 -d'"')
+  # SCRIPT-44 fix: use anchored regex match. `grep city` (substring) could
+  # match multiple JSON fields like "city_name", "capital_city", etc.
+  # `grep -E '"city"\s*:'` matches the actual JSON key exactly.
+  city=$(curl -fsS https://ipapi.co/json | grep -E '"city"\s*:' | head -n1 | cut -f4 -d'"')
 fi
 
 # URL-encode city for safe use in URLs
@@ -25,7 +28,7 @@ else
   encoded_city=$(printf '%s' "$city" | sed -e 's/ /%20/g' -e 's/&/%26/g' -e 's/?/%3F/g' -e 's/#/%23/g')
 fi
 
-cachedir="$HOME/.cache/rbn"
+cachedir="$HYPR_CACHE_DIR/rbn"
 # Include city and arg in cache key so changing city invalidates old cache
 cache_key="${city}_${1}"
 # Sanitize cache key to avoid problematic characters in filename
@@ -116,12 +119,11 @@ if [ ${#weather[@]} -lt 3 ] || ! echo "${weather[2]}" | grep -qE '[-+0-9].*°'; 
   fi
 fi
 
-# Restore IFSClear
+# Restore IFS
+# SCRIPT-43 fix: comment typo — was "Restore IFSClear".
 IFS=$SAVEIFS
 
 temperature=$(echo "${weather[2]}" | sed -E 's/([[:digit:]]+)\.\./\1 to /g')
-
-#echo ${weather[1]##*,}
 
 # https://fontawesome.com/icons?s=solid&c=weather
 # Normalize condition string for matching
@@ -186,8 +188,6 @@ if [ "$condition" = "" ]; then
   fi
 fi
 
-#echo $temp $condition
-
 # Ensure temperature has a value; if empty, keep whatever is in weather[2] or N/A
 if [ -z "$temperature" ]; then
   temperature="${weather[2]:-N/A}"
@@ -207,5 +207,4 @@ tooltip_json=$(json_escape "${weather[0]}: $temperature $cond_disp")
 printf '{"text":"%s", "alt":"%s", "tooltip":"%s"}\n' "$text_json" "$alt_json" "$tooltip_json"
 
 # Write a two-line cache with an actual newline between lines
-printf ' %s  \n%s %s\n' "$temperature" "$condition" "${weather[1]}" >"$HOME/.cache/.weather_cache"
-
+printf ' %s  \n%s %s\n' "$temperature" "$condition" "${weather[1]}" >"$HYPR_CACHE_DIR/.weather_cache"

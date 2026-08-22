@@ -2,6 +2,7 @@
 # @path: sys/scripts/BrightnessKbd.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Keyboard backlight control (get/inc/dec) via brightnessctl + notify-send
 #
 # Script for keyboard backlights (if supported) using brightnessctl
 

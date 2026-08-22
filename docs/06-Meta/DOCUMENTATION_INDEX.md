@@ -31,7 +31,7 @@
 - [ARCHITECTURE_OVERVIEW.md](../02-Architecture/ARCHITECTURE_OVERVIEW.md) — quick reference
 - [PIPELINE_ARCHITECTURE.md](../02-Architecture/PIPELINE_ARCHITECTURE.md) — require chain spec
 - [DESIGN_PRINCIPLES.md](../02-Architecture/DESIGN_PRINCIPLES.md) — 10 principles + patterns
-- [THREE_LAYER_CONSTANTS.md](../02-Architecture/THREE_LAYER_CONSTANTS.md) — `_G.HYPR_CONST` spec
+- [THREE_LAYER_CONSTANTS.md](../02-Architecture/THREE_LAYER_CONSTANTS.md) — `const` module (package.loaded injection) spec
 
 ### 03-Core-Systems (2 files)
 - [TAG_SYSTEM.md](../03-Core-Systems/TAG_SYSTEM.md) — tag-driven window management
@@ -80,19 +80,24 @@
 | `hyprland --verify-config` | Real Hyprland config loader | `hyprland --verify-config` | Runtime errors (require chain, nil calls) + API whitelist |
 | `hyprctl` | `hyprland --verify-config` | Real Hyprland config loader (needs nix store) |
 
-## Project Statistics (verified 2026-08-21)
+## Project Statistics (verified 2026-08-22, Round 111)
 
 | Metric | Value |
 | --- | --- |
 | Lua config files | 55 |
-| Shell scripts | 61 (+ 1 utility + 3 lua helpers) |
-| Shared libraries | 5 (`lib/` — added `active_policy.lua` Round 104) |
+| Shell scripts | 59 (+ 1 utility `validate_tags.sh`) |
+| Shared libraries | 8 (`lib/`: `sm.lua`, `deps.lua`, `types.lua`, `script_utils.lua`, `active_policy.lua`, `colors.lua`, `input_config.lua`, `cursor.lua`) |
 | Keybinds | 132 |
 | Window tags | 26 |
 | State machines | 3 |
-| External deps | 26 (in `lib/deps.lua`) |
+| External deps | 35 (in `lib/deps.lua`) |
 | Lua-able scripts | 4 (inlined in `keybind.lua` with sh fallback) |
-| Documentation files | 19 |
-| `bash -n` pass rate | 61/61 (100%) |
+| Documentation files | 22 |
+| `bash -n` pass rate | 59/59 (100%) |
 | `luac -p` pass rate | 55/55 (100%) |
 | Real Hyprland 0.56.2 verify | ✅ CONFIG_LOADED_OK |
+| `common.sh` helpers | 23 (including `dt_hl_dispatch` + `dt_hyprctl_json` for sh→Lua bridge) |
+| Sh→Lua migrations | 1 (cursor zoom, Round 107) |
+| Hardcoded tools eliminated | 6 (Round 108) + 5 `awww` (Round 110) |
+| Runtime bugs fixed | 2 (Round 110: TouchPad) + 4 (Round 111: Sounds.sh) |
+| XDG-aware paths | config_hypr + cache_dir + external + data (Round 111) |

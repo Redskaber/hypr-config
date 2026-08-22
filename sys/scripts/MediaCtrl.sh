@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Source shared library — provides MEDIA_CONTROL, NOTIFY, dt_notify, etc.
-source "$(dirname "$0")/lib/common.sh"
-
 # @path: sys/scripts/MediaCtrl.sh
 # @author: redskaber
 # @date: 2026-08-20
 # @description: Media playback control (uses common.sh for DI)
+
+# Source shared library — provides MEDIA_CONTROL, NOTIFY, dt_notify, etc.
+source "$(dirname "$0")/lib/common.sh"
 
 music_icon="$SWAYNC_ICONS/music.png"
 

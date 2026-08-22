@@ -2,6 +2,7 @@
 # @path: sys/scripts/ChangeBlur.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Toggle Hyprland decoration blur passes (1↔2) via hyprctl + notify-send
 #
 # Script for changing blurs on the fly
 # Source shared library — provides DI for tool names

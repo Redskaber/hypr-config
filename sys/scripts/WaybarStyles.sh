@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
-# Script for waybar styles
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-
-
-
 # @path: sys/scripts/WaybarStyles.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Switch waybar CSS style via rofi menu + symlink swap (interactive, no Lua API)
+#
+# Script for waybar styles
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 IFS=$'\n\t'
 
@@ -60,7 +57,7 @@ main() {
 
   [[ -z "$choice" ]] && {
     echo "No option selected. Exiting."
-return 0
+    return 0
   }
 
   # remove annotation and apply

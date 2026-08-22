@@ -26,7 +26,13 @@ source "$(dirname "$0")/lib/common.sh"
 
 # Variables (active_window_* computed lazily inside shotactive, not at top)
 time=$(date "+%d-%b_%H-%M-%S")
-dir="$(xdg-user-dir PICTURES)/Screenshots"
+# Round 108: xdg-user-dir may not be installed. Fall back to $XDG_PICTURES_DIR
+# or $HOME/Pictures. Per XDG Base Directory spec.
+if command -v xdg-user-dir >/dev/null 2>&1; then
+  dir="$(xdg-user-dir PICTURES)/Screenshots"
+else
+  dir="${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots"
+fi
 file="Screenshot_${time}_${RANDOM}.png"
 
 iDIR="$SWAYNC_ICONS"
@@ -98,7 +104,7 @@ shotarea() {
   geom=$("$SLURP" 2>/dev/null)
   if [ -z "$geom" ]; then
     rm -f "$tmpfile"
-    exit 0  # user cancelled slurp
+    exit 0 # user cancelled slurp
   fi
   "$SCREENSHOT" -g "$geom" - >"$tmpfile"
   if [[ -s "$tmpfile" ]]; then
@@ -133,7 +139,7 @@ shotswappy() {
   if [[ -s "$tmpfile" ]]; then
     "$WL_COPY" <"$tmpfile"
     "${sDIR}/Sounds.sh" --screenshot
-    "$SCREENSHOT_EDITOR" -f - <"$tmpfile" 2>/dev/null || \
+    "$SCREENSHOT_EDITOR" -f - <"$tmpfile" 2>/dev/null ||
       $notify_cmd_NOT " Screenshot:" " $SCREENSHOT_EDITOR not available"
     rm -f "$tmpfile"
   else
@@ -148,17 +154,17 @@ fi
 
 # CLI dispatch
 case "$1" in
-  --now)     shotnow ;;
-  --in5)     shot5 ;;
-  --in10)    shot10 ;;
-  --area)    shotarea ;;
-  --active)  shotactive ;;
-  --swappy)  shotswappy ;;
-  *)
-    echo "Usage: $(basename "$0") [--now|--in5|--in10|--area|--active|--swappy]"
-    echo "Available Options: --now --in5 --in10 --area --active --swappy"
-    exit 1
-    ;;
+--now) shotnow ;;
+--in5) shot5 ;;
+--in10) shot10 ;;
+--area) shotarea ;;
+--active) shotactive ;;
+--swappy) shotswappy ;;
+*)
+  echo "Usage: $(basename "$0") [--now|--in5|--in10|--area|--active|--swappy]"
+  echo "Available Options: --now --in5 --in10 --area --active --swappy"
+  exit 1
+  ;;
 esac
 
 exit 0

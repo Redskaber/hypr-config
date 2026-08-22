@@ -2,6 +2,7 @@
 # @path: sys/scripts/Battery.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Print battery status + capacity for BAT0–BAT3 (reads /sys/class/power_supply)
 
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"

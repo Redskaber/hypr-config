@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
+# @path: sys/scripts/Wlogout.sh
+# @author: redskaber
+# @date: 2026-08-20
+# @description: Launch wlogout logout menu with resolution-scaled button sizes via hyprctl + jq (no Lua API)
+#
 # wlogout (Power, Screen Lock, Suspend, etc)
 
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
-
-
-
-
-# @path: sys/scripts/Wlogout.sh
-# @author: redskaber
-# @date: 2026-08-20
 
 # Set variables for parameters. First numbers corresponts to Monitor Resolution
 # i.e 2160 means 2160p

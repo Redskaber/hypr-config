@@ -18,7 +18,7 @@
 - ✅ 54 `.lua` files, 62 `.sh` scripts, 26 deps, 21 docs
 - ✅ 0 hardcoded paths in `.lua` (all via `const.*`)
 - ✅ 0 Chinese comments
-- ✅ 0 `_G.HYPR_CONST` legacy
+- ✅ 0 dead global-mutation pattern (removed in Task 85; replaced by `require("const")` module injection via `package.loaded["const"] = const` in `bootstrap/default.lua`)
 - ✅ `sys/hardware/laptop.lua`: vendor-agnostic (ASUS keys moved to `user/hardware/`)
 - ✅ `sys/decoration.lua`: reads merged colors (user/policy/wallust → sys defaults + overrides)
 

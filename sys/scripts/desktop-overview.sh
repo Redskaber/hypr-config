@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
-# Overview toggle wrapper - tries Quickshell first, falls back to AGS
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-
-
-
 # @path: sys/scripts/desktop-overview.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Toggle desktop overview — try Quickshell IPC, fall back to AGS (no Lua API)
+#
+# Overview toggle wrapper - tries Quickshell first, falls back to AGS
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 # set -euo pipefail  # Removed: can crash session on error
 

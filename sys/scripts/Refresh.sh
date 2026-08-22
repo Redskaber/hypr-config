@@ -34,5 +34,5 @@ pkill "$ROFI" 2>/dev/null || true
 # ── Optional rainbow borders hook ────────────────────────────
 sleep 1
 if [ -x "${SCRIPTSDIR}/RainbowBorders.sh" ]; then
-    "${SCRIPTSDIR}/RainbowBorders.sh" &
+  "${SCRIPTSDIR}/RainbowBorders.sh" &
 fi

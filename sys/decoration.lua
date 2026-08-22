@@ -1,55 +1,58 @@
 -- @path: sys/decoration.lua
 -- @author: redskaber
--- @date: 2026-08-20
+-- @date: 2026-08-22
 -- @description: Visual decoration (colors from wallust, shadow/blur/group)
 --
--- ARCHITECTURE: Colors are loaded from user/policy/wallust/ (which merges
--- sys defaults + user overrides). This ensures user color overrides are
--- visible to decoration. The pipeline order (policy before decoration)
--- guarantees the merged colors are available.
+-- ARCHITECTURE (Round 105 fix): Colors are resolved via lib/colors.lua
+-- (neutral layer) which merges sys defaults + user overrides via pcall
+-- fallback. This breaks the previous sys→user layer cycle where sys
+-- directly required user.policy.wallust.wallust-hyprland.
+--
+-- Pipeline order (policy before decoration) ensures the merged colors
+-- are cached by the time decoration runs.
 
-local colors = require("user.policy.wallust.wallust-hyprland")
+local colors = require("lib.colors").resolve()
 
 hl.config({
-  general = {
-    col = {
-      active_border = colors.color12,
-      inactive_border = colors.color10,
-    },
-  },
-  decoration = {
-    rounding = 10,
-    active_opacity = 1.0,
-    inactive_opacity = 0.9,
-    fullscreen_opacity = 1.0,
-    dim_inactive = true,
-    dim_strength = 0.1,
-    dim_special = 0.8,
-    shadow = {
-      enabled = true,
-      range = 3,
-      render_power = 1,
-      color = colors.color12,
-      color_inactive = colors.color10,
-    },
-    blur = {
-      enabled = true,
-      size = 6,
-      passes = 2,
-      ignore_opacity = true,
-      new_optimizations = true,
-      special = true,
-      popups = true,
-    },
-  },
-  group = {
-    col = {
-      border_active = colors.color15,
-    },
-    groupbar = {
-      col = {
-        active = colors.color0,
-      },
-    },
-  },
+	general = {
+		col = {
+			active_border = colors.color12,
+			inactive_border = colors.color10,
+		},
+	},
+	decoration = {
+		rounding = 10,
+		active_opacity = 1.0,
+		inactive_opacity = 0.9,
+		fullscreen_opacity = 1.0,
+		dim_inactive = true,
+		dim_strength = 0.1,
+		dim_special = 0.8,
+		shadow = {
+			enabled = true,
+			range = 3,
+			render_power = 1,
+			color = colors.color12,
+			color_inactive = colors.color10,
+		},
+		blur = {
+			enabled = true,
+			size = 6,
+			passes = 2,
+			ignore_opacity = true,
+			new_optimizations = true,
+			special = true,
+			popups = true,
+		},
+	},
+	group = {
+		col = {
+			border_active = colors.color15,
+		},
+		groupbar = {
+			col = {
+				active = colors.color0,
+			},
+		},
+	},
 })

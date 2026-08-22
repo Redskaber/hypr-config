@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-
-
 # @path: sys/scripts/WallpaperAutoChange.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Loop forever — set random wallpaper from a directory every 30min via swww + RefreshNoWaybar
+#
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 # source https://wiki.archlinux.org/title/Hyprland#Using_a_script_to_change_wallpaper_every_X_minutes
 
@@ -24,7 +22,7 @@ focused_monitor=$("$HYPRCTL" monitors | awk '/^Monitor/{name=$2} /focused: yes/{
 if [[ $# -lt 1 ]] || [[ ! -d $1 ]]; then
   echo "Usage:
         $0 <dir containing images>"
-  exit 1  # usage error — missing or invalid wallpaper directory arg
+  exit 1 # usage error — missing or invalid wallpaper directory arg
 fi
 
 # Edit below to control the images transition
@@ -41,7 +39,7 @@ while true; do
     done |
     sort -n | cut -d':' -f2- |
     while read -r img; do
-      awww img -o $focused_monitor "$img"
+      "$WALLPAPER_CLIENT" img -o $focused_monitor "$img"
       # Regenerate colors from the exact image path to avoid cache races
       "$SCRIPTSDIR/WallustSwww.sh" "$img"
       # Refresh UI components that depend on wallust output

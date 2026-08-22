@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
-# Weather entrypoint: prefer Python (Open‑Meteo), fallback to legacy Bash (wttr.in)
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-
-
-
 # @path: sys/scripts/WeatherWrap.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Weather entrypoint — prefer Python Open-Meteo, fall back to legacy bash wttr.in
+#
+# Weather entrypoint: prefer Python (Open‑Meteo), fallback to legacy Bash (wttr.in)
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 SCRIPT_DIR="$(dirname "$0")"
 PY_SCRIPT="$SCRIPT_DIR/Weather.py"
@@ -40,4 +37,3 @@ else
   run_fallback "$@"
   exit $?
 fi
-

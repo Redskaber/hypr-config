@@ -2,213 +2,206 @@
 
 > Pure `.lua` (Hyprland v0.55+). Verified against actual code in
 > [`bootstrap/const.lua`](../../bootstrap/const.lua),
+> [`bootstrap/default.lua`](../../bootstrap/default.lua),
 > [`sys/const.lua`](../../sys/const.lua),
 > [`user/const.lua`](../../user/const.lua).
+>
+> **Round 105**: This doc was completely rewritten — the previous version
+> described a `_G.HYPR_CONST` global mutation pattern that was removed in
+> Task 85. The actual code uses `package.loaded["const"] = const` injection.
 
 ## Overview
 
-Constants live in a single global table `_G.HYPR_CONST`, populated by three
-layered files. Each file writes to the same table; **last-write-wins** gives
-user overrides priority.
+Constants are a **module-injected singleton** (`const`), populated by three
+layered files and merged via `deep_merge()`. Each layer has a clear role:
 
-This is **not** a Hyprland DSL feature — it's a plain Lua convention. There is
-no `deep_merge()` function and no `return { ... }` table-return form. Each
-const file runs `require`d in order and mutates the shared global table.
+| Layer | File | Role | Mutability |
+|---|---|---|---|
+| 1 | `bootstrap/const.lua` | Path infrastructure (immutable base) | Never edit |
+| 2 | `sys/const.lua` | System defaults + SSOT export to shell | Read-only |
+| 3 | `user/const.lua` | User deltas (incremental overrides) | **EDIT HERE** |
+
+The merged `const` table is the **Single Source of Truth (SSOT)** for:
+- Application commands (`const.apps.terminal`, `const.apps.file_manager`, ...)
+- Main modifier key (`const.modifier`)
+- Internal directory paths (`const.dirs.scripts`, `const.dirs.hardware`, ...)
+- External tool config paths (`const.external.swaync_dir`, `const.external.rofi_dir`, ...)
+- Helper tag names (`const.helpers.cheat`, `const.helpers.settings`)
+- Search engine URL (`const.search_engine`)
+- Wallpaper directory (`const.wallpaper_dir`)
 
 ## Architecture
 
 ```
-_G.HYPR_CONST = {}                   ← created by bootstrap/default.lua
-       │
-       ▼
-require("bootstrap.const")          ← Layer 1: path infrastructure (immutable)
-       │  _G.HYPR_CONST.Hypr  = "~/.config/hypr"
-       │  _G.HYPR_CONST.sys   = "~/.config/hypr/sys"
-       │  _G.HYPR_CONST.user  = "~/.config/hypr/user"
-       ▼
-require("sys.const")                ← Layer 2: system defaults (read-only)
-       │  _G.HYPR_CONST.M          = "SUPER"
-       │  _G.HYPR_CONST.M_terminal = "kitty"
-       │  _G.HYPR_CONST.S          = "~/.config/hypr/sys/scripts"
-       │  ... (25+ keys)
-       ▼
-require("user.const")              ← Layer 3: user deltas (EDIT HERE)
-       │  _G.HYPR_CONST.M_terminal = "ghostty"   ← wins (loaded last)
-       │  _G.HYPR_CONST.Search_Engine = "https://www.bing.com/search?q={}"
-       ▼
-_G.HYPR_CONST is now the merged SSOT
-       │
-       ▼
-All later modules (sys/keybind, sys/startup, ...) read _G.HYPR_CONST
+hyprland.lua
+  └── bootstrap/default.lua
+        ├── require("bootstrap.const")    ← Layer 1: paths (immutable)
+        ├── require("sys.const")          ← Layer 2: system defaults
+        ├── require("user.const")         ← Layer 3: user deltas (EDIT HERE)
+        │
+        ├── deep_merge(sys_const.apps, user_const.apps)
+        ├── deep_merge(sys_const.external, user_const.external)
+        │
+        ├── package.loaded["const"] = merged_const   ← INJECT module
+        │
+        └── sys_const.export_to_shell()              ← Generate .deps_cache.sh
+              │
+              ▼
+        All later modules use require("const")
+        Shell scripts source .deps_cache.sh
 ```
 
 ## The Three Layers
 
 ### Layer 1: `bootstrap/const.lua` — Path Infrastructure (immutable)
 
-Defines absolute path constants. **Never edit** — these are the foundation
+Defines absolute path constants derived from `XDG_CONFIG_HOME` (or `~/.config`)
+and `XDG_CACHE_HOME` (or `~/.cache`). **Never edit** — these are the foundation
 that other layers depend on.
 
 ```lua
--- bootstrap/const.lua
-_G.HYPR_CONST = _G.HYPR_CONST or {}
-
-_G.HYPR_CONST.Hypr  = "~/.config/hypr"
-_G.HYPR_CONST.sys   = "~/.config/hypr/sys"
-_G.HYPR_CONST.user  = "~/.config/hypr/user"
-_G.HYPR_CONST.lock_background = "~/.config/hypr/wallpaper_effects/.wallpaper_current"
+-- bootstrap/const.lua (actual code, Round 109)
+local M = {}
+M.config_hypr = os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config") .. "/hypr"
+M.bootstrap = M.config_hypr .. "/bootstrap"
+M.sys = M.config_hypr .. "/sys"
+M.user = M.config_hypr .. "/user"
+M.wallust_effects = M.config_hypr .. "/wallust_effects"
+M.lock_background = M.config_hypr .. "/wallpaper_effects/.wallpaper_current"
+M.icon = M.config_hypr .. "/icon.png"
+-- Round 109: cache dir (XDG_CACHE_HOME or ~/.cache) for state persistence files
+M.cache_dir = os.getenv("XDG_CACHE_HOME") or (os.getenv("HOME") .. "/.cache")
+return M
 ```
 
-### Layer 2: `sys/const.lua` — System Defaults (vendor, read-only)
+### Layer 2: `sys/const.lua` — System Defaults (read-only)
 
-Defines default applications, paths to scripts/hardware/policy, and helper
-constants. **Treat as read-only** — overrides go in `user/const.lua`.
+Defines default values for all SSOT keys + the `M.export_to_shell()` function
+that generates `.deps_cache.sh` for shell-script DI.
 
 ```lua
--- sys/const.lua (excerpt)
-_G.HYPR_CONST = _G.HYPR_CONST or {}
+-- sys/const.lua (actual code, abbreviated)
+local M = {}
+M.apps = { terminal = "kitty", file_manager = "nemo", editor = os.getenv("EDITOR") or "nano" }
+M.modifier = "SUPER"
+M.dirs = { scripts = paths.sys .. "/scripts", hardware = paths.sys .. "/hardware", ... }
+M.external = { swaync_dir = HOME .. "/.config/swaync", rofi_dir = HOME .. "/.config/rofi", ... }
+M.helpers = { cheat = "Help_Cheat", settings = "Help_Settings" }
+M.search_engine = "https://www.google.com/search?q={}"
+M.wallpaper_dir = HOME .. "/Pictures/wallpapers"
+M.notify_icon = paths.icon
+M.config_hypr = paths.config_hypr
 
-_G.HYPR_CONST.M          = "SUPER"                          -- main modifier
-_G.HYPR_CONST.M_terminal = "kitty"
-_G.HYPR_CONST.M_file_manager = "nemo"
-_G.HYPR_CONST.M_editor   = os.getenv("EDITOR") or "nano"
-
-_G.HYPR_CONST.S = "~/.config/hypr/sys/scripts"             -- scripts dir
-_G.HYPR_CONST.H = "~/.config/hypr/sys/hardware"            -- hardware dir
-_G.HYPR_CONST.P = "~/.config/hypr/sys/policy"              -- policy dir
-_G.HYPR_CONST.P_w = "~/.config/hypr/sys/policy/wallust"
-_G.HYPR_CONST.P_a = "~/.config/hypr/sys/policy/animations"
-
-_G.HYPR_CONST.W          = "~/.config/hypr/Pictures/wallpapers"
-_G.HYPR_CONST.I_notify   = "~/.config/hypr/icon.png"
-_G.HYPR_CONST.Search_Engine = "https://www.google.com/search?q={}"
+function M.export_to_shell() ... end  -- generates .deps_cache.sh
+return M
 ```
 
 ### Layer 3: `user/const.lua` — User Deltas (EDIT HERE)
 
-Override only the keys you want to change. **Last-write-wins** on the shared
-`_G.HYPR_CONST` table means user values always win.
+Contains **only the deltas** — keys you want to override. The `deep_merge()`
+in `bootstrap/default.lua` overlays these on top of sys defaults.
 
 ```lua
--- user/const.lua
-_G.HYPR_CONST = _G.HYPR_CONST or {}
-
-_G.HYPR_CONST.M_terminal = "ghostty"                                  -- ← wins
-_G.HYPR_CONST.Search_Engine = "https://www.bing.com/search?q={}"      -- ← wins
--- M_editor, M_file_manager, W, I_notify inherit from sys/const.lua
+-- user/const.lua (example override)
+local M = {}
+M.apps = { terminal = "ghostty" }       -- overrides sys.apps.terminal
+M.modifier = "SUPER"                     -- overrides sys.modifier
+M.external = { rofi_dir = HOME .. "/.config/rofi-custom" }
+M.wallpaper_dir = HOME .. "/Pictures/wallpapers-custom"
+return M
 ```
 
-## How It Works: last-write-wins
+## Module Injection (not global mutation)
 
-The bootstrap orchestrator ([`bootstrap/default.lua`](../../bootstrap/default.lua))
-runs the three `require` calls in order:
+The merged const is registered as the `"const"` module via Lua's
+`package.loaded` mechanism:
 
 ```lua
--- bootstrap/default.lua
-_G.HYPR_CONST = _G.HYPR_CONST or {}
-require("bootstrap.const")   -- Layer 1
-require("sys.const")          -- Layer 2
-require("user.const")         -- Layer 3 (overrides)
-require("sys.default")        -- pipeline continues
+-- bootstrap/default.lua (actual code)
+package.loaded["const"] = const  -- inject merged const as "const" module
 ```
 
-Each `require` executes the file top-to-bottom, mutating `_G.HYPR_CONST` in
-place. When `user/const.lua` runs `_G.HYPR_CONST.M_terminal = "ghostty"`, it
-overwrites the `"kitty"` set by `sys/const.lua` moments earlier.
-
-After all three layers run, every later module reads the merged table:
+This allows all downstream modules to access the SSOT via standard `require`:
 
 ```lua
--- sys/keybind.lua
-local const = _G.HYPR_CONST
-hl.bind(const.M .. " + Return", hl.dsp.exec_cmd(const.M_terminal))
---                                   ↑ resolves to "ghostty" (user override won)
+-- any module (sys/keybind.lua, sys/startup.lua, etc.)
+local const = require("const")
+print(const.apps.terminal)          -- "kitty" (or "ghostty" if user overrode)
+print(const.dirs.scripts)           -- "/home/user/.config/hypr/sys/scripts"
+print(const.external.swaync_dir)    -- "/home/user/.config/swaync"
 ```
 
-## Design Principles Applied
+## Shell Export (SSOT → shell scripts)
 
-| Principle | How |
-| --- | --- |
-| **Single Source of Truth (SSOT)** | One table `_G.HYPR_CONST`, one key per concept |
-| **Dependency Inversion** | Modules depend on the const abstraction, not specific values |
-| **Open/Closed** | `sys/const.lua` closed for modification; `user/const.lua` open for extension |
-| **Incremental Override** | User files contain only deltas — no need to redeclare defaults |
-| **Layered Architecture** | Clear boundary: bootstrap (infra) → sys (vendor) → user (you) |
-
-## Common Tasks
-
-### Change the terminal emulator
-
-```lua
--- user/const.lua
-_G.HYPR_CONST = _G.HYPR_CONST or {}
-_G.HYPR_CONST.M_terminal = "ghostty"   -- kitty, alacritty, foot, wezterm, ghostty
-```
-
-### Change the wallpaper directory
-
-```lua
--- user/const.lua
-_G.HYPR_CONST = _G.HYPR_CONST or {}
-_G.HYPR_CONST.W = "~/Pictures/my-wallpapers"
-```
-
-### Change the search engine (used by RofiSearch.sh)
-
-```lua
--- user/const.lua
-_G.HYPR_CONST = _G.HYPR_CONST or {}
-_G.HYPR_CONST.Search_Engine = "https://duckduckgo.com/?q={}"
-```
-
-### Add a brand-new constant
-
-```lua
--- user/const.lua
-_G.HYPR_CONST = _G.HYPR_CONST or {}
-_G.HYPR_CONST.my_browser = "firefox"   -- then use _G.HYPR_CONST.my_browser in user/keybind.lua
-```
-
-## Naming Convention
-
-| Prefix | Meaning | Example |
-| --- | --- | --- |
-| `M_*` | Application / command | `M_terminal`, `M_file_manager`, `M_editor` |
-| `M` | Main modifier key | `M = "SUPER"` |
-| `S` | sys/scripts directory | `S = "~/.config/hypr/sys/scripts"` |
-| `H` | sys/hardware directory | `H = "~/.config/hypr/sys/hardware"` |
-| `P` | sys/policy directory | `P = "~/.config/hypr/sys/policy"` |
-| `U*` | User-side equivalents | `U_s`, `U_h`, `U_p` |
-| `W` | Wallpaper directory | `W = "~/.config/hypr/Pictures/wallpapers"` |
-| `H_*` | Helper tags (window tag names) | `H_Cheat`, `H_Settings` |
-| `I_*` | Icons / images | `I_notify` |
-
-## Debugging
-
-### Print all constants at runtime
+`sys/const.lua:M.export_to_shell()` generates `.deps_cache.sh`, a
+shell-sourceable file containing all paths + DI variables as `export` statements:
 
 ```bash
-hyprctl eval 'for k,v in pairs(_G.HYPR_CONST) do print(k, "=", v) end'
+# .deps_cache.sh (auto-generated)
+export HYPR_CONFIG_DIR="/home/user/.config/hypr"
+export HYPR_SCRIPTS_DIR="/home/user/.config/hypr/sys/scripts"
+export HYPR_WALLPAPER_DIR="/home/user/Pictures/wallpapers"
+export SWAYNC_DIR="/home/user/.config/swaync"
+export ROFI_DIR="/home/user/.config/rofi"
+export TERMINAL="kitty"
+export NOTIFY="notify-send"
+# ... (all 26 deps + all paths)
 ```
 
-### Check a specific value
+Shell scripts source this file via `lib/common.sh`:
 
 ```bash
-hyprctl eval 'return _G.HYPR_CONST.M_terminal'
+# sys/scripts/lib/common.sh
+_DEPS_CACHE="${HYPR_DEPS_CACHE:-${XDG_CONFIG_HOME:-$HOME/.config}/hypr/.deps_cache.sh}"
+[ -f "$_DEPS_CACHE" ] && . "$_DEPS_CACHE" || {
+  # Fallback defaults if cache missing (e.g. script run before Hyprland starts)
+  : "${HYPRCTL:=hyprctl}"
+  : "${NOTIFY:=notify-send}"
+  # ... (26 fallback defaults)
+}
 ```
 
-### Common Issues
+## Validation
 
-| Symptom | Cause | Fix |
-| --- | --- | --- |
-| Override not taking effect | Edited `sys/const.lua` instead of `user/const.lua` | Move edits to `user/const.lua` |
-| Lua error "attempt to index nil" | `_G.HYPR_CONST` not yet initialized | Ensure `bootstrap/default.lua` loads const layers first |
-| Value still shows old default | Hyprland didn't reload | Save any `.lua` file to trigger auto-reload |
+```bash
+# Verify the merged const is correctly injected
+lua -e '
+  package.path = "./?.lua;./lib/?.lua"
+  require("bootstrap.default")
+  local const = require("const")
+  print("terminal:", const.apps.terminal)
+  print("scripts:", const.dirs.scripts)
+  print("swaync_dir:", const.external.swaync_dir)
+'
+
+# Verify .deps_cache.sh is generated
+cat ~/.config/hypr/.deps_cache.sh | head -5
+```
+
+## Key Design Principles
+
+1. **Single Source of Truth (SSOT)**: `sys/const.lua` is the ONLY place paths
+   and DI variables are defined. Shell scripts never hardcode paths.
+
+2. **Incremental Override**: `user/const.lua` contains only deltas, not full
+   copies. Easier to maintain, less drift.
+
+3. **Deep Merge**: Tables are merged recursively (sys + user), so users can
+   override a single key without redefining the whole table.
+
+4. **Module Injection**: `package.loaded["const"] = const` is cleaner than
+   `_G.HYPR_CONST` global mutation (no global namespace pollution).
+
+5. **Shell Bridge**: `export_to_shell()` auto-generates `.deps_cache.sh` so
+   shell scripts get the same SSOT values (no manual sync).
+
+6. **Resilience**: `lib/common.sh` has fallback defaults if `.deps_cache.sh`
+   is missing (e.g. script run before Hyprland starts).
 
 ## References
 
-- [`bootstrap/default.lua`](../../bootstrap/default.lua) — pipeline orchestrator
-- [`bootstrap/const.lua`](../../bootstrap/const.lua) — Layer 1 source
-- [`sys/const.lua`](../../sys/const.lua) — Layer 2 source
-- [`user/const.lua`](../../user/const.lua) — Layer 3 source (edit here)
-- [Dependency Inversion Principle](https://en.wikipedia.org/wiki/Dependency_inversion_principle)
+- [`bootstrap/default.lua`](../../bootstrap/default.lua) — merge + injection
+- [`sys/const.lua`](../../sys/const.lua) — SSOT + shell export
+- [`user/const.lua`](../../user/const.lua) — user deltas
+- [`sys/scripts/lib/common.sh`](../../sys/scripts/lib/common.sh) — shell DI
+- [`lib/deps.lua`](../../lib/deps.lua) — 26-tool DI manifest

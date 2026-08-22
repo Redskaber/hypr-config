@@ -316,11 +316,12 @@ the bind falls back to the legacy `.sh` script:
 
 ```lua
 -- Pattern (not actually in code, but recommended):
+local const = require("const")
 local ok_sm, layout_sm = pcall(function() return require('sys.statemachine.layout').new(hl) end)
 
 hl.bind("SUPER + ALT + L", function()
   if ok_sm then layout_sm:fire("cycle")
-  else hl.exec_cmd(_G.HYPR_CONST.S .. "/ChangeLayout.sh") end
+  else hl.exec_cmd(const.dirs.scripts .. "/ChangeLayout.sh") end
 end)
 ```
 

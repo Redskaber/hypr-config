@@ -1,28 +1,29 @@
 #!/usr/bin/env bash
+# @path: sys/scripts/WallpaperEffects.sh
+# @author: redskaber
+# @date: 2026-08-20
+# @description: Apply ImageMagick effects (blur/charcoal/sepia/etc) to wallpaper via rofi menu (interactive, no Lua API)
+#
 # Wallpaper Effects using ImageMagick (SUPER SHIFT W)
 
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
-
-
-
-# @path: sys/scripts/WallpaperEffects.sh
-# @author: redskaber
-# @date: 2026-08-20
-
 # Variables — override terminal via HYPR_TERMINAL env var (set in user/env.conf)
 
 terminal="${HYPR_TERMINAL:-"$TERMINAL"}"
-wallpaper_current="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_current"
-wallpaper_output="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_modified"
+# SCRIPT-35 fix: use $HYPR_WALLUST_DIR DI var (set in lib/common.sh from
+# sys/const.lua) instead of hardcoding "$HYPR_CONFIG_DIR/wallust_effects".
+wallpaper_current="$HYPR_WALLUST_DIR/.wallpaper_current"
+wallpaper_output="$HYPR_WALLUST_DIR/.wallpaper_modified"
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 focused_monitor=$("$HYPRCTL" monitors -j | "$JQ" -r '.[] | select(.focused) | .name')
 rofi_theme="$ROFI_DIR/config-wallpaper-effect.rasi"
 
 # Directory for swaync
 iDIR="$SWAYNC_IMAGES"
-iDIRi="$SWAYNC_ICONS"
+# SCRIPT-25 fix: removed dead `iDIRi="$SWAYNC_ICONS"` assignment — variable
+# was never read anywhere in this script.
 
 # awww transition config
 FPS=60
@@ -34,31 +35,32 @@ SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration
 # Define ImageMagick effects
 declare -A effects=(
   ["No Effects"]="no-effects"
-  ["Black & White"]="magick $wallpaper_current -colorspace gray -sigmoidal-contrast 10,40% $wallpaper_output"
-  ["Blurred"]="magick $wallpaper_current -blur 0x10 $wallpaper_output"
-  ["Charcoal"]="magick $wallpaper_current -charcoal 0x5 $wallpaper_output"
-  ["Edge Detect"]="magick $wallpaper_current -edge 1 $wallpaper_output"
-  ["Emboss"]="magick $wallpaper_current -emboss 0x5 $wallpaper_output"
-  ["Frame Raised"]="magick $wallpaper_current +raise 150 $wallpaper_output"
-  ["Frame Sunk"]="magick $wallpaper_current -raise 150 $wallpaper_output"
-  ["Negate"]="magick $wallpaper_current -negate $wallpaper_output"
-  ["Oil Paint"]="magick $wallpaper_current -paint 4 $wallpaper_output"
-  ["Posterize"]="magick $wallpaper_current -posterize 4 $wallpaper_output"
-  ["Polaroid"]="magick $wallpaper_current -polaroid 0 $wallpaper_output"
-  ["Sepia Tone"]="magick $wallpaper_current -sepia-tone 65% $wallpaper_output"
-  ["Solarize"]="magick $wallpaper_current -solarize 80% $wallpaper_output"
-  ["Sharpen"]="magick $wallpaper_current -sharpen 0x5 $wallpaper_output"
-  ["Vignette"]="magick $wallpaper_current -vignette 0x3 $wallpaper_output"
-  ["Vignette-black"]="magick $wallpaper_current -background black -vignette 0x3 $wallpaper_output"
-  ["Zoomed"]="magick $wallpaper_current -gravity Center -extent 1:1 $wallpaper_output"
+  ["Black & White"]="$IMAGE_MAGICK $wallpaper_current -colorspace gray -sigmoidal-contrast 10,40% $wallpaper_output"
+  ["Blurred"]="$IMAGE_MAGICK $wallpaper_current -blur 0x10 $wallpaper_output"
+  ["Charcoal"]="$IMAGE_MAGICK $wallpaper_current -charcoal 0x5 $wallpaper_output"
+  ["Edge Detect"]="$IMAGE_MAGICK $wallpaper_current -edge 1 $wallpaper_output"
+  ["Emboss"]="$IMAGE_MAGICK $wallpaper_current -emboss 0x5 $wallpaper_output"
+  ["Frame Raised"]="$IMAGE_MAGICK $wallpaper_current +raise 150 $wallpaper_output"
+  ["Frame Sunk"]="$IMAGE_MAGICK $wallpaper_current -raise 150 $wallpaper_output"
+  ["Negate"]="$IMAGE_MAGICK $wallpaper_current -negate $wallpaper_output"
+  ["Oil Paint"]="$IMAGE_MAGICK $wallpaper_current -paint 4 $wallpaper_output"
+  ["Posterize"]="$IMAGE_MAGICK $wallpaper_current -posterize 4 $wallpaper_output"
+  ["Polaroid"]="$IMAGE_MAGICK $wallpaper_current -polaroid 0 $wallpaper_output"
+  ["Sepia Tone"]="$IMAGE_MAGICK $wallpaper_current -sepia-tone 65% $wallpaper_output"
+  ["Solarize"]="$IMAGE_MAGICK $wallpaper_current -solarize 80% $wallpaper_output"
+  ["Sharpen"]="$IMAGE_MAGICK $wallpaper_current -sharpen 0x5 $wallpaper_output"
+  ["Vignette"]="$IMAGE_MAGICK $wallpaper_current -vignette 0x3 $wallpaper_output"
+  ["Vignette-black"]="$IMAGE_MAGICK $wallpaper_current -background black -vignette 0x3 $wallpaper_output"
+  ["Zoomed"]="$IMAGE_MAGICK $wallpaper_current -gravity Center -extent 1:1 $wallpaper_output"
 )
 
 # Function to apply no effects
+# Round 105 fix: removed broken `wait $!` pattern (was no-op after foreground
+# command — $! is empty since no background process was started). The `&&`
+# chain already provides sequential execution.
 no-effects() {
-  awww img -o "$focused_monitor" "$wallpaper_current" $SWWW_PARAMS &&
-    wait $!
-  "$COLOR_GEN" run "$wallpaper_current" -s &&
-    wait $!
+  "$WALLPAPER_CLIENT" img -o "$focused_monitor" "$wallpaper_current" $SWWW_PARAMS || return 1
+  "$COLOR_GEN" run "$wallpaper_current" -s || return 1
   # Refresh rofi, waybar, wallust palettes
   sleep 2
   "$SCRIPTSDIR/Refresh.sh"
@@ -92,7 +94,7 @@ main() {
       done
 
       sleep 1
-      awww img -o "$focused_monitor" "$wallpaper_output" $SWWW_PARAMS &
+      "$WALLPAPER_CLIENT" img -o "$focused_monitor" "$wallpaper_output" $SWWW_PARAMS &
 
       sleep 2
 
@@ -114,44 +116,7 @@ fi
 
 main
 
-sleep 1
-
-if [[ -n "$choice" ]]; then
-  # Resolve SDDM themes directory (standard and NixOS path)
-  sddm_themes_dir=""
-  if [ -d "/usr/share/sddm/themes" ]; then
-    sddm_themes_dir="/usr/share/sddm/themes"
-  elif [ -d "/run/current-system/sw/share/sddm/themes" ]; then
-    sddm_themes_dir="/run/current-system/sw/share/sddm/themes"
-  fi
-
-  if [ -n "$sddm_themes_dir" ]; then
-    sddm_simple="$sddm_themes_dir/simple_sddm_2"
-
-    # Only prompt if theme exists and its Backgrounds directory is writable
-    if [ -d "$sddm_simple" ] && [ -w "$sddm_simple/Backgrounds" ]; then
-      # Check if yad is running to avoid multiple yad notification
-      if pidof yad >/dev/null; then
-        killall yad
-      fi
-
-      if yad --info --text="Set current wallpaper as SDDM background?\n\nNOTE: This only applies to SIMPLE SDDM v2 Theme" \
-        --text-align=left \
-        --title="SDDM Background" \
-        --timeout=5 \
-        --timeout-indicator=right \
-        --button="yad-yes:0" \
-        --button="yad-no:1" \
-        ; then
-
-        # Check if terminal exists
-        if ! command -v "$terminal" &>/dev/null; then
-          "$NOTIFY" -i "$iDIR/ja.png" "Missing $terminal" "Install $terminal to enable setting of wallpaper background"
-          exit 1
-        fi
-
-        bash "$SCRIPTSDIR/sddm_wallpaper.sh" --effects
-      fi
-    fi
-  fi
-fi
+# SCRIPT-18 fix: replaced ~40-line duplicated SDDM prompt block with call to
+# shared helper. Outer $choice guard preserved — prompt only fires after a
+# successful effect selection.
+[[ -n "$choice" ]] && dt_sddm_prompt "$terminal" "$SCRIPTSDIR"
