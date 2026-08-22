@@ -2,7 +2,7 @@
 # @path: sys/scripts/lib/common.sh
 # @author: redskaber
 # @date: 2026-08-20
-# @version: 2.1 (Round 104: dt_swaync_reload landmine removed + fallback vars added)
+# @version: 2.1
 # @description: Shared shell library — sources SSOT cache + provides helpers
 #
 # ARCHITECTURE (Task 90): Single Source of Truth (SSOT) pattern.
@@ -59,6 +59,9 @@ else
   : "${WALLPAPER_DAEMON:=awww-daemon}"
   # Round 110: wallpaper client (companion to wallpaper_daemon)
   : "${WALLPAPER_CLIENT:=awww}"
+  # Round 120: widget tools (qs/ags) — for desktop overview
+  : "${QUICKSHELL:=qs}"
+  : "${AGS:=ags}"
   : "${COLOR_GEN:=wallust}"
   : "${LOCK:=hyprlock}"
   : "${IDLE_DAEMON:=hypridle}"
@@ -105,16 +108,16 @@ else
   : "${QT_DIR:=$HOME/.config/qt}"
 
   export HYPRCTL NOTIFY ROFI BAR NOTIFICATION JQ TERMINAL FILE_MANAGER LAUNCHER \
-         BRIGHTNESS_CONTROL VOLUME_CONTROL MEDIA_CONTROL CLIPBOARD WL_PASTE WL_COPY \
-         SCREENSHOT SLURP WALLPAPER_DAEMON WALLPAPER_CLIENT COLOR_GEN LOCK IDLE_DAEMON NIGHTLIGHT \
-         LOGOUT_MENU EDITOR \
-         FILE_OPENER SCREENSHOT_EDITOR CALCULATOR MEDIA_PLAYER VIDEO_WALLPAPER \
-         IMAGE_MAGICK DIALOG CAVA \
-         HYPR_CONFIG_DIR HYPR_SCRIPTS_DIR HYPR_HARDWARE_DIR HYPR_POLICY_DIR \
-         HYPR_USER_DIR HYPR_WALLUST_DIR HYPR_NOTIFY_ICON HYPR_LOCK_BG \
-         HYPR_WALLPAPER_DIR HYPR_SEARCH_ENGINE HYPR_CACHE_DIR \
-         SWAYNC_DIR SWAYNC_ICONS SWAYNC_IMAGES ROFI_DIR WAYBAR_DIR \
-         WALLUST_DIR KITTY_DIR QT_DIR
+    BRIGHTNESS_CONTROL VOLUME_CONTROL MEDIA_CONTROL CLIPBOARD WL_PASTE WL_COPY \
+    SCREENSHOT SLURP WALLPAPER_DAEMON WALLPAPER_CLIENT COLOR_GEN LOCK IDLE_DAEMON NIGHTLIGHT \
+    LOGOUT_MENU EDITOR QUICKSHELL AGS \
+    FILE_OPENER SCREENSHOT_EDITOR CALCULATOR MEDIA_PLAYER VIDEO_WALLPAPER \
+    IMAGE_MAGICK DIALOG CAVA \
+    HYPR_CONFIG_DIR HYPR_SCRIPTS_DIR HYPR_HARDWARE_DIR HYPR_POLICY_DIR \
+    HYPR_USER_DIR HYPR_WALLUST_DIR HYPR_NOTIFY_ICON HYPR_LOCK_BG \
+    HYPR_WALLPAPER_DIR HYPR_SEARCH_ENGINE HYPR_CACHE_DIR \
+    SWAYNC_DIR SWAYNC_ICONS SWAYNC_IMAGES ROFI_DIR WAYBAR_DIR \
+    WALLUST_DIR KITTY_DIR QT_DIR
 fi
 
 # =============================================================================
@@ -164,7 +167,10 @@ dt_sddm_prompt() {
   if yad --info --text="Set current wallpaper as SDDM background?\n\nNOTE: This only applies to SIMPLE SDDM v2 Theme" \
     --text-align=left --title="SDDM Background" --timeout=5 --timeout-indicator=right \
     --button="yes:0" --button="no:1"; then
-    command -v "$terminal" >/dev/null 2>&1 || { dt_notify "Missing $terminal" "Install $terminal to enable setting of wallpaper background" critical; return 1; }
+    command -v "$terminal" >/dev/null 2>&1 || {
+      dt_notify "Missing $terminal" "Install $terminal to enable setting of wallpaper background" critical
+      return 1
+    }
     bash "$scripts_dir/sddm_wallpaper.sh" --normal &
   fi
 }
@@ -174,8 +180,8 @@ dt_sddm_prompt() {
 # fallback when jq is unavailable / hyprctl -j fails). The previous helper
 # silently returned empty when jq was missing — breaking every caller.
 dt_get_focused_monitor() {
-  "$HYPRCTL" -j monitors 2>/dev/null | "$JQ" -r '.[] | select(.focused == true) | .name' 2>/dev/null \
-    || "$HYPRCTL" monitors 2>/dev/null | awk '/Focused:/ {for(i=1;i<=NF;i++) if($i=="monitor:") print $(i+1)}'
+  "$HYPRCTL" -j monitors 2>/dev/null | "$JQ" -r '.[] | select(.focused == true) | .name' 2>/dev/null ||
+    "$HYPRCTL" monitors 2>/dev/null | awk '/Focused:/ {for(i=1;i<=NF;i++) if($i=="monitor:") print $(i+1)}'
 }
 dt_get_active_workspace_id() {
   "$HYPRCTL" activeworkspace -j 2>/dev/null | "$JQ" -r '.id'
@@ -190,7 +196,11 @@ dt_rofi_drun() { "$ROFI" -show drun -modi drun; }
 dt_rofi_menu() { "$ROFI" -dmenu -i -p "$1"; }
 
 # --- Waybar helpers ---
-dt_waybar_reload() { pkill "$BAR" 2>/dev/null; sleep 0.1; "$BAR" & }
+dt_waybar_reload() {
+  pkill "$BAR" 2>/dev/null
+  sleep 0.1
+  "$BAR" &
+}
 
 # --- Brightness helpers ---
 dt_get_brightness() { "$BRIGHTNESS_CONTROL" -m 2>/dev/null | cut -d, -f4 | tr -d '%'; }
@@ -210,7 +220,8 @@ dt_screenshot_full() {
 }
 dt_screenshot_area() {
   local out="${1:-/tmp/screenshot_$(date +%s).png}"
-  local geom; geom="$("$SLURP" 2>/dev/null)"
+  local geom
+  geom="$("$SLURP" 2>/dev/null)"
   [ -n "$geom" ] && "$SCREENSHOT" -g "$geom" "$out" && echo "$out"
 }
 

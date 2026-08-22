@@ -106,11 +106,10 @@ Hyprland
 │   ├── env.lua  input.lua  layout.lua  decoration.lua  render.lua  misc.lua
 │   ├── startup.lua  keybind.lua  tags.lua  rules.lua
 │
-├── lib/                      # Shared libraries (8 modules)
+├── lib/                      # Shared libraries (7 modules)
 │   ├── sm.lua               # State machine base class (pcall + invariant + log)
 │   ├── deps.lua             # 35-tool external dependency manifest (SSOT + DI)
 │   ├── types.lua            # LuaLS type definitions (hl.* API surface)
-│   ├── script_utils.lua     # Helpers shared by shell scripts
 │   ├── active_policy.lua    # Runtime-switchable animation preset resolver
 │   ├── colors.lua           # Wallust color resolver (breaks sys→user layer cycle)
 │   ├── input_config.lua     # Lua-aware kb_layout parser for sh scripts
@@ -554,7 +553,7 @@ for the full doc map.
 | Configuration files | 55 `.lua` (0 `.conf` in `sys/`/`user/`/`lib/`/`bootstrap/`) |
 | Daemon configs | 2 `.conf` (`hypridle.conf`, `hyprlock.conf` — daemons don't support Lua) |
 | Runtime scripts | 59 `.sh` (+ 1 utility `validate_tags.sh`) |
-| Shared libraries | 8 (`lib/`: `sm.lua`, `deps.lua`, `types.lua`, `script_utils.lua`, `active_policy.lua`, `colors.lua`, `input_config.lua`, `cursor.lua`) |
+| Shared libraries | 7 (`lib/`: `sm.lua`, `deps.lua`, `types.lua`, `active_policy.lua`, `colors.lua`, `input_config.lua`, `cursor.lua`) |
 | Keybinds | 132 `hl.bind` calls in `sys/keybind.lua` |
 | Window tags | 26 (20 category + 6 behavior/helper) in `sys/tags.lua` |
 | State machines | 3 (`layout`, `gamemode`, `nightlight`) in `sys/statemachine/` |

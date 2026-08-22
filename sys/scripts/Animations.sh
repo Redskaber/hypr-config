@@ -37,8 +37,8 @@ msg='❗NOTE:❗ Select an animation preset to apply'
 
 # List .lua preset files (was buggy: looked for .conf in older versions)
 # Sort numerically so default.lua appears first
-animations_list=$(find -L "$animations_dir" -maxdepth 1 -type f -name '*.lua' \
-  | sed 's|.*/||; s|\.lua$||' | sort -V)
+animations_list=$(find -L "$animations_dir" -maxdepth 1 -type f -name '*.lua' |
+  sed 's|.*/||; s|\.lua$||' | sort -V)
 
 if [ -z "$animations_list" ]; then
   dt_notify "Animations" "No animation presets found in $animations_dir" critical
@@ -46,8 +46,8 @@ if [ -z "$animations_list" ]; then
 fi
 
 # Rofi Menu
-chosen_file=$(printf '%s\n' "$animations_list" \
-  | "$ROFI" -i -dmenu -config "$rofi_theme" -mesg "$msg")
+chosen_file=$(printf '%s\n' "$animations_list" |
+  "$ROFI" -i -dmenu -config "$rofi_theme" -mesg "$msg")
 
 # User pressed Escape — silent exit (not an error)
 [ -z "$chosen_file" ] && exit 0
@@ -60,7 +60,7 @@ if [ ! -f "$full_path" ]; then
 fi
 
 # Write chosen name to state file (read by lib/active_policy.lua on reload)
-printf '%s\n' "$chosen_file" > "$state_file"
+printf '%s\n' "$chosen_file" >"$state_file"
 
 # Apply: reload Hyprland config (triggers user/policy/default.lua → active_policy)
 "$HYPRCTL" reload

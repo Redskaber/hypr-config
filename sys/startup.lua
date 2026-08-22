@@ -1,10 +1,10 @@
 -- @path: sys/startup.lua
 -- @author: redskaber
 -- @date: 2026-08-22
--- @version: 2.0 (Round 107 — added shutdown cleanup handler + removed stale &)
+-- @version: 2.0
 -- @description: exec-once commands (hl.on hyprland.start/shutdown event hooks)
 --
--- ARCHITECTURE (Round 107):
+-- ARCHITECTURE:
 --   Per Hyprland wiki (Autostart): "hl.exec_cmd() will spawn an asynchronous
 --   process, so there is no need for & disown at the end." Removed trailing `&`
 --   from Dropterminal startup (was unnecessary, could cause double-fork).
@@ -18,9 +18,6 @@ local deps = require("lib.deps")
 
 -- ── STARTUP (hyprland.start event) ─────────────────────────────────────────
 hl.on("hyprland.start", function()
-	-- Regenerate .deps_cache.sh (in case config changed since bootstrap)
-	require("sys.const").export_to_shell()
-
 	-- Environment propagation (D-Bus + systemd)
 	hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
 	hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
@@ -59,8 +56,11 @@ hl.on("hyprland.start", function()
 		hl.exec_cmd(bar.cmd)
 	end
 
-	-- Quickshell overview
-	hl.exec_cmd("qs -c overview")
+	-- Quickshell overview (Round 120: use DI instead of hardcoded "qs")
+	local qs = deps.get("quickshell")
+	if qs and qs.found then
+		hl.exec_cmd(qs.cmd .. " -c overview")
+	end
 
 	-- Clipboard history (wl-paste watches clipboard → cliphist stores)
 	local clip = deps.get("clipboard")

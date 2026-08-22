@@ -17,6 +17,8 @@ M.bootstrap = M.config_hypr .. "/bootstrap"
 M.sys = M.config_hypr .. "/sys"
 M.user = M.config_hypr .. "/user"
 
+M.deps_cache_file = M.config_hypr .. "/.deps_cache.sh"
+
 -- Runtime paths
 M.wallust_effects = M.config_hypr .. "/wallust_effects"
 M.lock_background = M.wallust_effects .. "/.wallpaper_current"

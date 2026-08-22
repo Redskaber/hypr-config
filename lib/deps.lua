@@ -1,7 +1,7 @@
 -- @path: lib/deps.lua
 -- @author: redskaber
 -- @date: 2026-08-22
--- @version: 2.0 (Round 108 — added file_opener + screenshot_editor + calculator + media_player + image_magick + dialog + cava)
+-- @version: 2.0
 -- @description: External dependency manifest (SSOT + DI, 34 tools)
 
 local M = {}
@@ -78,11 +78,38 @@ M.specs = {
 		owned = false,
 		desc = "Blue light filter",
 	},
-	clipboard = { cmd = "cliphist", fallback = "clipman", required = true, owned = false, desc = "Clipboard history" },
-	wl_paste = { cmd = "wl-paste", required = true, owned = false, desc = "Wayland clipboard paste" },
-	wl_copy = { cmd = "wl-copy", required = true, owned = false, desc = "Wayland clipboard copy" },
-	screenshot = { cmd = "grim", fallback = "hyprshot", required = true, owned = false, desc = "Screenshot" },
-	slurp = { cmd = "slurp", required = false, owned = false, desc = "Region selector" },
+	clipboard = {
+		cmd = "cliphist",
+		fallback = "clipman",
+		required = true,
+		owned = false,
+		desc = "Clipboard history",
+	},
+	wl_paste = {
+		cmd = "wl-paste",
+		required = true,
+		owned = false,
+		desc = "Wayland clipboard paste",
+	},
+	wl_copy = {
+		cmd = "wl-copy",
+		required = true,
+		owned = false,
+		desc = "Wayland clipboard copy",
+	},
+	screenshot = {
+		cmd = "grim",
+		fallback = "hyprshot",
+		required = true,
+		owned = false,
+		desc = "Screenshot",
+	},
+	slurp = {
+		cmd = "slurp",
+		required = false,
+		owned = false,
+		desc = "Region selector",
+	},
 	logout_menu = {
 		cmd = "wlogout",
 		fallback = "wleave",
@@ -91,8 +118,19 @@ M.specs = {
 		config_path = "~/.config/wlogout/",
 		desc = "Logout menu",
 	},
-	media_control = { cmd = "playerctl", required = false, owned = false, desc = "Media control" },
-	volume_control = { cmd = "pamixer", fallback = "pactl", required = true, owned = false, desc = "Volume control" },
+	media_control = {
+		cmd = "playerctl",
+		required = false,
+		owned = false,
+		desc = "Media control",
+	},
+	volume_control = {
+		cmd = "pamixer",
+		fallback = "pactl",
+		required = true,
+		owned = false,
+		desc = "Volume control",
+	},
 	brightness_control = {
 		cmd = "brightnessctl",
 		fallback = "light",
@@ -107,7 +145,13 @@ M.specs = {
 		owned = false,
 		desc = "Polkit agent",
 	},
-	input_method = { cmd = "fcitx5", fallback = "ibus-daemon", required = false, owned = false, desc = "Input method" },
+	input_method = {
+		cmd = "fcitx5",
+		fallback = "ibus-daemon",
+		required = false,
+		owned = false,
+		desc = "Input method",
+	},
 	network_applet = {
 		cmd = "nm-applet",
 		fallback = "nm-tray",
@@ -123,15 +167,56 @@ M.specs = {
 		env_var = "HYPR_FILE_MANAGER",
 		desc = "File manager",
 	},
-	editor = { cmd = os.getenv("EDITOR") or "nano", fallback = "vim", required = true, owned = false, desc = "Editor" },
-	jq = { cmd = "jq", required = true, owned = false, desc = "JSON processor" },
-	notify = { cmd = "notify-send", required = true, owned = false, desc = "Notification sender" },
-	-- Round 108: tools previously only in common.sh fallback, now properly DI'd
-	file_opener = { cmd = "xdg-open", required = false, owned = false, desc = "File/URL opener" },
-	screenshot_editor = { cmd = "swappy", required = false, owned = false, desc = "Screenshot editor" },
-	calculator = { cmd = "qalc", fallback = "bc", required = false, owned = false, desc = "Calculator" },
-	media_player = { cmd = "mpv", required = false, owned = false, desc = "Media player" },
-	video_wallpaper = { cmd = "mpvpaper", required = false, owned = false, desc = "Video wallpaper" },
+	editor = {
+		cmd = os.getenv("EDITOR") or "nano",
+		fallback = "vim",
+		required = true,
+		owned = false,
+		desc = "Editor",
+	},
+	jq = {
+		cmd = "jq",
+		required = true,
+		owned = false,
+		desc = "JSON processor",
+	},
+	notify = {
+		cmd = "notify-send",
+		required = true,
+		owned = false,
+		desc = "Notification sender",
+	},
+	file_opener = {
+		cmd = "xdg-open",
+		required = false,
+		owned = false,
+		desc = "File/URL opener",
+	},
+	screenshot_editor = {
+		cmd = "swappy",
+		required = false,
+		owned = false,
+		desc = "Screenshot editor",
+	},
+	calculator = {
+		cmd = "qalc",
+		fallback = "bc",
+		required = false,
+		owned = false,
+		desc = "Calculator",
+	},
+	media_player = {
+		cmd = "mpv",
+		required = false,
+		owned = false,
+		desc = "Media player",
+	},
+	video_wallpaper = {
+		cmd = "mpvpaper",
+		required = false,
+		owned = false,
+		desc = "Video wallpaper",
+	},
 	image_magick = {
 		cmd = "magick",
 		fallback = "convert",
@@ -139,10 +224,37 @@ M.specs = {
 		owned = false,
 		desc = "Image manipulation",
 	},
-	dialog = { cmd = "yad", fallback = "zenity", required = false, owned = false, desc = "Dialog tool" },
-	cava = { cmd = "cava", required = false, owned = false, desc = "Audio visualizer" },
-	-- Round 110: wallpaper client (awww) — companion to wallpaper_daemon (awww-daemon)
-	wallpaper_client = { cmd = "awww", required = false, owned = false, desc = "Wallpaper client CLI" },
+	dialog = {
+		cmd = "yad",
+		fallback = "zenity",
+		required = false,
+		owned = false,
+		desc = "Dialog tool",
+	},
+	cava = {
+		cmd = "cava",
+		required = false,
+		owned = false,
+		desc = "Audio visualizer",
+	},
+	wallpaper_client = {
+		cmd = "awww",
+		required = false,
+		owned = false,
+		desc = "Wallpaper client CLI",
+	},
+	quickshell = {
+		cmd = "qs",
+		required = false,
+		owned = false,
+		desc = "Quickshell CLI (overview widget)",
+	},
+	ags = {
+		cmd = "ags",
+		required = false,
+		owned = false,
+		desc = "AGS CLI (overview widget fallback)",
+	},
 }
 
 M._resolved = {}
@@ -204,9 +316,5 @@ function M.cmd(name)
 	end
 	return cmd
 end
-
--- NOTE: export_to_shell() has been moved to sys/const.lua M.export_to_shell().
---       That function exports BOTH deps (tool commands) AND const (paths).
---       lib/deps.lua is now ONLY the dependency manifest (specs + get/cmd).
 
 return M

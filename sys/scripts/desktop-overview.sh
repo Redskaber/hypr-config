@@ -1,41 +1,46 @@
 #!/usr/bin/env bash
 # @path: sys/scripts/desktop-overview.sh
 # @author: redskaber
-# @date: 2026-08-20
+# @date: 2026-08-22
 # @description: Toggle desktop overview — try Quickshell IPC, fall back to AGS (no Lua API)
 #
-# Overview toggle wrapper - tries Quickshell first, falls back to AGS
+# ARCHITECTURE (Round 120):
+#   - qs/ags CLI (widget tools — no Lua API for overview toggle)
+#   - pgrep/pkill (process management — no Lua API)
+#   - notify-send (notification — no Lua API)
+#   Stays in sh; uses $QUICKSHELL + $AGS DI vars.
+#
+# Round 120: replaced hardcoded `qs`/`ags` → $QUICKSHELL/$AGS (DI)
+
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
-# set -euo pipefail  # Removed: can crash session on error
-
 # 1) Try Quickshell via IPC (works if QS is running and listening)
 if pgrep -x quickshell >/dev/null 2>&1; then
-  if qs ipc -c overview call overview toggle >/dev/null 2>&1; then
+  if "$QUICKSHELL" ipc -c overview call overview toggle >/dev/null 2>&1; then
     exit 0
   fi
 fi
 
 # If QS isn't running, but the CLI exists, try starting it and retry once
-if command -v qs >/dev/null 2>&1; then
-  qs -c overview >/dev/null 2>&1 &
+if command -v "$QUICKSHELL" >/dev/null 2>&1; then
+  "$QUICKSHELL" -c overview >/dev/null 2>&1 &
   sleep 0.6
-  if qs ipc -c overview call overview toggle >/dev/null 2>&1; then
+  if "$QUICKSHELL" ipc -c overview call overview toggle >/dev/null 2>&1; then
     exit 0
   fi
 fi
 
 # 2) Fall back to AGS template
-if command -v ags >/dev/null 2>&1; then
+if command -v "$AGS" >/dev/null 2>&1; then
   pkill "$ROFI" || true
-  if ags -t 'overview' >/dev/null 2>&1; then
+  if "$AGS" -t 'overview' >/dev/null 2>&1; then
     exit 0
   fi
   # If it failed, try starting AGS daemon then call the template
-  ags >/dev/null 2>&1 &
+  "$AGS" >/dev/null 2>&1 &
   sleep 0.6
-  if ags -t 'overview' >/dev/null 2>&1; then
+  if "$AGS" -t 'overview' >/dev/null 2>&1; then
     exit 0
   fi
 fi

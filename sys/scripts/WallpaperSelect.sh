@@ -12,11 +12,10 @@ source "$(dirname "$0")/lib/common.sh"
 terminal="${HYPR_TERMINAL:-"$TERMINAL"}"
 wallDIR="${HYPR_WALLPAPER_DIR:-$HOME/Pictures/wallpapers}"
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
-wallpaper_current="$HYPR_CONFIG_DIR/wallust_effects/.wallpaper_current"
+wallpaper_current="$HYPR_LOCK_BG"
 
 # Directory for swaync
-iDIR="$SWAYNC_IMAGES"
-# SCRIPT-26 fix: removed dead `iDIRi="$SWAYNC_ICONS"` assignment — variable
+# SCRIPT-26 fix: removed dead `SWAYNC_IMAGESi="$SWAYNC_ICONS"` assignment — variable
 # was never read anywhere in this script.
 
 # awww transition config
@@ -28,7 +27,7 @@ SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration
 
 # Check if package bc exists
 if ! command -v bc &>/dev/null; then
-  "$NOTIFY" -i "$iDIR/error.png" "bc missing" "Install package bc first"
+  "$NOTIFY" -i "$SWAYNC_IMAGES/error.png" "bc missing" "Install package bc first"
   exit 1
 fi
 
@@ -38,7 +37,7 @@ focused_monitor=$("$HYPRCTL" monitors -j | "$JQ" -r '.[] | select(.focused) | .n
 
 # Ensure focused_monitor is detected
 if [[ -z "$focused_monitor" ]]; then
-  "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "Could not detect focused monitor"
+  "$NOTIFY" -i "$SWAYNC_IMAGES/error.png" "E-R-R-O-R" "Could not detect focused monitor"
   exit 1
 fi
 
@@ -74,7 +73,7 @@ mapfile -d '' PICS < <(find -L "${wallDIR}" -type f \( \
 
 # Round 105 fix: guard against div-by-zero when wallDIR is empty
 if [ ${#PICS[@]} -eq 0 ]; then
-  "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "No wallpapers found in $wallDIR"
+  "$NOTIFY" -i "$SWAYNC_IMAGES/error.png" "E-R-R-O-R" "No wallpapers found in $wallDIR"
   exit 1
 fi
 
@@ -140,10 +139,15 @@ apply_image_wallpaper() {
   # Do NOT restart awww-daemon! It's already running (started by sys/startup.lua).
   # Restarting it causes: "There is an awww-daemon instance already running on this socket!"
   # → panic → abort → core dumped → can crash Hyprland session.
-  # Just use "$WALLPAPER_CLIENT" img to set the wallpaper image.
-  "$WALLPAPER_CLIENT" img --format argb -o "$focused_monitor" "$image_path" $SWWW_PARAMS
+  # Round 124 fix: was `--format argb` which is NOT a valid awww img flag.
+  # awww img accepts: -o <monitor> <path> [transition params]
+  # The --format argb was from the .conf era and caused awww img to silently fail,
+  # so wallpaper never changed (but WallustSwww.sh still ran, changing only colors).
+  "$WALLPAPER_CLIENT" img -o "$focused_monitor" "$image_path" $SWWW_PARAMS
 
   # Run additional scripts (pass the image path to avoid cache race conditions)
+  # Round 124 fix: pass image_path explicitly to WallustSwww.sh so it doesn't
+  # need to read from awww cache (which may not be written yet).
   "$SCRIPTSDIR/WallustSwww.sh" "$image_path"
   sleep 2
   "$SCRIPTSDIR/Refresh.sh"
@@ -157,7 +161,7 @@ apply_video_wallpaper() {
 
   # Check if mpvpaper is installed
   if ! command -v mpvpaper &>/dev/null; then
-    "$NOTIFY" -i "$iDIR/error.png" "E-R-R-O-R" "mpvpaper not found"
+    "$NOTIFY" -i "$SWAYNC_IMAGES/error.png" "E-R-R-O-R" "mpvpaper not found"
     return 1
   fi
   kill_wallpaper_for_video

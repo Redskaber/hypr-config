@@ -42,6 +42,8 @@ const.bootstrap = paths.bootstrap
 const.sys = paths.sys
 const.user = paths.user
 
+const.deps_cache_file = paths.deps_cache_file
+
 const.wallust_effects = paths.wallust_effects
 const.lock_background = paths.lock_background
 

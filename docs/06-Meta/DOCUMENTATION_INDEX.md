@@ -86,15 +86,15 @@
 | --- | --- |
 | Lua config files | 55 |
 | Shell scripts | 59 (+ 1 utility `validate_tags.sh`) |
-| Shared libraries | 8 (`lib/`: `sm.lua`, `deps.lua`, `types.lua`, `script_utils.lua`, `active_policy.lua`, `colors.lua`, `input_config.lua`, `cursor.lua`) |
+| Shared libraries | 7 (`lib/`: `sm.lua`, `deps.lua`, `types.lua`, `active_policy.lua`, `colors.lua`, `input_config.lua`, `cursor.lua`) |
 | Keybinds | 132 |
 | Window tags | 26 |
 | State machines | 3 |
-| External deps | 35 (in `lib/deps.lua`) |
+| External deps | 37 (in `lib/deps.lua`, +quickshell +ags in Round 120) |
 | Lua-able scripts | 4 (inlined in `keybind.lua` with sh fallback) |
 | Documentation files | 22 |
 | `bash -n` pass rate | 59/59 (100%) |
-| `luac -p` pass rate | 55/55 (100%) |
+| `luac -p` pass rate | 54/54 (100%) |
 | Real Hyprland 0.56.2 verify | ✅ CONFIG_LOADED_OK |
 | `common.sh` helpers | 23 (including `dt_hl_dispatch` + `dt_hyprctl_json` for sh→Lua bridge) |
 | Sh→Lua migrations | 1 (cursor zoom, Round 107) |

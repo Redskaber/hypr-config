@@ -35,7 +35,7 @@ pallete_light="light16"
 # `swaync-client --reload-config` (invoked from Refresh.sh, see Round 104
 # dt_swaync_reload helper). The SIGUSR1 here is harmless if swaync ignores it,
 # but if it ever causes issues we should drop $NOTIFICATION from this loop.
-for pid in "$BAR" "$ROFI" "$NOTIFICATION" ags swaybg; do
+for pid in "$BAR" "$ROFI" "$NOTIFICATION" "$AGS" swaybg; do
   killall -SIGUSR1 "$pid" 2>/dev/null || true
 done
 
@@ -110,7 +110,7 @@ else
 fi
 
 # ags color change
-if command -v ags >/dev/null 2>&1; then
+if command -v "$AGS" >/dev/null 2>&1; then
   if [ "$next_mode" = "Dark" ]; then
     sed -i '/@define-color noti-bg/s/rgba([0-9]*,\s*[0-9]*,\s*[0-9]*,\s*[0-9.]*);/rgba(0, 0, 0, 0.4);/' "${ags_style}"
     sed -i '/@define-color text-color/s/rgba([0-9]*,\s*[0-9]*,\s*[0-9]*,\s*[0-9.]*);/rgba(255, 255, 255, 0.7);/' "${ags_style}"
@@ -253,14 +253,14 @@ set_custom_gtk_theme "$next_mode"
 # Update theme mode for the next cycle
 update_theme_mode
 
-${SCRIPTSDIR}/WallustSwww.sh &&
+${SCRIPTSDIR}/WallustSwww.sh "${next_wallpaper}" &&
   sleep 2
 # Stop services that need restart for theme reload.
 # Round 104 (Task 117 regression fix): swaync ($NOTIFICATION) MUST NOT be
 # killall'd — it core-dumps on kill+restart. Use swaync-client --reload-config
 # instead (handled in Refresh.sh). waybar can be safely killed.
 # swaybg is also safe to kill (it's a wallpaper renderer, not a daemon).
-for pid1 in "$BAR" "$ROFI" ags swaybg; do
+for pid1 in "$BAR" "$ROFI" "$AGS" swaybg; do
   killall "$pid1" 2>/dev/null || true
 done
 

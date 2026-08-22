@@ -32,10 +32,13 @@ _gamemode_on() {
 
 _gamemode_off() {
   # awww-daemon already running (started by sys/startup.lua)
+  local current_wallpaper="$ROFI_DIR/.current_wallpaper"
   sleep 0.3
-  "$WALLPAPER_CLIENT" img "$ROFI_DIR/.current_wallpaper"
+  "$WALLPAPER_CLIENT" img "$current_wallpaper"
   sleep 0.1
-  "${HYPR_SCRIPTS_DIR}/WallustSwww.sh"
+  # Round 124 fix: pass wallpaper path explicitly to WallustSwww.sh
+  # (was called without path → tried awww cache → race condition → wallust not regenerated)
+  "${HYPR_SCRIPTS_DIR}/WallustSwww.sh" "$current_wallpaper"
   sleep 0.5
   "$HYPRCTL" reload
   "${HYPR_SCRIPTS_DIR}/Refresh.sh"

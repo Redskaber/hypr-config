@@ -65,7 +65,7 @@ hyprland.lua
 │   ├── scripts/             ← 59 `.sh` (+ lib/common.sh + lib/emoji-data.txt)
 │   └── *.lua                ← env/input/decoration/render/keybind/tags/rules
 ├── user/                     ← Layer 3: YOUR overrides (edit here)
-├── lib/                      ← Shared: sm.lua, deps.lua, types.lua, script_utils.lua, active_policy.lua, colors.lua, input_config.lua, cursor.lua
+├── lib/                      ← Shared: sm.lua, deps.lua, types.lua, active_policy.lua, colors.lua, input_config.lua, cursor.lua
 └── docs/                     ← This documentation
 ```
 
@@ -75,11 +75,11 @@ hyprland.lua
 | --- | --- |
 | Lua config files | 55 |
 | Shell scripts | 59 (+ 1 utility `validate_tags.sh`) |
-| Shared libraries | 8 (`lib/`: `sm.lua`, `deps.lua`, `types.lua`, `script_utils.lua`, `active_policy.lua`, `colors.lua`, `input_config.lua`, `cursor.lua`) |
+| Shared libraries | 7 (`lib/`: `sm.lua`, `deps.lua`, `types.lua`, `active_policy.lua`, `colors.lua`, `input_config.lua`, `cursor.lua`) |
 | Keybinds | 132 (`hl.bind` calls in `sys/keybind.lua`) |
 | Window tags | 26 (20 category + 6 behavior/helper) |
 | State machines | 3 |
-| External deps declared | 35 (in `lib/deps.lua`, +wallpaper_client in Round 110) |
+| External deps declared | 37 (in `lib/deps.lua`, +quickshell +ags in Round 120) |
 | Documentation files | 22 (across 6 categories) |
 | Lua-able scripts | 4 (inlined in `keybind.lua` with sh fallback — see [SCRIPT_AUDIT.md](../05-Reference/SCRIPT_AUDIT.md)) |
 | `common.sh` helpers | 23 (including `dt_hl_dispatch` + `dt_hyprctl_json` for sh→Lua bridge) |

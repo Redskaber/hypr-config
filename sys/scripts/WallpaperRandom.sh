@@ -52,7 +52,10 @@ SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration
 "$WALLPAPER_CLIENT" query 2>/dev/null && "$WALLPAPER_CLIENT" img -o "$focused_monitor" "${RANDOMPICS}" $SWWW_PARAMS
 
 # Regenerate wallust colors + refresh UI
-"$SCRIPTSDIR/WallustSwww.sh" || true
+# Round 124 fix: pass RANDOMPICS explicitly to WallustSwww.sh so it doesn't
+# need to read from awww cache (which may not be written yet — race condition).
+# Was: "$SCRIPTSDIR/WallustSwww.sh" (no path arg → tries awww cache → empty → exit 1)
+"$SCRIPTSDIR/WallustSwww.sh" "${RANDOMPICS}" || true
 sleep 2
 "$SCRIPTSDIR/Refresh.sh"
 

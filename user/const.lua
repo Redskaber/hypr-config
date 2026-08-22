@@ -23,21 +23,21 @@
 -- to UPPER_SNAKE_CASE shell variables. Here is the complete mapping:
 --
 -- ── Config paths (from bootstrap/const.lua + sys/const.lua M.dirs) ──────────
---   const.config_hypr       → HYPR_CONFIG_DIR      ($HOME/.config/hypr)
---   const.dirs.scripts      → HYPR_SCRIPTS_DIR     ($HYPR_CONFIG_DIR/sys/scripts)
---   const.dirs.hardware     → HYPR_HARDWARE_DIR    ($HYPR_CONFIG_DIR/sys/hardware)
---   const.dirs.policy       → HYPR_POLICY_DIR      ($HYPR_CONFIG_DIR/sys/policy)
+--   const.config_hypr       → HYPR_CONFIG_DIR        ($HOME/.config/hypr)
+--   const.dirs.scripts      → HYPR_SCRIPTS_DIR       ($HYPR_CONFIG_DIR/sys/scripts)
+--   const.dirs.hardware     → HYPR_HARDWARE_DIR      ($HYPR_CONFIG_DIR/sys/hardware)
+--   const.dirs.policy       → HYPR_POLICY_DIR        ($HYPR_CONFIG_DIR/sys/policy)
 --   const.dirs.wallust      → (internal, not exported)
 --   const.dirs.animations   → (internal, not exported)
---   const.dirs.wallust_effects → HYPR_WALLUST_DIR  ($HYPR_CONFIG_DIR/wallust_effects)
---   const.dirs.lock_background → HYPR_LOCK_BG     ($HYPR_WALLUST_DIR/.wallpaper_current)
---   const.notify_icon       → HYPR_NOTIFY_ICON     ($HYPR_CONFIG_DIR/icon.png)
---   const.wallpaper_dir     → HYPR_WALLPAPER_DIR   ($HOME/Pictures/wallpapers)
+--   const.dirs.wallust_effects → HYPR_WALLUST_DIR    ($HYPR_CONFIG_DIR/wallust_effects)
+--   const.dirs.lock_background → HYPR_LOCK_BG        ($HYPR_WALLUST_DIR/.wallpaper_current)
+--   const.notify_icon       → HYPR_NOTIFY_ICON       ($HYPR_CONFIG_DIR/icon.png)
+--   const.wallpaper_dir     → HYPR_WALLPAPER_DIR     ($HOME/Pictures/wallpapers)
 --
 -- ── External tool config paths (from sys/const.lua M.external) ────────────
---   const.external.swaync_dir     → SWAYNC_DIR          ($HOME/.config/swaync)
---   const.external.swaync_icons  → SWAYNC_ICONS        ($SWAYNC_DIR/icons)
---   const.external.swaync_images → SWAYNC_IMAGES       ($SWAYNC_DIR/images)
+--   const.external.swaync_dir     → SWAYNC_DIR       ($HOME/.config/swaync)
+--   const.external.swaync_icons  → SWAYNC_ICONS      ($SWAYNC_DIR/icons)
+--   const.external.swaync_images → SWAYNC_IMAGES     ($SWAYNC_DIR/images)
 --   const.external.rofi_dir      → ROFI_DIR          ($HOME/.config/rofi)
 --   const.external.waybar_dir    → WAYBAR_DIR        ($HOME/.config/waybar)
 --   const.external.wallust_dir   → WALLUST_DIR       ($HOME/.config/wallust)
@@ -55,7 +55,7 @@
 --   deps.get("file_manager").cmd → FILE_MANAGER      (nemo)
 --   deps.get("launcher").cmd    → LAUNCHER           (rofi)
 --   deps.get("brightness_control").cmd → BRIGHTNESS_CONTROL (brightnessctl)
---   deps.get("volume_control").cmd → VOLUME_CONTROL (pamixer)
+--   deps.get("volume_control").cmd → VOLUME_CONTROL  (pamixer)
 --   deps.get("media_control").cmd → MEDIA_CONTROL    (playerctl)
 --   deps.get("clipboard").cmd   → CLIPBOARD          (cliphist)
 --   deps.get("wl_paste").cmd    → WL_PASTE           (wl-paste)
@@ -68,7 +68,7 @@
 --   deps.get("idle_daemon").cmd → IDLE_DAEMON        (hypridle)
 --   deps.get("nightlight").cmd  → NIGHTLIGHT         (hyprsunset)
 --   deps.get("logout_menu").cmd → LOGOUT_MENU        (wlogout)
---   deps.get("editor").cmd     → EDITOR             (nano / $EDITOR)
+--   deps.get("editor").cmd     → EDITOR              (nano / $EDITOR)
 --
 -- ── Env var overrides ────────────────────────────────────────────────────────
 --   Users can override any tool command via env var (checked by deps.get):
@@ -98,12 +98,12 @@ M.apps = {
 
 -- ── External tool config directory overrides ──────────────────────────────
 M.external = {
-	-- swaync_dir  = "/custom/swaync",     -- → SWAYNC_DIR in shell
+	-- swaync_dir  = "/custom/swaync",    -- → SWAYNC_DIR in shell
 	-- rofi_dir    = "/custom/rofi",      -- → ROFI_DIR in shell
 	-- waybar_dir  = "/custom/waybar",    -- → WAYBAR_DIR in shell
 	-- wallust_dir = "/custom/wallust",   -- → WALLUST_DIR in shell
-	-- kitty_dir   = "/custom/kitty",    -- → KITTY_DIR in shell
-	-- qt_dir      = "/custom/qt",      -- → QT_DIR in shell
+	-- kitty_dir   = "/custom/kitty",     -- → KITTY_DIR in shell
+	-- qt_dir      = "/custom/qt",        -- → QT_DIR in shell
 }
 
 -- ── Search engine ──────────────────────────────────────────────────────────
