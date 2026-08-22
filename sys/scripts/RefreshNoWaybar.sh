@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Source shared library — SSOT paths + DI variables
+source "$(dirname "$0")/lib/common.sh"
 
 # @path: sys/scripts/RefreshNoWaybar.sh
 # @author: redskaber
@@ -10,8 +12,6 @@ SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 # Used after wallpaper changes (WallpaperAutoChange, Animations) where "$BAR"
 # does not need a full restart.
 
-UserScripts="$HYPR_CONFIG_DIR/user/scripts"
-
 # ── Kill rofi if open ────────────────────────────────────────
 pkill "$ROFI" 2>/dev/null || true
 
@@ -22,11 +22,13 @@ sleep 0.2
 # ── Reload swaync ────────────────────────────────────────────
 "${NOTIFICATION}-client" --reload-config 2>/dev/null || true
 
-# ── Optional user scripts ────────────────────────────────────
+# ── Optional rainbow borders hook ────────────────────────────
+# Round 104: was looking at $HYPR_CONFIG_DIR/user/scripts/RainbowBorders.sh
+# (non-existent). RainbowBorders.sh lives in $HYPR_SCRIPTS_DIR.
 sleep 1
-if [ -x "${UserScripts}/RainbowBorders.sh" ]; then
-    "${UserScripts}/RainbowBorders.sh" &
+if [ -x "${SCRIPTSDIR}/RainbowBorders.sh" ]; then
+    "${SCRIPTSDIR}/RainbowBorders.sh" &
 fi
 
-true  # exit removed: script exits naturally
+exit 0  # end of script — successful refresh
 

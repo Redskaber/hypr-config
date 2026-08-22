@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
 # @path: sys/scripts/Hypridle.sh
 # @author: redskaber
 # @date: 2026-08-20
 
-PROCESS="hypridle"
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
+
+PROCESS="$IDLE_DAEMON"
 HYPRIDLE_CONF="$HYPR_CONFIG_DIR/sys/hypridle.conf"
 
 if [[ "$1" == "status" ]]; then
@@ -25,5 +24,5 @@ elif [[ "$1" == "toggle" ]]; then
   fi
 else
   echo "Usage: $0 {status|toggle}"
-true  # exit removed: script exits naturally
+  exit 1
 fi

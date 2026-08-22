@@ -76,12 +76,12 @@ apply_rofi_theme_to_config() {
 # Check for required directories and files
 if [ ! -d "$ROFI_THEMES_DIR_CONFIG" ] && [ ! -d "$ROFI_THEMES_DIR_LOCAL" ]; then
   notify_user "$IDIR/error.png" "E-R-R-O-R" "No Rofi themes directory found."
-true  # exit removed: script exits naturally
+  exit 1
 fi
 
 if [ ! -f "$ROFI_CONFIG_FILE" ]; then
   notify_user "$IDIR/error.png" "E-R-R-O-R" "Rofi config file not found: $ROFI_CONFIG_FILE"
-true  # exit removed: script exits naturally
+  exit 1
 fi
 
 # Backup the original config content
@@ -95,7 +95,7 @@ mapfile -t available_theme_names < <((
 
 if [ ${#available_theme_names[@]} -eq 0 ]; then
   notify_user "$IDIR/error.png" "No Rofi Themes" "No .rasi files found in theme directories."
-true  # exit removed: script exits naturally
+  exit 1
 fi
 
 # Find the currently active theme to set as the initial selection
@@ -117,9 +117,9 @@ while true; do
 
   # Apply the theme for preview
   if ! apply_rofi_theme_to_config "$theme_to_preview_now"; then
-    echo "$original_rofi_config_content_backup" >"$ROFI_CONFIG_FILE"
+    printf '%s' "$original_rofi_config_content_backup" >"$ROFI_CONFIG_FILE"
     notify_user "$IDIR/error.png" "Preview Error" "Failed to apply $theme_to_preview_now. Reverted."
-true  # exit removed: script exits naturally
+    exit 1
   fi
 
   # Prepare theme list for Rofi
@@ -160,4 +160,4 @@ true  # exit removed: script exits naturally
   fi
 done
 
-true  # exit removed: script exits naturally
+exit 0

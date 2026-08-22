@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Source shared library — SSOT paths + DI variables
+source "$(dirname "$0")/lib/common.sh"
 
 # @path: sys/scripts/UptimeNixOS.sh
 # @author: redskaber
@@ -15,7 +17,7 @@ if [[ -r /proc/uptime ]]; then
   s=${s/.*/}
 else
   echo "Error UptimeNixOS.sh: Uptime could not be determined." >&2
-true  # exit removed: script exits naturally
+  exit 1  # error path — /proc/uptime not readable
 fi
 
 d="$((s / 60 / 60 / 24)) days"

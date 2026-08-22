@@ -13,6 +13,9 @@
 source "$(dirname "$0")/lib/common.sh"
 
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
+# Round 104: RainbowBorders.sh lives in $HYPR_SCRIPTS_DIR (sys/scripts/), not
+# user/scripts/. The old path silently failed the `[ -x ... ]` test so the
+# rainbow borders hook never fired on Refresh.
 UserScripts="$HYPR_CONFIG_DIR/user/scripts"
 
 # ── Restart waybar (kill + restart) ───────────────────────────
@@ -28,8 +31,8 @@ sleep 0.1
 # ── Kill rofi if open ────────────────────────────────────────
 pkill "$ROFI" 2>/dev/null || true
 
-# ── Optional user scripts ────────────────────────────────────
+# ── Optional rainbow borders hook ────────────────────────────
 sleep 1
-if [ -x "${UserScripts}/RainbowBorders.sh" ]; then
-    "${UserScripts}/RainbowBorders.sh" &
+if [ -x "${SCRIPTSDIR}/RainbowBorders.sh" ]; then
+    "${SCRIPTSDIR}/RainbowBorders.sh" &
 fi

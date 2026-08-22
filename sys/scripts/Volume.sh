@@ -76,7 +76,8 @@ toggle_mic() {
   if [ "$("$VOLUME_CONTROL" --default-source --get-mute)" == "false" ]; then
     "$VOLUME_CONTROL" --default-source -m && "$NOTIFY" -e -u low -h boolean:SWAYNC_BYPASS_DND:true -i "$iDIR/microphone-mute.png" " Microphone:" " Switched OFF"
   elif [ "$("$VOLUME_CONTROL" --default-source --get-mute)" == "true" ]; then
-    "$VOLUME_CONTROL" -u --default-source u && "$NOTIFY" -e -u low -h boolean:SWAYNC_BYPASS_DND:true -i "$iDIR/microphone.png" " Microphone:" " Switched ON"
+    # Round 104: was `-u --default-source u` (stray trailing 'u' typo). Use `--default-source -u`.
+    "$VOLUME_CONTROL" --default-source -u && "$NOTIFY" -e -u low -h boolean:SWAYNC_BYPASS_DND:true -i "$iDIR/microphone.png" " Microphone:" " Switched ON"
   fi
 }
 

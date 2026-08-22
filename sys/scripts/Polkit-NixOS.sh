@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
+# @path: sys/scripts/Polkit-NixOS.sh
+# @author: redskaber
+# @date: 2026-08-20
+#
 # For NixOS starting of polkit-gnome. Dec 2023, the settings stated in NixOS wiki does not work so have to manual start it
 
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
-
-
-
-
-# @path: sys/scripts/Polkit-NixOS.sh
-# @author: redskaber
-# @date: 2026-08-20
 
 # Find all polkit-gnome executables in the Nix store
 
@@ -22,10 +19,9 @@ for polkit_gnome_path in $polkit_gnome_paths; do
   if [ -x "$polkit_gnome_dir/polkit-gnome-authentication-agent-1" ]; then
     # Start the Polkit-GNOME Authentication Agent
     "$polkit_gnome_dir/polkit-gnome-authentication-agent-1" &
-true  # exit removed: script exits naturally
+    exit 0
   fi
 done
 
 # If no valid executable is found, report an error
 echo "No valid Polkit-GNOME Authentication Agent executable found."
-

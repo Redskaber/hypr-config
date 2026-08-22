@@ -1,20 +1,15 @@
 #!/usr/bin/env bash
-# Copied from Discord post. Thanks to @Zorg
-
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-
-
 # @path: sys/scripts/KillActiveProcess.sh
 # @author: redskaber
 # @date: 2026-08-20
+# @description: Force-kill the active window's process (SIGKILL)
 
-# Get id of an active window
+# Source shared library — SSOT paths + DI variables
+source "$(dirname "$0")/lib/common.sh"
 
-active_pid=$("$HYPRCTL" activewindow | grep -o 'pid: [0-9]*' | cut -d' ' -f2)
+# Get active window PID via JSON (cleaner than grep/cut)
+active_pid=$("$HYPRCTL" activewindow -j 2>/dev/null | "$JQ" -r '.pid // empty')
 
-# Close active window
-kill $active_pid
-
+if [ -n "$active_pid" ] && [ "$active_pid" -gt 0 ]; then
+  kill -9 "$active_pid" 2>/dev/null || true
+fi

@@ -25,20 +25,33 @@ source "$(dirname "$0")/lib/common.sh"
 # This is for changing kb_layouts. Set kb_layouts in
 
 MAP_FILE="$HOME/.cache/kb_layout_per_window"
-CFG_FILE="$HYPR_CONFIG_DIR/sys/input.conf"
+# NOTE: Task 6 migration renamed sys/input.conf → sys/input.lua (Lua API).
+# Prefer .lua (current), fall back to .conf for older installs.
+if [ -f "$HYPR_CONFIG_DIR/sys/input.lua" ]; then
+  CFG_FILE="$HYPR_CONFIG_DIR/sys/input.lua"
+else
+  CFG_FILE="$HYPR_CONFIG_DIR/sys/input.conf"
+fi
 ICON="$SWAYNC_IMAGES/ja.png"
 SCRIPT_NAME="$(basename "$0")"
 
 # Ensure map file exists
 touch "$MAP_FILE"
 
-# Read layouts from config
+# Read layouts from config (handles both `kb_layout = us,de` and `kb_layout = "us,de",` formats).
 if ! grep -q 'kb_layout' "$CFG_FILE"; then
   echo "Error: cannot find kb_layout in $CFG_FILE" >&2
-true  # exit removed: script exits naturally
+  exit 1  # error path — config missing required kb_layout directive
 fi
-kb_layouts=($(grep 'kb_layout' "$CFG_FILE" | cut -d '=' -f2 | tr -d '[:space:]' | tr ',' ' '))
+# Extract value after `=`, strip quotes/whitespace, then split on comma into array.
+kb_layouts=($(grep 'kb_layout[[:space:]]*=' "$CFG_FILE" | head -n1 \
+  | sed -E 's/^[^=]*=//; s/["'\''[:space:]]//g' | tr ',' ' '))
 count=${#kb_layouts[@]}
+# Guard against div-by-zero when no layouts are configured.
+[ "$count" -gt 0 ] || {
+  echo "Error: no kb_layout entries found in $CFG_FILE" >&2
+  exit 1
+}
 
 # Get current active window ID
 get_win() {
@@ -128,6 +141,8 @@ case "$1" in
 toggle | "") cmd_toggle ;;
 *)
   echo "Usage: $SCRIPT_NAME [toggle]" >&2
-true  # exit removed: script exits naturally
+  exit 1  # usage error — invalid CLI argument
   ;;
 esac
+
+exit 0  # end of script — CLI command dispatched

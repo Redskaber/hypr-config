@@ -23,8 +23,8 @@ focused_monitor=$("$HYPRCTL" monitors | awk '/^Monitor/{name=$2} /focused: yes/{
 
 if [[ $# -lt 1 ]] || [[ ! -d $1 ]]; then
   echo "Usage:
-	$0 <dir containing images>"
-true  # exit removed: script exits naturally
+        $0 <dir containing images>"
+  exit 1  # usage error — missing or invalid wallpaper directory arg
 fi
 
 # Edit below to control the images transition

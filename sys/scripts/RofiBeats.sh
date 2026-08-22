@@ -29,13 +29,27 @@ notification() {
 music_playing() { pgrep -x "mpv" >/dev/null; }
 
 # Stop all mpv processes except mpvpaper
+# Round 104 fix: was `ps aux | grep 'unique-wallpaper-process'` which matches
+# nothing (no process is named that). Use pgrep -x mpvpaper to find video
+# wallpaper mpv instances (mpvpaper spawns mpv with --mpv-profile=mpvpaper).
 stop_music() {
-  mpv_pids=$(pgrep -x mpv)
+  mpv_pids=$(pgrep -x mpv 2>/dev/null)
   if [ -n "$mpv_pids" ]; then
-    mpvpaper_pid=$(ps aux | grep -- 'unique-wallpaper-process' | grep -v 'grep' | awk '{print $2}')
+    # mpvpaper runs mpv as a child; its pids are discoverable via pgrep -x mpvpaper
+    # then we walk each mpvpaper pid's children via pgrep -P
+    mpvpaper_pids=$(pgrep -x mpvpaper 2>/dev/null)
+    mpvpaper_children=""
+    for mpp in $mpvpaper_pids; do
+      mpvpaper_children="$mpvpaper_children $(pgrep -P "$mpp" 2>/dev/null)"
+    done
     for pid in $mpv_pids; do
-      if ! echo "$mpvpaper_pid" | grep -q "$pid"; then
-        kill -9 $pid || true
+      # Skip mpv processes that are children of mpvpaper (don't kill video wallpaper)
+      skip=false
+      for child in $mpvpaper_children; do
+        if [ "$pid" = "$child" ]; then skip=true; break; fi
+      done
+      if [ "$skip" = "false" ]; then
+        kill -9 "$pid" 2>/dev/null || true
       fi
     done
     notification "Music stopped"

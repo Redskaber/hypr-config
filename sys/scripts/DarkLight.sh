@@ -1,19 +1,15 @@
 #!/usr/bin/env bash
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-
 # @path: sys/scripts/DarkLight.sh
 # @author: redskaber
 # @date: 2026-08-20
+#
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 # For Dark and Light switching
 # Note: Scripts are looking for keywords Light or Dark except for wallpapers as the are in a separate directories
 
-
 # Paths
-
 wallpaper_base_path="$HOME/Pictures/wallpapers/Dynamic-Wallpapers"
 dark_wallpapers="$wallpaper_base_path/Dark"
 light_wallpapers="$wallpaper_base_path/Light"
@@ -239,8 +235,12 @@ update_theme_mode
 
 ${SCRIPTSDIR}/WallustSwww.sh &&
   sleep 2
-# stop services before restart
-for pid1 in "$BAR" "$ROFI" "$NOTIFICATION" ags swaybg; do
+# Stop services that need restart for theme reload.
+# Round 104 (Task 117 regression fix): swaync ($NOTIFICATION) MUST NOT be
+# killall'd — it core-dumps on kill+restart. Use swaync-client --reload-config
+# instead (handled in Refresh.sh). waybar can be safely killed.
+# swaybg is also safe to kill (it's a wallpaper renderer, not a daemon).
+for pid1 in "$BAR" "$ROFI" ags swaybg; do
   killall "$pid1" 2>/dev/null || true
 done
 
@@ -250,4 +250,3 @@ ${SCRIPTSDIR}/Refresh.sh
 sleep 0.5
 # Display notifications for theme and icon changes
 "$NOTIFY" -u low -i "$notif" " Themes switched to:" " $next_mode Mode"
-

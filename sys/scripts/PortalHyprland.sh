@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
-# For manually starting xdg-desktop-portal-hyprland
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-
-
-
 # @path: sys/scripts/PortalHyprland.sh
 # @author: redskaber
 # @date: 2026-08-20
+#
+# For manually starting xdg-desktop-portal-hyprland
+
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 sleep 1
 killall xdg-desktop-portal-hyprland

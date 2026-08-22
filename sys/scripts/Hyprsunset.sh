@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-
-
 # @path: sys/scripts/Hyprsunset.sh
 # @author: redskaber
 # @date: 2026-08-20
+#
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 # DEPRECATED: This script is replaced by the Lua state machine module (sys/statemachine/).
 # Kept for reference only. Do not use — the SM module is called directly via hl.bind().
@@ -121,6 +118,6 @@ status) cmd_status ;;
 init) cmd_init ;;
 *)
   echo "usage: $0 [toggle|status|init]" >&2
-true  # exit removed: script exits naturally
+  exit 0
   ;;
 esac

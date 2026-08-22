@@ -1,20 +1,17 @@
 #!/usr/bin/env bash
+# @path: sys/scripts/ClipManager.sh
+# @author: redskaber
+# @date: 2026-08-20
+#
 # Clipboard Manager. This script uses cliphist, rofi, and wl-copy.
 
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
-
-
-
-# @path: sys/scripts/ClipManager.sh
-# @author: redskaber
-# @date: 2026-08-20
-
 # Variables
 
 rofi_theme="$ROFI_DIR/config-clipboard.rasi"
-msg='👀 **note**  CTRL DEL = "$CLIPBOARD" del (entry)   or   ALT DEL - "$CLIPBOARD" wipe (all)'
+msg="👀 **note**  CTRL DEL = \"${CLIPBOARD}\" del (entry)   or   ALT DEL - \"${CLIPBOARD}\" wipe (all)"
 # Actions:
 # CTRL Del to delete an entry
 # ALT Del to wipe clipboard contents
@@ -34,7 +31,7 @@ while true; do
 
   case "$?" in
   1)
-true  # exit removed: script exits naturally
+    break
     ;;
   0)
     case "$result" in
@@ -43,7 +40,7 @@ true  # exit removed: script exits naturally
       ;;
     *)
       "$CLIPBOARD" decode <<<"$result" | "$WL_COPY"
-true  # exit removed: script exits naturally
+      break
       ;;
     esac
     ;;

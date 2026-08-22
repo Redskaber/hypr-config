@@ -30,7 +30,7 @@ if command -v python3 >/dev/null 2>&1; then
   python3 "$PY_SCRIPT" "$@"
   exit_code=$?
   if [ "$exit_code" -eq 0 ]; then
-true  # exit removed: script exits naturally
+    exit 0
   fi
   echo "Weather.py failed with code $exit_code — falling back to Weather.sh" >&2
   run_fallback "$@"

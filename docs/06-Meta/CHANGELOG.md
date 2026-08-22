@@ -3,6 +3,49 @@
 > Notable changes to the hypr-config project.
 > Pure `.lua` (Hyprland v0.55+).
 
+## 2026-08-21 — Round 104: Systemic sh-script audit & capability boundary
+
+### Added
+- `docs/05-Reference/SCRIPT_AUDIT.md` — comprehensive script audit + capability boundary matrix
+- `lib/active_policy.lua` — runtime-switchable animation preset resolver (state-file architecture)
+- `sys/scripts/lib/emoji-data.txt` — extracted emoji catalog (1849 lines, was inlined in `RofiEmoji.sh`)
+- `lib/common.sh` — added 9 fallback DI vars: `$FILE_OPENER`, `$SCREENSHOT_EDITOR`, `$CALCULATOR`, `$MEDIA_PLAYER`, `$VIDEO_WALLPAPER`, `$IMAGE_MAGICK`, `$DIALOG`, `$CAVA`, `$HYPR_SEARCH_ENGINE`
+
+### Fixed — Systemic "true # exit removed" regression (40 instances across 23 scripts)
+Task 119 was too aggressive removing `exit N`/`return N` calls. Restored proper exit codes per context:
+- Error paths → `exit 1` (or `exit 2` for documented config errors)
+- Successful end-of-script → `exit 0`
+- `while true` loop exits → `break`
+
+Affected: Animations, RofiCalc, RofiThemeSelector, RofiThemeSelector-modified, ClipManager, Distro_update, Hypridle, Hyprsunset, KeyBinds, Kitty_themes, MediaCtrl, Polkit, Polkit-NixOS, RefreshNoWaybar, RofiEmoji, ScreenShot, Sounds, SwitchKeyboardLayout, Tak0-Autodispatch, Tak0-Per-Window-Switch, UptimeNixOS, WallpaperAutoChange, WallpaperEffects, WallustSwww, WaybarCava, Weather, WeatherWrap, ZshChangeTheme, sddm_wallpaper, Wlogout, desktop-overview, validate_tags, KeyBinds (etc.)
+
+### Fixed — Critical bugs
+- **`lib/common.sh` `dt_swaync_reload()`** — was `pkill swaync; swaync &` (Task 117 landmine, caused core dumps). Now `swaync-client --reload-config` (D-Bus live reload, no kill).
+- **`Animations.sh`** — was looking for `.conf` files (none exist; presets are `.lua`); `hyprctl reload` didn't apply chosen preset. Now lists `.lua` files + writes to `.active_animation` state file + `lib/active_policy.lua` reads state on reload.
+- **`RofiEmoji.sh`** — `bash -n` failed (emoji data after `# # DATA # #` marker parsed as bash code). Extracted data to `lib/emoji-data.txt`.
+- **`Volume.sh` `toggle_mic`** — `-u --default-source u` (stray trailing `u` typo). Fixed to `--default-source -u`.
+- **`ScreenShot.sh`** — hardcoded `swappy`/`xdg-open`; dead code (lines 20-22, 108-113); unquoted `cd ${dir}`. Now uses `$SCREENSHOT_EDITOR`/`$FILE_OPENER` DI vars; removed dead code; quoted paths.
+- **`DarkLight.sh`** — `killall swaync` (Task 117 regression — swaync core-dumps on kill+restart). Removed from killall list.
+- **`ClipManager.sh`** — `$CLIPBOARD` in single-quoted msg (literal text shown to user); infinite loop on Escape. Double-quoted msg + added `break`.
+- **`KeyBinds.sh`** — jq used `.has_mod` and `.desc` (wrong fields). Changed to `.modmask` and `.description` per Hyprland 0.55+ wiki.
+- **`RofiBeats.sh`** — `ps aux | grep 'unique-wallpaper-process'` matched nothing → all mpv killed. Use `pgrep -x mpvpaper` + `pgrep -P` for children.
+- **`Dropterminal.sh`** — `grep -qF` (substring) caused `0x123` to match `0x1234` → false positive → drop-down never detected. Changed to `grep -qxF` (exact line match). Also: `validate_args` return code was unchecked in `main()` → added `|| return 1`.
+- **`WaybarStyles.sh` + `WaybarLayout.sh`** — `$BAR` in single-quoted msg (literal `"$BAR"` shown). Double-quoted msg.
+- **`Refresh.sh` + `RefreshNoWaybar.sh`** — looked for `${HYPR_CONFIG_DIR}/user/scripts/RainbowBorders.sh` (non-existent). Changed to `${HYPR_SCRIPTS_DIR}/RainbowBorders.sh`.
+- **`Quick_Settings.sh`** — `edit="${EDITOR:-"$EDITOR"}"` (no-op tautology). Changed to `edit="${VISUAL:-$EDITOR}"`.
+- **`SwitchKeyboardLayout.sh` + `Tak0-Per-Window-Switch.sh`** — read `sys/input.conf` (doesn't exist); div-by-zero when layout count is 0. Migrated to read from `sys/input.lua` + added `[ "$count" -gt 0 ] || exit 1` guard.
+- **`Tak0-Autodispatch.sh`** — `exit 0` (success-on-match) was removed → 29 redundant `window.move` calls per match. Restored `exit 0`.
+
+### Verification
+- `bash -n *.sh`: 61/61 pass (was 60/61 — RofiEmoji fixed)
+- `luac -p *.lua`: 55/55 pass
+- `true # exit removed` count: 0 (was 40)
+- Hardcoded tool commands (non-comment): 0
+- Hardcoded daemon kills: 0
+- Permissions: all `.lua` = 644, all `.sh` = 755
+- Real Hyprland 0.56.2 headless verify: ✅ CONFIG_LOADED_OK
+- `lib/active_policy.lua` unit tests: ✅ ALL PASSED (3 assertions)
+
 ## 2026-08-20 — Deep audit & docs rewrite
 
 ### Added

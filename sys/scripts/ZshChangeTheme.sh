@@ -20,7 +20,7 @@ iDIR="$SWAYNC_IMAGES"
 rofi_theme="$ROFI_DIR/config-zsh-theme.rasi"
 if [ -n "$(grep -i nixos </etc/os-release)" ]; then
   "$NOTIFY" -i "$iDIR/note.png" "NOT Supported" "Sorry NixOS does not support this feature"
-true  # exit removed: script exits naturally
+  exit 0
 fi
 
 themes_dir="$HOME/.oh-my-zsh/themes"

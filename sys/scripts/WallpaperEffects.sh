@@ -147,7 +147,7 @@ if [[ -n "$choice" ]]; then
         # Check if terminal exists
         if ! command -v "$terminal" &>/dev/null; then
           "$NOTIFY" -i "$iDIR/ja.png" "Missing $terminal" "Install $terminal to enable setting of wallpaper background"
-true  # exit removed: script exits naturally
+          exit 1
         fi
 
         bash "$SCRIPTSDIR/sddm_wallpaper.sh" --effects

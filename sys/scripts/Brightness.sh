@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Source shared library — provides BRIGHTNESS_CONTROL, NOTIFY, dt_notify, etc.
-source "$(dirname "$0")/lib/common.sh"
-
 # @path: sys/scripts/Brightness.sh
 # @author: redskaber
 # @date: 2026-08-20
 # @description: Monitor brightness control (uses common.sh for DI)
+
+# Source shared library — provides BRIGHTNESS_CONTROL, NOTIFY, dt_notify, etc.
+source "$(dirname "$0")/lib/common.sh"
 
 iDIR="$SWAYNC_ICONS"
 step=10 # INCREASE/DECREASE BY THIS VALUE

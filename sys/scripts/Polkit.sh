@@ -32,7 +32,7 @@ for file in "${polkit[@]}"; do
   if [ -e "$file" ] && [ ! -d "$file" ]; then
     echo "Found: $file — executing..."
     "$file" &
-true  # exit removed: script exits naturally
+    exit 0
     executed=true
     break
   fi

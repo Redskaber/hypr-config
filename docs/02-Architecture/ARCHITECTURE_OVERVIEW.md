@@ -73,14 +73,15 @@ hyprland.lua
 
 | Metric | Value |
 | --- | --- |
-| Lua config files | 49 |
-| Shell scripts | 60 (+ 3 lua helpers in `sys/scripts/lua/`) |
-| Shared libraries | 4 (`lib/`) |
+| Lua config files | 55 |
+| Shell scripts | 61 (+ 1 utility `validate_tags.sh` + 3 lua helpers in `sys/scripts/lua/`) |
+| Shared libraries | 5 (`lib/`: `sm.lua`, `deps.lua`, `types.lua`, `script_utils.lua`, `active_policy.lua`) |
 | Keybinds | 132 (`hl.bind` calls in `sys/keybind.lua`) |
 | Window tags | 26 (20 category + 6 behavior/helper) |
 | State machines | 3 |
-| External deps declared | 25 (in `lib/deps.lua`) |
-| Documentation files | 18 (across 6 categories) |
+| External deps declared | 26 (in `lib/deps.lua`) |
+| Documentation files | 19 (across 6 categories) |
+| Lua-able scripts | 4 (inlined in `keybind.lua` with sh fallback — see [SCRIPT_AUDIT.md](../05-Reference/SCRIPT_AUDIT.md)) |
 
 ## Where to Go Next
 
@@ -93,6 +94,7 @@ hyprland.lua
 | Design principles catalog | [DESIGN_PRINCIPLES.md](DESIGN_PRINCIPLES.md) |
 | Tag system | [../03-Core-Systems/TAG_SYSTEM.md](../03-Core-Systems/TAG_SYSTEM.md) |
 | State machines | [../03-Core-Systems/STATE_MACHINES.md](../03-Core-Systems/STATE_MACHINES.md) |
+| **Script audit & capability boundary** | [../05-Reference/SCRIPT_AUDIT.md](../05-Reference/SCRIPT_AUDIT.md) |
 | Troubleshoot | [../05-Reference/TROUBLESHOOTING.md](../05-Reference/TROUBLESHOOTING.md) |
 
 ## Validation

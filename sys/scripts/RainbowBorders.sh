@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Source shared library — SSOT paths + DI variables
+source "$(dirname "$0")/lib/common.sh"
 
 # @path: sys/scripts/RainbowBorders.sh
 # @author: redskaber

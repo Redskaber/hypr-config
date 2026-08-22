@@ -28,7 +28,7 @@ B_720=50
 # Check if wlogout is already running
 if pgrep -x "wlogout" >/dev/null; then
   pkill -x "wlogout"
-true  # exit removed: script exits naturally
+  exit 0
 fi
 
 # Detect monitor resolution and scaling factor

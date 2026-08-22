@@ -2,7 +2,7 @@
 # @path: sys/scripts/lib/common.sh
 # @author: redskaber
 # @date: 2026-08-20
-# @version: 2.0
+# @version: 2.1 (Round 104: dt_swaync_reload landmine removed + fallback vars added)
 # @description: Shared shell library — sources SSOT cache + provides helpers
 #
 # ARCHITECTURE (Task 90): Single Source of Truth (SSOT) pattern.
@@ -12,6 +12,14 @@
 #
 #   If .deps_cache.sh is missing (e.g. script run before Hyprland starts),
 #   fallback defaults are used so scripts still work.
+#
+# CAPABILITY BOUNDARY (Round 104): These helpers exist because the underlying
+#   operations CANNOT be done in Hyprland's Lua API:
+#     - hyprctl IPC (Lua has hl.exec_cmd but no JSON query API)
+#     - notify-send / rofi / wl-copy (external CLIs, no Lua bindings)
+#     - File operations (Lua has io but bash is more ergonomic for shims)
+#   Lua-able operations (window kill, lock, etc.) are inlined in keybind.lua
+#   via hl.dsp.* — they do NOT need a sh wrapper.
 #
 # Usage in any .sh script:
 #   #!/usr/bin/env bash
@@ -56,6 +64,21 @@ else
   : "${LOGOUT_MENU:=wlogout}"
   : "${EDITOR:=nano}"
 
+  # Round 104: tools not yet in deps.lua but referenced by scripts.
+  # These defaults keep scripts working even if .deps_cache.sh is missing.
+  : "${FILE_OPENER:=xdg-open}"
+  : "${SCREENSHOT_EDITOR:=swappy}"
+  : "${CALCULATOR:=qalc}"
+  : "${MEDIA_PLAYER:=mpv}"
+  : "${VIDEO_WALLPAPER:=mpvpaper}"
+  : "${IMAGE_MAGICK:=magick}"
+  : "${DIALOG:=yad}"
+  : "${CAVA:=cava}"
+
+  # Round 104: HYPR_SEARCH_ENGINE was missing from fallback (RofiSearch.sh
+  # depends on it; without it, xdg-open "$query" opens raw query as URL).
+  : "${HYPR_SEARCH_ENGINE:=https://www.google.com/search?q=}"
+
   # Config paths (from bootstrap/const.lua + sys/const.lua)
   : "${HYPR_CONFIG_DIR:=${XDG_CONFIG_HOME:-$HOME/.config}/hypr}"
   : "${HYPR_SCRIPTS_DIR:=$HYPR_CONFIG_DIR/sys/scripts}"
@@ -81,9 +104,11 @@ else
          BRIGHTNESS_CONTROL VOLUME_CONTROL MEDIA_CONTROL CLIPBOARD WL_PASTE WL_COPY \
          SCREENSHOT SLURP WALLPAPER_DAEMON COLOR_GEN LOCK IDLE_DAEMON NIGHTLIGHT \
          LOGOUT_MENU EDITOR \
+         FILE_OPENER SCREENSHOT_EDITOR CALCULATOR MEDIA_PLAYER VIDEO_WALLPAPER \
+         IMAGE_MAGICK DIALOG CAVA \
          HYPR_CONFIG_DIR HYPR_SCRIPTS_DIR HYPR_HARDWARE_DIR HYPR_POLICY_DIR \
          HYPR_USER_DIR HYPR_WALLUST_DIR HYPR_NOTIFY_ICON HYPR_LOCK_BG \
-         HYPR_WALLPAPER_DIR \
+         HYPR_WALLPAPER_DIR HYPR_SEARCH_ENGINE \
          SWAYNC_DIR SWAYNC_ICONS SWAYNC_IMAGES ROFI_DIR WAYBAR_DIR \
          WALLUST_DIR KITTY_DIR QT_DIR
 fi
@@ -108,8 +133,11 @@ dt_notify_bypass_dnd() {
 }
 
 # --- Swaync helpers ---
+# Round 104: dt_swaync_reload used to do `pkill swaync; swaync &` — this KILLED
+# swaync mid-event and caused core dumps (Task 117 regression). swaync is
+# designed for live config reload via D-Bus; only waybar can be safely killed.
 dt_swaync_toggle() { "${NOTIFICATION}-client" -t -sw 2>/dev/null; }
-dt_swaync_reload() { pkill "${NOTIFICATION}" 2>/dev/null; sleep 0.1; "$NOTIFICATION" & }
+dt_swaync_reload() { "${NOTIFICATION}-client" --reload-config 2>/dev/null; }
 
 # --- Hyprctl helpers ---
 dt_get_focused_monitor() {

@@ -25,15 +25,15 @@ NOTIFY_SEND=$(command -v notify-send)
 
 if [ -z "${SED}" ]; then
   echo "Did not find 'sed', script cannot continue."
-true  # exit removed: script exits naturally
+  exit 1
 fi
 if [ -z "${MKTEMP}" ]; then
   echo "Did not find 'mktemp', script cannot continue."
-true  # exit removed: script exits naturally
+  exit 1
 fi
 if [ -z "${ROFI}" ]; then
-  echo "Did not find "$ROFI", there is no point to continue."
-true  # exit removed: script exits naturally
+  echo "Did not find '$ROFI', there is no point to continue."
+  exit 1
 fi
 if [ -z "${NOTIFY_SEND}" ]; then
   echo "Did not find '"$NOTIFY"', notifications won't work."
@@ -194,7 +194,7 @@ find_themes
 ##
 if [ ${#themes[@]} = 0 ]; then
   ${ROFI} -e "No themes found."
-true  # exit removed: script exits naturally
+  exit 0
 fi
 
 ##

@@ -111,7 +111,7 @@ if [ ${#weather[@]} -lt 3 ] || ! echo "${weather[2]}" | grep -qE '[-+0-9].*°'; 
       printf "%s\n" "$temp_only" >>"$cachedir/$cachefile"
     else
       echo -e "{\"text\":\"\uf06a\", \"alt\":\"\", \"tooltip\":\": \"}"
-true  # exit removed: script exits naturally
+      exit 0
     fi
   fi
 fi

@@ -1,18 +1,13 @@
 #!/usr/bin/env bash
-
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-
-
 # @path: sys/scripts/KeyHints.sh
 # @author: redskaber
 # @date: 2026-08-20
 
-# GDK BACKEND. Change to either wayland or x11 if having issues
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
-BACKEND=wayland
+# GDK BACKEND. Change to either wayland or x11 if having issues
+BACKEND="$GDK_BACKEND"
 
 # Check if rofi or yad is running and kill them if they are
 if pidof "$ROFI" >/dev/null; then

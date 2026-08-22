@@ -38,9 +38,9 @@ hl.bind(const.modifier .. " + A", hl.dsp.exec_cmd(const.dirs.scripts .. "/deskto
 -- ── SYSTEM ──────────────────────────────────────────────────────────
 hl.bind("CTRL + ALT + Delete", hl.dsp.exit())
 hl.bind(const.modifier .. " + Q", hl.dsp.window.close())
-hl.bind(const.modifier .. " + SHIFT + Q", hl.dsp.exec_cmd(const.dirs.scripts .. "/KillActiveProcess.sh"))
-hl.bind("CTRL + ALT + L", hl.dsp.exec_cmd(const.dirs.scripts .. "/LockScreen.sh"))
-hl.bind("CTRL + ALT + P", hl.dsp.exec_cmd(const.dirs.scripts .. "/Wlogout.sh"))
+hl.bind(const.modifier .. " + SHIFT + Q", hl.dsp.window.kill())
+hl.bind("CTRL + ALT + L", hl.dsp.exec_cmd(deps.cmd("lock")))
+hl.bind("CTRL + ALT + P", hl.dsp.exec_cmd(deps.cmd("logout_menu")))
 hl.bind(const.modifier .. " + SHIFT + N", hl.dsp.exec_cmd(notification_cmd .. "-client -t -sw"))
 
 -- ── FEATURES / EXTRAS ──────────────────────────────────────────────

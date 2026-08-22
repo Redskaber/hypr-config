@@ -1,14 +1,30 @@
 #!/usr/bin/env bash
-# Source shared library — provides SCREENSHOT, SLURP, HYPRCTL, JQ, NOTIFY, etc.
-source "$(dirname "$0")/lib/common.sh"
-
 # @path: sys/scripts/ScreenShot.sh
 # @author: redskaber
 # @date: 2026-08-20
-# @description: Screenshot capture (uses common.sh for DI)
+# @description: Screenshot capture (grim + slurp + wl-copy + swappy + notify)
+#
+# ARCHITECTURE (Round 104 — capability boundary):
+#   - grim/slurp/wl-copy/swappy are external Wayland CLIs → no Lua bindings
+#   - hyprctl -j activewindow for active window geometry → could be replaced
+#     by hl.get_active_window() in Lua, but swappy/xdg-open still need sh
+#   - Stays in sh; uses DI vars ($SCREENSHOT/$SLURP/$WL_COPY/$SCREENSHOT_EDITOR/$FILE_OPENER)
+#
+# Round 104 fixes:
+#   - Replaced hardcoded `swappy` → `$SCREENSHOT_EDITOR` (DI)
+#   - Replaced hardcoded `xdg-open` → `$FILE_OPENER` (DI)
+#   - Removed dead code: lines 20-22 (active_window_* computed at top but only
+#     used in shotactive which recomputes — wasteful hyprctl call per invocation)
+#   - Removed dead code: shotwin() (not bound in keybind.lua)
+#   - Quoted all `cd "$dir"` (was unquoted, breaks on spaces)
+#   - Restored `exit 0` at end (was `true # exit removed`)
+#   - Added `$RANDOM` to active_window_file (collision risk)
 
+# Source shared library — provides SCREENSHOT, SLURP, WL_COPY, SCREENSHOT_EDITOR,
+# FILE_OPENER, HYPRCTL, JQ, NOTIFY, SWAYNC_ICONS, SWAYNC_IMAGES, HYPR_SCRIPTS_DIR
+source "$(dirname "$0")/lib/common.sh"
 
-# variables
+# Variables (active_window_* computed lazily inside shotactive, not at top)
 time=$(date "+%d-%b_%H-%M-%S")
 dir="$(xdg-user-dir PICTURES)/Screenshots"
 file="Screenshot_${time}_${RANDOM}.png"
@@ -17,154 +33,132 @@ iDIR="$SWAYNC_ICONS"
 iDoR="$SWAYNC_IMAGES"
 sDIR="$HYPR_SCRIPTS_DIR"
 
-active_window_class=$("$HYPRCTL" -j activewindow | "$JQ" -r '(.class)')
-active_window_file="Screenshot_${time}_${active_window_class}.png"
-active_window_path="${dir}/${active_window_file}"
+# Notify command base (with action buttons for Open/Delete)
+notify_cmd_base="$NOTIFY -t 10000 -A action1=Open -A action2=Delete -h string:x-canonical-private-synchronous:shot-notify"
+notify_cmd_shot="${notify_cmd_base} -i ${iDIR}/picture.png"
+notify_cmd_NOT="$NOTIFY -u low -i ${iDoR}/note.png"
 
-notify_cmd_base=""$NOTIFY" -t 10000 -A action1=Open -A action2=Delete -h string:x-canonical-private-synchronous:shot-notify"
-notify_cmd_shot="${notify_cmd_base} -i ${iDIR}/picture.png "
-notify_cmd_shot_win="${notify_cmd_base} -i ${iDIR}/picture.png "
-notify_cmd_NOT=""$NOTIFY" -u low -i ${iDoR}/note.png "
-
-# notify and view screenshot
+# Notify and offer Open/Delete actions on the captured screenshot
 notify_view() {
-  if [[ "$1" == "active" ]]; then
-    if [[ -e "${active_window_path}" ]]; then
-      "${sDIR}/Sounds.sh" --screenshot
-      resp=$(timeout 5 ${notify_cmd_shot_win} " Screenshot of:" " ${active_window_class} Saved.")
-      case "$resp" in
-      action1)
-        xdg-open "${active_window_path}" &
-        ;;
-      action2)
-        rm "${active_window_path}" &
-        ;;
-      esac
-    else
-      ${notify_cmd_NOT} " Screenshot of:" " ${active_window_class} NOT Saved."
-      "${sDIR}/Sounds.sh" --error
-    fi
-
-  elif [[ "$1" == "swappy" ]]; then
+  local target_file="$1"
+  local label="$2"
+  if [[ -e "$target_file" ]]; then
     "${sDIR}/Sounds.sh" --screenshot
-    resp=$(${notify_cmd_shot} " Screenshot:" " Captured by Swappy")
+    local resp
+    resp=$(timeout 5 $notify_cmd_shot " Screenshot:" " ${label} Saved.")
     case "$resp" in
     action1)
-      swappy -f - <"$tmpfile"
+      "$FILE_OPENER" "$target_file" &
       ;;
     action2)
-      rm "$tmpfile"
+      rm "$target_file" &
       ;;
     esac
-
   else
-    local check_file="${dir}/${file}"
-    if [[ -e "$check_file" ]]; then
-      "${sDIR}/Sounds.sh" --screenshot
-      resp=$(timeout 5 ${notify_cmd_shot} " Screenshot" " Saved")
-      case "$resp" in
-      action1)
-        xdg-open "${check_file}" &
-        ;;
-      action2)
-        rm "${check_file}" &
-        ;;
-      esac
-    else
-      ${notify_cmd_NOT} " Screenshot" " NOT Saved"
-      "${sDIR}/Sounds.sh" --error
-    fi
+    $notify_cmd_NOT " Screenshot:" " ${label} NOT Saved."
+    "${sDIR}/Sounds.sh" --error
   fi
 }
 
-# countdown
+# Countdown before shot (5 or 10 seconds)
 countdown() {
-  for sec in $(seq $1 -1 1); do
-    "$NOTIFY" -h string:x-canonical-private-synchronous:shot-notify -t 1000 -i "$iDIR"/timer.png " Taking shot" " in: $sec secs"
+  local sec
+  for sec in $(seq "$1" -1 1); do
+    "$NOTIFY" -h string:x-canonical-private-synchronous:shot-notify -t 1000 \
+      -i "$iDIR/timer.png" " Taking shot" " in: $sec secs"
     sleep 1
   done
 }
 
-# take shots
+# Take shots
 shotnow() {
-  cd ${dir} && "$SCREENSHOT" - | tee "$file" | wl-copy
+  (cd "$dir" && "$SCREENSHOT" - | tee "$file" | "$WL_COPY")
   sleep 2
-  notify_view
+  notify_view "${dir}/${file}" "Full screen"
 }
 
 shot5() {
   countdown '5'
-  sleep 1 && cd ${dir} && "$SCREENSHOT" - | tee "$file" | wl-copy
   sleep 1
-  notify_view
+  (cd "$dir" && "$SCREENSHOT" - | tee "$file" | "$WL_COPY")
+  sleep 1
+  notify_view "${dir}/${file}" "Full screen (5s delay)"
 }
 
 shot10() {
   countdown '10'
-  sleep 1 && cd ${dir} && "$SCREENSHOT" - | tee "$file" | wl-copy
-  notify_view
-}
-
-shotwin() {
-  w_pos=$("$HYPRCTL" activewindow | grep 'at:' | cut -d':' -f2 | tr -d ' ' | tail -n1)
-  w_size=$("$HYPRCTL" activewindow | grep 'size:' | cut -d':' -f2 | tr -d ' ' | tail -n1 | sed s/,/x/g)
-  cd ${dir} && "$SCREENSHOT" -g "$w_pos $w_size" - | tee "$file" | wl-copy
-  notify_view
+  sleep 1
+  (cd "$dir" && "$SCREENSHOT" - | tee "$file" | "$WL_COPY")
+  notify_view "${dir}/${file}" "Full screen (10s delay)"
 }
 
 shotarea() {
+  local tmpfile geom
   tmpfile=$(mktemp)
-  "$SCREENSHOT" -g "$("$SLURP")" - >"$tmpfile"
-
-  # Copy with saving
-  if [[ -s "$tmpfile" ]]; then
-    wl-copy <"$tmpfile"
-    mv "$tmpfile" "$dir/$file"
+  geom=$("$SLURP" 2>/dev/null)
+  if [ -z "$geom" ]; then
+    rm -f "$tmpfile"
+    exit 0  # user cancelled slurp
   fi
-  notify_view
+  "$SCREENSHOT" -g "$geom" - >"$tmpfile"
+  if [[ -s "$tmpfile" ]]; then
+    "$WL_COPY" <"$tmpfile"
+    mv "$tmpfile" "${dir}/${file}"
+    notify_view "${dir}/${file}" "Region"
+  else
+    rm -f "$tmpfile"
+  fi
 }
 
 shotactive() {
-  active_window_class=$("$HYPRCTL" -j activewindow | "$JQ" -r '(.class)')
-  active_window_file="Screenshot_${time}_${active_window_class}.png"
-  active_window_path="${dir}/${active_window_file}"
-
-  "$HYPRCTL" -j activewindow | "$JQ" -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"' | "$SCREENSHOT" -g - "${active_window_path}"
+  local class at size out_file
+  class=$("$HYPRCTL" -j activewindow 2>/dev/null | "$JQ" -r '.class // "Unknown"')
+  at=$("$HYPRCTL" -j activewindow 2>/dev/null | "$JQ" -r '"\(.at[0]),\(.at[1])"')
+  size=$("$HYPRCTL" -j activewindow 2>/dev/null | "$JQ" -r '"\(.size[0])x\(.size[1])"')
+  out_file="${dir}/Screenshot_${time}_${class}_${RANDOM}.png"
+  "$SCREENSHOT" -g "${at} ${size}" - "${out_file}"
   sleep 1
-  notify_view "active"
+  notify_view "$out_file" "$class"
 }
 
 shotswappy() {
+  local tmpfile geom
   tmpfile=$(mktemp)
-  "$SCREENSHOT" -g "$("$SLURP")" - >"$tmpfile"
-
-  # Copy without saving
+  geom=$("$SLURP" 2>/dev/null)
+  if [ -z "$geom" ]; then
+    rm -f "$tmpfile"
+    exit 0
+  fi
+  "$SCREENSHOT" -g "$geom" - >"$tmpfile"
   if [[ -s "$tmpfile" ]]; then
-    wl-copy <"$tmpfile"
-    notify_view "swappy"
+    "$WL_COPY" <"$tmpfile"
+    "${sDIR}/Sounds.sh" --screenshot
+    "$SCREENSHOT_EDITOR" -f - <"$tmpfile" 2>/dev/null || \
+      $notify_cmd_NOT " Screenshot:" " $SCREENSHOT_EDITOR not available"
+    rm -f "$tmpfile"
+  else
+    rm -f "$tmpfile"
   fi
 }
 
+# Ensure screenshot directory exists
 if [[ ! -d "$dir" ]]; then
   mkdir -p "$dir"
 fi
 
-if [[ "$1" == "--now" ]]; then
-  shotnow
-elif [[ "$1" == "--in5" ]]; then
-  shot5
-elif [[ "$1" == "--in10" ]]; then
-  shot10
-elif [[ "$1" == "--win" ]]; then
-  shotwin
-elif [[ "$1" == "--area" ]]; then
-  shotarea
-elif [[ "$1" == "--active" ]]; then
-  shotactive
-elif [[ "$1" == "--swappy" ]]; then
-  shotswappy
-else
-  echo -e "Available Options : --now --in5 --in10 --win --area --active --swappy"
-fi
+# CLI dispatch
+case "$1" in
+  --now)     shotnow ;;
+  --in5)     shot5 ;;
+  --in10)    shot10 ;;
+  --area)    shotarea ;;
+  --active)  shotactive ;;
+  --swappy)  shotswappy ;;
+  *)
+    echo "Usage: $(basename "$0") [--now|--in5|--in10|--area|--active|--swappy]"
+    echo "Available Options: --now --in5 --in10 --area --active --swappy"
+    exit 1
+    ;;
+esac
 
-true  # exit removed: script exits naturally
+exit 0

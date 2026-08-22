@@ -13,7 +13,7 @@ notify_icon="$SWAYNC_IMAGES/ja.png"
 # sys/scripts/GameMode.sh — Toggle game mode (state machine: on ↔ off)
 # State is read from animations:enabled (1 = normal, 0 = game mode active).
 
-GAMEMODE_ACTIVE=$("$HYPRCTL" -j getoption animations:enabled | jq ".bool")
+GAMEMODE_ACTIVE=$("$HYPRCTL" -j getoption animations:enabled | "$JQ" ".bool")
 
 _gamemode_on() {
   "$HYPRCTL" --batch "\

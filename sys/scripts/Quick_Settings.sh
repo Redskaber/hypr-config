@@ -13,9 +13,11 @@ source "$(dirname "$0")/lib/common.sh"
 
 HYPR_DIR="$HYPR_CONFIG_DIR"
 
-# terminal and editor: prefer env vars set via user/env.lua, fall back to defaults
-term="${HYPR_TERMINAL:-"$TERMINAL"}"
-edit="${EDITOR:-"$EDITOR"}"
+# Terminal and editor: prefer env vars (user/env.lua), fall back to DI defaults.
+# Round 104: was `edit="${EDITOR:-"$EDITOR"}"` — a no-op tautology (always
+# evaluates to $EDITOR). Now respects $VISUAL (vim convention) → $EDITOR (DI).
+term="${HYPR_TERMINAL:-$TERMINAL}"
+edit="${VISUAL:-$EDITOR}"
 
 # variables
 sys_conf="$HYPR_DIR/sys"

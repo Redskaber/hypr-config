@@ -63,7 +63,7 @@ fi
 # Abort on NixOS where this repo doesn't manage SDDM and themes are typically read-only
 if hostnamectl 2>/dev/null | grep -q 'Operating System: NixOS'; then
   "$NOTIFY" -i "$iDIR/error.png" "SDDM" "NixOS detected: skipping SDDM background change."
-true  # exit removed: script exits naturally
+  exit 0
 fi
 
 # Launch terminal and apply changes

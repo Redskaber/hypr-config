@@ -1,18 +1,14 @@
 #!/usr/bin/env bash
+# @path: sys/scripts/MonitorProfiles.sh
+# @author: redskaber
+# @date: 2026-08-20
+#
 # For applying Pre-configured Monitor Profiles
 
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
 
-
-
-
-# @path: sys/scripts/MonitorProfiles.sh
-# @author: redskaber
-# @date: 2026-08-20
-
 # Check if rofi is already running
-
 if pidof "$ROFI" >/dev/null; then
   pkill "$ROFI"
 fi
@@ -49,4 +45,3 @@ fi
 
 sleep 1
 ${SCRIPTSDIR}/RefreshNoWaybar.sh &
-

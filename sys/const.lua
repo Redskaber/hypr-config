@@ -61,6 +61,7 @@ M.dirs = {
 M.external = {
 	-- execute
 	rofi = "rofi",
+	gdk_backend = "wayland",
 
 	-- dirs
 	swaync_dir = os.getenv("HOME") .. "/.config/swaync",

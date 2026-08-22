@@ -16,7 +16,7 @@ source "$(dirname "$0")/lib/common.sh"
 # Ensure cava exists
 if ! command -v cava >/dev/null 2>&1; then
   echo "cava not found in PATH" >&2
-true  # exit removed: script exits naturally
+  exit 1
 fi
 
 # 0..7 → ▁▂▃▄▅▆▇█

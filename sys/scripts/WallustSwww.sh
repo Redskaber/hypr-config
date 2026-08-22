@@ -49,7 +49,7 @@ fi
 
 if [[ -z "${wallpaper_path:-}" || ! -f "$wallpaper_path" ]]; then
   # Nothing to do; avoid failing loudly so callers can continue
-  true # exit removed: script exits naturally
+  exit 1
 fi
 
 # Update helpers that depend on the path

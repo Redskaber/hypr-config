@@ -18,7 +18,7 @@ waybar_styles="$WAYBAR_DIR/style"
 waybar_style="$WAYBAR_DIR/style.css"
 SCRIPTSDIR="$HYPR_SCRIPTS_DIR"
 rofi_config="$ROFI_DIR/config-"$BAR"-style.rasi"
-msg=' 🎌 NOTE: Some "$BAR" STYLES NOT fully compatible with some LAYOUTS'
+msg=" 🎌 NOTE: Some $BAR STYLES NOT fully compatible with some LAYOUTS"
 
 # Apply selected style
 apply_style() {

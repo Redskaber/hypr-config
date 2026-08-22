@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
-# Airplane Mode. Turning on or off all wifi using rfkill.
-# Source shared library — provides DI for tool names
-source "$(dirname "$0")/lib/common.sh"
-
-
-
-
-
 # @path: sys/scripts/AirplaneMode.sh
 # @author: redskaber
 # @date: 2026-08-20
+#
+# Airplane Mode. Turning on or off all wifi using rfkill.
+
+# Source shared library — provides DI for tool names
+source "$(dirname "$0")/lib/common.sh"
 
 notif="$SWAYNC_IMAGES/ja.png"
 

@@ -15,6 +15,7 @@
 | Constants system | [02-Architecture/THREE_LAYER_CONSTANTS.md](../02-Architecture/THREE_LAYER_CONSTANTS.md) |
 | Tag system | [03-Core-Systems/TAG_SYSTEM.md](../03-Core-Systems/TAG_SYSTEM.md) |
 | State machines | [03-Core-Systems/STATE_MACHINES.md](../03-Core-Systems/STATE_MACHINES.md) |
+| **Script audit & capability boundary** | [05-Reference/SCRIPT_AUDIT.md](../05-Reference/SCRIPT_AUDIT.md) |
 | Troubleshoot | [05-Reference/TROUBLESHOOTING.md](../05-Reference/TROUBLESHOOTING.md) |
 | `.conf` ↔ `.lua` migration | [07-Lua-Reference/COMPATIBILITY.md](../07-Lua-Reference/COMPATIBILITY.md) |
 | Lua API quick card | [07-Lua-Reference/README.md](../07-Lua-Reference/README.md) |
@@ -36,9 +37,10 @@
 - [TAG_SYSTEM.md](../03-Core-Systems/TAG_SYSTEM.md) — tag-driven window management
 - [STATE_MACHINES.md](../03-Core-Systems/STATE_MACHINES.md) — 3 FSMs + base class
 
-### 05-Reference (2 files)
+### 05-Reference (3 files)
 - [TROUBLESHOOTING.md](../05-Reference/TROUBLESHOOTING.md) — 8 common issues
 - [GPU_VERIFICATION_CHECKLIST.md](../05-Reference/GPU_VERIFICATION_CHECKLIST.md) — GPU/NVIDIA setup
+- [SCRIPT_AUDIT.md](../05-Reference/SCRIPT_AUDIT.md) — Round 104 script audit + capability boundary
 
 ### 06-Meta (5 files)
 - [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) — this file
@@ -78,15 +80,19 @@
 | `hyprland --verify-config` | Real Hyprland config loader | `hyprland --verify-config` | Runtime errors (require chain, nil calls) + API whitelist |
 | `hyprctl` | `hyprland --verify-config` | Real Hyprland config loader (needs nix store) |
 
-## Project Statistics (verified 2026-08-20)
+## Project Statistics (verified 2026-08-21)
 
 | Metric | Value |
 | --- | --- |
-| Lua config files | 49 |
-| Shell scripts | 60 (+ 3 lua helpers) |
-| Shared libraries | 4 (`lib/`) |
+| Lua config files | 55 |
+| Shell scripts | 61 (+ 1 utility + 3 lua helpers) |
+| Shared libraries | 5 (`lib/` — added `active_policy.lua` Round 104) |
 | Keybinds | 132 |
 | Window tags | 26 |
 | State machines | 3 |
-| External deps | 25 (in `lib/deps.lua`) |
-| Documentation files | 18 |
+| External deps | 26 (in `lib/deps.lua`) |
+| Lua-able scripts | 4 (inlined in `keybind.lua` with sh fallback) |
+| Documentation files | 19 |
+| `bash -n` pass rate | 61/61 (100%) |
+| `luac -p` pass rate | 55/55 (100%) |
+| Real Hyprland 0.56.2 verify | ✅ CONFIG_LOADED_OK |

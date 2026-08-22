@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
+# @path: sys/scripts/LockScreen.sh
+# @author: redskaber
+# @date: 2026-08-20
+#
 # For Hyprlock
 
 # Source shared library — provides DI for tool names
 source "$(dirname "$0")/lib/common.sh"
-
-
-
-
-# @path: sys/scripts/LockScreen.sh
-# @author: redskaber
-# @date: 2026-08-20
 
 # Ensure weather cache is up-to-date before locking (Waybar/lockscreen readers)
 # WeatherWrap.sh moved to sys/scripts in new arch

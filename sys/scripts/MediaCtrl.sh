@@ -62,6 +62,6 @@ case "$1" in
   ;;
 *)
   echo "Usage: $0 [--nxt|--prv|--pause|--stop]"
-true  # exit removed: script exits naturally
+  exit 0
   ;;
 esac

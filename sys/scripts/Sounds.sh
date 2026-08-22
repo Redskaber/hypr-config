@@ -16,28 +16,28 @@ muteVolume=false
 
 # Exit if the system sounds are muted.
 if [[ "$mute" = true ]]; then
-true  # exit removed: script exits naturally
+  exit 0  # muted — nothing to play (not an error)
 fi
 
 # Choose the sound to play.
 if [[ "$1" == "--screenshot" ]]; then
   if [[ "$muteScreenshots" = true ]]; then
-true  # exit removed: script exits naturally
+    exit 0  # screenshot sound muted — nothing to play
   fi
   soundoption="screen-capture.*"
 elif [[ "$1" == "--volume" ]]; then
   if [[ "$muteVolume" = true ]]; then
-true  # exit removed: script exits naturally
+    exit 0  # volume sound muted — nothing to play
   fi
   soundoption="audio-volume-change.*"
 elif [[ "$1" == "--error" ]]; then
   if [[ "$muteScreenshots" = true ]]; then
-true  # exit removed: script exits naturally
+    exit 0  # error sound muted — nothing to play
   fi
   soundoption="dialog-error.*"
 else
   echo -e "Available sounds: --screenshot, --volume, --error"
-true  # exit removed: script exits naturally
+  exit 1  # usage error — invalid sound selector
 fi
 
 # Set the directory defaults for system sounds.
@@ -71,7 +71,7 @@ if ! test -f "$sound_file"; then
       sound_file=$(find -L $systemDIR/$defaultTheme/stereo -name "$soundoption" -print -quit)
       if ! test -f "$sound_file"; then
         echo "Error: Sound file not found."
-true  # exit removed: script exits naturally
+        exit 1  # sound file missing in all searched dirs
       fi
     fi
   fi
